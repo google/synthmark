@@ -125,7 +125,7 @@ public:
         mLogTool->setVar1(mFrameCounter);
 
         // Variables for turning notes on and off.
-        bool on = false;
+        bool areNotesOn = false;
         int32_t countdown = 0;
         const int32_t blocksOn = (int) (0.2 * mSampleRate / mFramesPerRender);
         const int32_t blocksOff = (int) (0.3 * mSampleRate / mFramesPerRender);
@@ -141,10 +141,10 @@ public:
         while (mFrameCounter < framesNeeded) {
             // Turn notes on and off so they never stop sounding.
             if (countdown <= 0) {
-                if (on) {
+                if (areNotesOn) {
                     mSynth.allNotesOff();
                     countdown = blocksOff;
-                    on = false;
+                    areNotesOn = false;
                 } else {
                     result = onBeforeNoteOn();
                     if (result < 0) {
@@ -155,7 +155,7 @@ public:
                         break;
                     }
                     countdown = blocksOn;
-                    on = true;
+                    areNotesOn = true;
                 }
             }
             countdown--;

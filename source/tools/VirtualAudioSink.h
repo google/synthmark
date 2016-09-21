@@ -27,19 +27,20 @@
 #define MAX_BUFFER_CAPACITY_IN_BURSTS 128
 #endif
 
+#define BUFFER_SIZE_IN_BURSTS 2 // Double buffered
+
 class VirtualAudioSink : public AudioSinkBase
 {
 public:
     VirtualAudioSink() {}
     virtual ~VirtualAudioSink() {}
 
-    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame,
+    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame __unused,
             int32_t framesPerBurst) override {
         mSampleRate = sampleRate;
-        (void) samplesPerFrame;
         mFramesPerBurst = framesPerBurst;
-        mBufferSizeInFrames = 2 * framesPerBurst;
-        mBufferCapacityInFrames = MAX_BUFFER_CAPACITY_IN_BURSTS * framesPerBurst;
+        mBufferSizeInFrames = BUFFER_SIZE_IN_BURSTS * framesPerBurst;
+        mMaxBufferCapacityInFrames = MAX_BUFFER_CAPACITY_IN_BURSTS * framesPerBurst;
         mFramesWritten = mBufferSizeInFrames;  // start full and primed
         mNanosPerBurst = (int32_t) (SYNTHMARK_NANOS_PER_SECOND * mFramesPerBurst / mSampleRate);
         return 0;
@@ -73,8 +74,8 @@ public:
     virtual int32_t setBufferSizeInFrames(int32_t numFrames) override {
         if (numFrames < 2) {
             mBufferSizeInFrames = 2;
-        } else if (numFrames > mBufferCapacityInFrames) {
-            mBufferSizeInFrames = mBufferCapacityInFrames;
+        } else if (numFrames > mMaxBufferCapacityInFrames) {
+            mBufferSizeInFrames = mMaxBufferCapacityInFrames;
         } else {
             mBufferSizeInFrames = numFrames;
         }
@@ -92,7 +93,7 @@ public:
      * Get the maximum size of the buffer.
      */
     virtual int32_t getBufferCapacityInFrames() override {
-        return mBufferCapacityInFrames;
+        return mMaxBufferCapacityInFrames;
     }
 
     /**
@@ -163,7 +164,7 @@ private:
     int32_t mNanosPerBurst = 1;
     int64_t mNextHardwareReadTimeNanos = 0;
     int32_t mBufferSizeInFrames = 0;
-    int32_t mBufferCapacityInFrames = 0;
+    int32_t mMaxBufferCapacityInFrames = 0;
     int64_t mFramesWritten = 0;
     int64_t mFramesConsumed = 0;
     int32_t mUnderrunCount = 0;
