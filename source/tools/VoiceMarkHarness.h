@@ -87,8 +87,8 @@ public:
                     accepted = true;
                 }
             }
-            mLogTool->log("%3d voices used %5.3f of CPU%s\n", oldNumVoices, cpuLoad,
-                accepted ? "" : " - not used");
+            mLogTool->log("%3d voices used %5.3f of CPU, %s\n", oldNumVoices, cpuLoad,
+                          accepted ? "" : " - not used");
             mTimer.reset();
             mNumVoices = newNumVoices;
         }

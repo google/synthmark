@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "SynthMark.h"
+#include "SynthMarkResult.h"
 #include "AudioSinkBase.h"
 
 #ifndef SYNTHMARK_VIRTUAL_AUDIO_SINK_H
@@ -43,6 +44,8 @@ public:
         mMaxBufferCapacityInFrames = MAX_BUFFER_CAPACITY_IN_BURSTS * framesPerBurst;
         mFramesWritten = mBufferSizeInFrames;  // start full and primed
         mNanosPerBurst = (int32_t) (SYNTHMARK_NANOS_PER_SECOND * mFramesPerBurst / mSampleRate);
+
+        mBurstBuffer = new float[samplesPerFrame * framesPerBurst];
         return 0;
     }
 
@@ -154,7 +157,32 @@ public:
     }
 
     virtual int32_t close() override {
+        delete[] mBurstBuffer;
         return 0;
+    }
+
+    /**
+     * Call the callback in a loop until it is finished or an error occurs.
+     * Data from the callback will be passed to the write() method.
+     */
+    virtual int32_t runCallbackLoop() override {
+        IAudioSinkCallback *callback = getCallback();
+        if (callback != NULL) {
+            IAudioSinkCallback::audio_sink_callback_result_t result
+                     = IAudioSinkCallback::CALLBACK_CONTINUE;
+            while (result == IAudioSinkCallback::CALLBACK_CONTINUE) {
+                // Gather audio data from the synthesizer.
+                result = fireCallback(mBurstBuffer, mFramesPerBurst);
+                if (result == IAudioSinkCallback::CALLBACK_CONTINUE) {
+                    // Output the audio using a blocking write.
+                    if (write(mBurstBuffer, mFramesPerBurst) < 0) {
+                        return SYNTHMARK_RESULT_AUDIO_SINK_WRITE_FAILURE;
+                    }
+
+                }
+            }
+        }
+        return SYNTHMARK_RESULT_SUCCESS;
     }
 
 private:
@@ -168,6 +196,7 @@ private:
     int64_t mFramesWritten = 0;
     int64_t mFramesConsumed = 0;
     int32_t mUnderrunCount = 0;
+    float*  mBurstBuffer = NULL;   // contains output of the synthesizer
 
     void updateHardwareSimulator() {
         int64_t currentTime = TimingAnalyzer::getNanoTime();
