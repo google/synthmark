@@ -103,7 +103,6 @@ public class AppObject extends Application {
             }
 
             while (running) {
-                log("r "+ mNativeTest);
                 if (mNativeTest != 0) {
                     int progress = testProgress(mNativeTest);
                     int status = testStatus(mNativeTest);
@@ -215,7 +214,6 @@ public class AppObject extends Application {
     }
 
     public void postNotificationTestShortUpdate(int testId, String message) {
-        log("test update");
         Intent intent = new Intent(AppObject.INTENT_NOTIFICATION);
         intent.putExtra(INTENT_NOTIFICATION_TYPE, NOTIFICATION_TEST_SHORT_UPDATE);
         intent.putExtra(NOTIFICATION_KEY_TEST_ID, testId);
