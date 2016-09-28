@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
+#ifndef SYNTHMARK_AUDIO_SINK_BASE_H
+#define SYNTHMARK_AUDIO_SINK_BASE_H
+
 #include <cstdint>
 #include <math.h>
 #include "SynthMark.h"
-
-#ifndef SYNTHMARK_AUDIO_SINK_BASE_H
-#define SYNTHMARK_AUDIO_SINK_BASE_H
+#include "IAudioSinkCallback.h"
 
 /**
  * Base class for an audio output device.
  * This may be implemented using an actual audio device,
  * or a realtime hardware simulator.
+ *
+ * You can im
  */
 class AudioSinkBase
 {
@@ -36,11 +39,37 @@ public:
         return 0;
     }
 
-    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame, int32_t framesPerBuffer) = 0;
+    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame, int32_t framesPerBurst) = 0;
     virtual int32_t start() = 0;
+
+    /**
+     * You don't need to implement a real blocking write if you are using
+     * a real audio callback, eg. OpenSL ES. You can just implement a stub.
+     */
     virtual int32_t write(const float *buffer, int32_t numFrames) = 0;
+
     virtual int32_t stop() = 0;
     virtual int32_t close() = 0;
+
+    void setCallback(IAudioSinkCallback *callback) {
+        mCallback = callback;
+    }
+
+    IAudioSinkCallback * getCallback() {
+        return mCallback;
+    }
+
+    /**
+     * Wait for callback loop to complete.
+     * This may wait for a real hardware device to finish,
+     * or it may call the callback itself in a loop
+     */
+    virtual int32_t runCallbackLoop() = 0;
+
+    virtual IAudioSinkCallback::audio_sink_callback_result_t
+            fireCallback(float *buffer, int32_t numFrames) {
+        return mCallback->renderAudio(buffer, numFrames);
+    }
 
     /**
      * Set the amount of the buffer that will be used. Determines latency.
@@ -75,6 +104,8 @@ public:
         return 0;
     }
 
+private:
+    IAudioSinkCallback *mCallback = NULL;
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H

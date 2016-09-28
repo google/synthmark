@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef SYNTHMARK_SYNTHMARK_HARNESS_H
+#define SYNTHMARK_SYNTHMARK_HARNESS_H
+
 #include <cstdint>
 #include <math.h>
 #include "SynthMark.h"
@@ -22,15 +25,12 @@
 #include "AudioSinkBase.h"
 #include "tools/LogTool.h"
 #include "SynthMarkResult.h"
-
-#ifndef SYNTHMARK_SYNTHMARK_HARNESS_H
-#define SYNTHMARK_SYNTHMARK_HARNESS_H
-
+#include "IAudioSinkCallback.h"
 
 /**
  * Base class for running a test.
  */
-class TestHarnessBase {
+class TestHarnessBase : public IAudioSinkCallback {
 public:
     TestHarnessBase(AudioSinkBase *audioSink,
                     SynthMarkResult *result,
@@ -42,7 +42,6 @@ public:
     , mResult(result)
     , mSampleRate(SYNTHMARK_SAMPLE_RATE)
     , mSamplesPerFrame(2)
-    , mFramesPerRender(0)
     , mNumVoices(8)
     , mFrameCounter(0)
 
@@ -98,17 +97,64 @@ public:
         }
         mSampleRate = sampleRate;
         mSamplesPerFrame = samplesPerFrame;
-        mFramesPerRender = framesPerRender;
         mFramesPerBurst = framesPerBurst;
-        mRenderBuffer = new float[samplesPerFrame * framesPerRender];
 
         mSynth.setup(sampleRate, SYNTHMARK_MAX_VOICES);
         return mAudioSink->open(sampleRate, samplesPerFrame, framesPerBurst);
     }
 
+    virtual audio_sink_callback_result_t renderAudio(float *buffer,
+                                                     int32_t numFrames) override {
+        // mLogTool->log("renderAudio() callback called\n");
+        int32_t result;
+        if (mFrameCounter >= mFramesNeeded) {
+            return CALLBACK_FINISHED;
+        }
+
+        // Turn notes on and off so they never stop sounding.
+        if (mBurstCountdown <= 0) {
+            if (mAreNotesOn) {
+                mSynth.allNotesOff();
+                mBurstCountdown = mBurstsOff;
+                mAreNotesOn = false;
+            } else {
+                result = onBeforeNoteOn();
+                if (result < 0) {
+                    mLogTool->log("renderAudio() onBeforeNoteOn() returned %d\n", result);
+                    mResult->setResultCode(result);
+                    return CALLBACK_ERROR;
+                }
+                result = mSynth.allNotesOn(mNumVoices);
+                if (result < 0) {
+                    mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);
+                    mResult->setResultCode(result);
+                    return CALLBACK_ERROR;
+                }
+                mBurstCountdown = mBurstsOn;
+                mAreNotesOn = true;
+            }
+        }
+        mBurstCountdown--;
+
+        // Gather timing information.
+        // mLogTool->log("renderAudio() call the synthesizer\n");
+        mTimer.markEntry();
+        mSynth.renderStereo(buffer, numFrames);
+        // Ideally we should write the data earlier than when it is read,
+        // by a full buffer's worth of time.
+        int64_t fullFramePosition = mFrameCounter - mAudioSink->getBufferSizeInFrames();
+        int64_t idealTime = mAudioSink->convertFrameToTime(fullFramePosition);
+        mTimer.markExit(idealTime);
+
+        mFrameCounter += numFrames;
+        mLogTool->setVar1(mFrameCounter);
+
+        return CALLBACK_CONTINUE;
+    }
+
     /**
      * Perform a SynthMark measurement. Results are stored in the SynthMarkResult object
-     * passed in the constructor
+     * passed in the constructor.  Audio may be rendered in a background thread.
      *
      * @param seconds - duration of test
      */
@@ -120,17 +166,20 @@ public:
                       SYNTHMARK_MINOR_VERSION);
 
         int32_t result; // Used to store the results of various operations during the test
-        int32_t framesNeeded = (int)(mSampleRate * seconds);
+        mFramesNeeded = (int)(mSampleRate * seconds);
         mFrameCounter = 0;
         mLogTool->setVar1(mFrameCounter);
 
         // Variables for turning notes on and off.
-        bool areNotesOn = false;
-        int32_t countdown = 0;
-        const int32_t blocksOn = (int) (0.2 * mSampleRate / mFramesPerRender);
-        const int32_t blocksOff = (int) (0.3 * mSampleRate / mFramesPerRender);
+        mAreNotesOn = false;
+        mBurstCountdown = 0;
+        mBurstsOn = (int) (0.2 * mSampleRate / mFramesPerBurst);
+        mBurstsOff = (int) (0.3 * mSampleRate / mFramesPerBurst);
 
         onBeginMeasurement();
+
+        mLogTool->log("set the callback\n");
+        mAudioSink->setCallback(this);
 
         result = mAudioSink->start();
         if (result < 0){
@@ -138,53 +187,20 @@ public:
             return;
         }
 
-        while (mFrameCounter < framesNeeded) {
-            // Turn notes on and off so they never stop sounding.
-            if (countdown <= 0) {
-                if (areNotesOn) {
-                    mSynth.allNotesOff();
-                    countdown = blocksOff;
-                    areNotesOn = false;
-                } else {
-                    result = onBeforeNoteOn();
-                    if (result < 0) {
-                        break;
-                    }
-                    result = mSynth.allNotesOn(mNumVoices);
-                    if (result < 0) {
-                        break;
-                    }
-                    countdown = blocksOn;
-                    areNotesOn = true;
-                }
-            }
-            countdown--;
-
-            // Gather timing information.
-            mTimer.markEntry();
-            mSynth.renderStereo(mRenderBuffer, (int32_t) mFramesPerRender);
-            // Ideally we should write the data earlier than when it is read,
-            // by a full buffer's worth of time.
-            int64_t fullFramePosition = mFrameCounter - mAudioSink->getBufferSizeInFrames();
-            int64_t idealTime = mAudioSink->convertFrameToTime(fullFramePosition);
-            mTimer.markExit(idealTime);
-
-            // Output the audio using a blocking write.
-            result = mAudioSink->write(mRenderBuffer, mFramesPerRender);
-            if (result < 0){
-                mResult->setResultCode(SYNTHMARK_RESULT_AUDIO_SINK_WRITE_FAILURE);
-                return;
-            }
-            mFrameCounter += mFramesPerRender;
-            mLogTool->setVar1(mFrameCounter);
+        // Run the test or wait for it to finish.
+        mLogTool->log("call runCallbackLoop()\n");
+        result = mAudioSink->runCallbackLoop();
+        if (result < 0) {
+            mResult->setResultCode(result);
+            return;
         }
+
         mAudioSink->stop();
 
         onEndMeasurement();
     }
 
     int32_t close() {
-        delete[] mRenderBuffer;
         return mAudioSink->close();
     }
 
@@ -203,13 +219,18 @@ protected:
     LogTool       *mLogTool;
     SynthMarkResult *mResult;
     std::string    mTestName;
-    float         *mRenderBuffer;   // contains output of the synthesizer
     int32_t        mSampleRate;
     int32_t        mSamplesPerFrame;
-    int32_t        mFramesPerRender; // number of frames rendered at one time
     int32_t        mFramesPerBurst;  // number of frames read by hardware at one time
     int32_t        mNumVoices;
     int32_t        mFrameCounter;
+    int32_t        mFramesNeeded;
+
+    // Variables for turning notes on and off.
+    bool          mAreNotesOn;
+    int32_t       mBurstCountdown;
+    int32_t       mBurstsOn;
+    int32_t       mBurstsOff;
 };
 
 
