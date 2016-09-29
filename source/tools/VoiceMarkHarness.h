@@ -54,6 +54,9 @@ public:
         mResult->setTestName(mTestName);
         mLogTool->log("---- Starting %s ----\n", mTestName.c_str());
 
+        float bufferSizeInMs = (float) (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
+                        / mAudioSink->getSampleRate();
+        mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
         mNumVoices = mInitialVoiceCount;
         sumVoicesOn = 0;
         sumVoicesCount = 0;
@@ -111,6 +114,7 @@ public:
 
             double measurement = sumVoicesOn / sumVoicesCount;
             resultCode = SYNTHMARK_RESULT_SUCCESS;
+            resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
             resultMessage << mTestName << "_"
                 << ((int)(mFractionOfCpu * 100)) << " = " << measurement;
             resultMessage << ", normalized to 100% = " << (measurement / mFractionOfCpu);

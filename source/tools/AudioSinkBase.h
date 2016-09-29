@@ -91,6 +91,8 @@ public:
         return -1; // UNIMPLEMENTED
     }
 
+    virtual int32_t getSampleRate() = 0;
+
     /**
      * @return valid time or zero
      */
