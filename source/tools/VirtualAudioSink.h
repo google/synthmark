@@ -71,6 +71,10 @@ public:
         return mUnderrunCount;
     }
 
+    int32_t getSampleRate() override {
+        return mSampleRate;
+    }
+
     /**
      * Set the amount of the buffer that will be used. Determines latency.
      */
