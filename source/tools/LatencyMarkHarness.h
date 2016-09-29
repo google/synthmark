@@ -48,6 +48,7 @@ public:
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;
         mAudioSink->setBufferSizeInFrames(mFramesPerBurst);
+        mNumVoices = SYNTHMARK_NUM_VOICES_LATENCY;
         mLogTool->log("---- Measure latency ---- #voices = %d\n", mNumVoices);
     }
 

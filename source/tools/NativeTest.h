@@ -90,6 +90,7 @@ public:
                 harness.open(SYNTHMARK_SAMPLE_RATE, SAMPLES_PER_FRAME,
                              SYNTHMARK_FRAMES_PER_RENDER,
                              framesPerBurst);
+                // TODO: Parameterize the test duration, for Constant CPU test it should be 600s
                 harness.measure(SYNTHMARK_NUM_SECONDS);
                 harness.close();
 
