@@ -20,37 +20,50 @@
 #include "tools/TimingAnalyzer.h"
 #include "synth/Synthesizer.h"
 #include "tools/VirtualAudioSink.h"
+#include "tools/VoiceMarkHarness.h"
 #include "tools/LatencyMarkHarness.h"
+#include "tools/JitterMarkHarness.h"
 
+#define DEFAULT_TEST_CODE          'v'
 #define DEFAULT_SECONDS            10
-#define DEFAULT_FRAMES_PER_BURST  SYNTHMARK_FRAMES_PER_BURST
+#define DEFAULT_FRAMES_PER_BURST   SYNTHMARK_FRAMES_PER_BURST
 #define DEFAULT_NUM_VOICES         8
+#define DEFAULT_PERCENT_CPU        ((int)(100 * SYNTHMARK_TARGET_CPU_LOAD))
 
 void usage(const char *name) {
-    printf("%s -n{numVoices} -r{sampleRate} -s{seconds} -b{burstSize}\n", name);
+    printf("%s -t{test} -n{numVoices} -r{sampleRate} -s{seconds} -b{burstSize} -f\n", name);
+    printf("    test, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n", DEFAULT_TEST_CODE);
     printf("    numVoices to render, default = %d\n", DEFAULT_NUM_VOICES);
+    printf("    percentCPU to render, default = %d\n", DEFAULT_PERCENT_CPU);
     printf("    rate should be typical, 44100, 48000, etc. default is %d\n", SYNTHMARK_SAMPLE_RATE);
     printf("    seconds required to be glitch free, default is %d\n", DEFAULT_SECONDS);
+    printf("    -f to use SCHED_FIFO\n");
     printf("    burstSize frames read by virtual hardware at one time , default = %d\n",
             DEFAULT_FRAMES_PER_BURST);
 }
 
 int main(int argc, char **argv)
 {
+    int32_t percentCpu = DEFAULT_PERCENT_CPU;
     int32_t sampleRate = SYNTHMARK_SAMPLE_RATE;
     int32_t framesPerBurst = DEFAULT_FRAMES_PER_BURST;
     int32_t numSeconds = DEFAULT_SECONDS;
     int32_t numVoices = DEFAULT_NUM_VOICES;
+    bool schedFifoEnabled = false;
+    char testCode = DEFAULT_TEST_CODE;
+    TestHarnessBase *harness = NULL;
 
     SynthMarkResult result;
     VirtualAudioSink audioSink;
-    LatencyMarkHarness harness(&audioSink, &result);
 
     // Parse command line arguments.
     for (int iarg = 1; iarg < argc; iarg++) {
         char * arg = argv[iarg];
         if (arg[0] == '-') {
             switch(arg[1]) {
+                case 'p':
+                    percentCpu = atoi(&arg[2]);
+                    break;
                 case 'n':
                     numVoices = atoi(&arg[2]);
                     break;
@@ -62,6 +75,12 @@ int main(int argc, char **argv)
                     break;
                 case 'b':
                     framesPerBurst = atoi(&arg[2]);
+                    break;
+                case 'f':
+                    schedFifoEnabled = true;
+                    break;
+                case 't':
+                    testCode = arg[2];
                     break;
                 case 'h': // help
                 case '?': // help
@@ -75,6 +94,11 @@ int main(int argc, char **argv)
         } else {
             usage(argv[0]);
         }
+    }
+    if (percentCpu < 1 || percentCpu > 100) {
+        printf("Invalid percent CPU = %d\n", percentCpu);
+        usage(argv[0]);
+        return 1;
     }
     if (numVoices < 1 || numVoices > SYNTHMARK_MAX_VOICES) {
         printf("Invalid num voices = %d\n", numVoices);
@@ -92,14 +116,50 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // Create a test harness and set the parameters.
+    switch(testCode) {
+        case 'v':
+            {
+                VoiceMarkHarness *voiceHarness = new VoiceMarkHarness(&audioSink, &result);
+                voiceHarness->setTargetCpuLoad(percentCpu * 0.01);
+                voiceHarness->setInitialVoiceCount(numVoices);
+                harness = voiceHarness;
+            }
+            break;
+        case 'l':
+            harness = new LatencyMarkHarness(&audioSink, &result);
+            break;
+        case 'j':
+            harness = new JitterMarkHarness(&audioSink, &result);
+            break;
+        default:
+            printf("ERROR - unrecognized testCode = %c\n", testCode);
+            usage(argv[0]);
+            return 1;
+            break;
+    }
+    harness->setSchedFifoEnabled(schedFifoEnabled);
+    harness->setNumVoices(numVoices);
+
+    // Print specified parameters.
+    printf("--- %s V%d.%d ---\n", harness->getName(), SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
+    printf("  numVoices      = %6d\n", numVoices);
+    printf("  percentCpu     = %6d\n", percentCpu);
+    printf("  framesPerBurst = %6d\n", framesPerBurst);
+    printf("--- wait at least %d seconds for benchmark to complete ---\n", numSeconds);
+    fflush(stdout);
+
     // Run the benchmark.
-    harness.open(sampleRate, SAMPLES_PER_FRAME, SYNTHMARK_FRAMES_PER_RENDER, framesPerBurst);
-    harness.measure(numSeconds);
-    harness.close();
+    harness->open(sampleRate, SAMPLES_PER_FRAME, SYNTHMARK_FRAMES_PER_RENDER, framesPerBurst);
+    harness->measure(numSeconds);
+    harness->close();
 
-    std::cout << result.getResultMessage() << "\n";
+    // Print the test results.
+    printf("RESULTS BEGIN\n");
+    std::cout << result.getResultMessage();
+    printf("RESULTS END\n");
+    printf("Benchmark complete.\n");
 
-    printf("Test complete.\n");
     return result.getResultCode();
 }
 

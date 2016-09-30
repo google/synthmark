@@ -77,11 +77,12 @@ public:
      */
     virtual void onEndMeasurement() override {
         int32_t sizeFrames = mAudioSink->getBufferSizeInFrames();
-        int32_t latencyMsec = 1000 * sizeFrames / mSampleRate;
+        double latencyMsec = 1000.0 * sizeFrames / mSampleRate;
 
         std::stringstream resultMessage;
         resultMessage << sizeFrames << " = " << latencyMsec << " msec at burst size " <<
-                mFramesPerBurst << " frames";
+                mFramesPerBurst << " frames"
+                << std::endl;
         mResult->setResultMessage(resultMessage.str());
         mResult->setResultCode(SYNTHMARK_RESULT_SUCCESS);
         mResult->setMeasurement((double) sizeFrames);

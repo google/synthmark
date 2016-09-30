@@ -19,6 +19,7 @@
 #include <time.h>
 #include <string.h>
 #include "SynthMark.h"
+#include "HostTools.h"
 
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
@@ -43,23 +44,6 @@ public:
         delete[] mLastMarkers;
     }
 
-#if defined(__APPLE__)
-    static int64_t getNanoTime() {
-        mach_timebase_info_data_t info;
-        mach_timebase_info(&info);
-        return (int64_t)(mach_absolute_time() * info.numer / info.denom);
-    }
-#else
-    static int64_t getNanoTime() {
-        struct timespec res;
-        int result = clock_gettime(CLOCK_MONOTONIC, &res);
-        if (result < 0) {
-            return result;
-        }
-        return (res.tv_sec * SYNTHMARK_NANOS_PER_SECOND) + res.tv_nsec;
-    }
-#endif
-
     void setupJitterRecording(int32_t nanosPerBin, int32_t numBins) {
         mBins = new int32_t[numBins];
         mLastMarkers = new int32_t[numBins];
@@ -69,7 +53,7 @@ public:
     }
 
     void markEntry() {
-        int64_t now = getNanoTime();
+        int64_t now = HostTools::getNanoTime();
         if (mBaseTime == 0) {
             mBaseTime = now;
         }
@@ -77,7 +61,7 @@ public:
     }
 
     void markExit(int64_t idealTime) {
-        int64_t now = getNanoTime();
+        int64_t now = HostTools::getNanoTime();
         mActiveTime += now - mEntryTime;
         // Calculate jitter delay value for histogram.
         int64_t previousTime = mExitTime;
@@ -91,19 +75,22 @@ public:
                 recordJitter(now - idealTime); // Absolute
             }
         }
-        mMarkIndex++;
+        mLoopIndex++;
     }
 
     void recordJitter(int64_t jitterDuration) {
-        if (jitterDuration < 0) {
-            jitterDuration = 0;
+        // throw away first bin
+        if (mLoopIndex > 0) {
+            if (jitterDuration < 0) {
+                jitterDuration = 0;
+            }
+            int32_t binIndex = jitterDuration / mNanosPerBin;
+            if (binIndex >= mNumBins) {
+                binIndex = mNumBins - 1;
+            }
+            mBins[binIndex] += 1;
+            mLastMarkers[binIndex] = mLoopIndex;
         }
-        int32_t binIndex = jitterDuration / mNanosPerBin;
-        if (binIndex >= mNumBins) {
-            binIndex = mNumBins - 1;
-        }
-        mBins[binIndex] += 1;
-        mLastMarkers[binIndex] = mMarkIndex;
     }
 
     void reset() {
@@ -111,7 +98,7 @@ public:
         mEntryTime = 0;
         mExitTime = 0;
         mActiveTime = 0;
-        mMarkIndex = 0;
+        mLoopIndex = 0;
         delete[] mBins;
         mBins = NULL;
         delete[] mLastMarkers;
@@ -150,7 +137,7 @@ private:
     int32_t *mLastMarkers;
     int32_t  mNumBins;
     int32_t  mNanosPerBin;
-    int32_t  mMarkIndex;
+    int32_t  mLoopIndex;
 };
 
 #endif // SYNTHMARK_TIMING_ANALYZER_H

@@ -44,6 +44,7 @@ public:
     , mSamplesPerFrame(2)
     , mNumVoices(8)
     , mFrameCounter(0)
+    , mSchedFifoEnabled(false)
 
     {
         mAudioSink = audioSink;
@@ -100,9 +101,11 @@ public:
         mFramesPerBurst = framesPerBurst;
 
         mSynth.setup(sampleRate, SYNTHMARK_MAX_VOICES);
+        mAudioSink->setSchedFifoEnabled(mSchedFifoEnabled);
         return mAudioSink->open(sampleRate, samplesPerFrame, framesPerBurst);
     }
 
+    // This is called by the AudioSink in a loop.
     virtual audio_sink_callback_result_t renderAudio(float *buffer,
                                                      int32_t numFrames) override {
         // mLogTool->log("renderAudio() callback called\n");
@@ -142,7 +145,9 @@ public:
         mSynth.renderStereo(buffer, numFrames);
         // Ideally we should write the data earlier than when it is read,
         // by a full buffer's worth of time.
-        int64_t fullFramePosition = mFrameCounter - mAudioSink->getBufferSizeInFrames();
+        int64_t fullFramePosition = mAudioSink->getFramesWritten()
+                                    - mAudioSink->getBufferSizeInFrames()
+                                    - mFramesPerBurst;
         int64_t idealTime = mAudioSink->convertFrameToTime(fullFramePosition);
         mTimer.markExit(idealTime);
 
@@ -178,7 +183,6 @@ public:
 
         onBeginMeasurement();
 
-        mLogTool->log("set the callback\n");
         mAudioSink->setCallback(this);
 
         result = mAudioSink->start();
@@ -188,16 +192,21 @@ public:
         }
 
         // Run the test or wait for it to finish.
-        mLogTool->log("call runCallbackLoop()\n");
         result = mAudioSink->runCallbackLoop();
         if (result < 0) {
+            mLogTool->log("ERROR runCallbackLoop() failed, returned %d\n", result);
             mResult->setResultCode(result);
             return;
         }
 
         mAudioSink->stop();
-
         onEndMeasurement();
+
+        mLogTool->log("SCHED_FIFO %sused\n", mAudioSink->wasSchedFifoUsed() ? "" : "NOT ");
+        mLogTool->log("bufferSizeInFrames     = %6d\n", mAudioSink->getBufferSizeInFrames());
+        mLogTool->log("bufferCapacityInFrames = %6d\n", mAudioSink->getBufferCapacityInFrames());
+        mLogTool->log("sampleRate             = %6d\n", mAudioSink->getSampleRate());
+        mLogTool->log("measured CPU load      = %6.2f%%\n", mTimer.getDutyCycle() * 100);
     }
 
     int32_t close() {
@@ -210,6 +219,18 @@ public:
 
     int32_t getNumVoices() {
         return mNumVoices;
+    }
+
+    void setSchedFifoEnabled(bool schedFifoEnabled) {
+        mSchedFifoEnabled = schedFifoEnabled;
+    }
+
+    bool getSchedFifoEnabled() {
+        return mSchedFifoEnabled;
+    }
+
+    const char *getName() {
+        return mTestName.c_str();
     }
 
 protected:
@@ -225,6 +246,7 @@ protected:
     int32_t        mNumVoices;
     int32_t        mFrameCounter;
     int32_t        mFramesNeeded;
+    bool           mSchedFifoEnabled;
 
     // Variables for turning notes on and off.
     bool          mAreNotesOn;

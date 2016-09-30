@@ -108,7 +108,8 @@ public:
 
             resultCode = SYNTHMARK_RESULT_TOO_FEW_MEASUREMENTS;
             resultMessage << "Only " << sumVoicesCount << " measurements. Minimum is " <<
-                    SYNTHMARK_MINIMUM_VOICE_COUNT << ". Not a valid result!";
+                    SYNTHMARK_MINIMUM_VOICE_COUNT << ". Not a valid result!"
+                    << std::endl;
 
         } else {
 
@@ -117,7 +118,8 @@ public:
             resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
             resultMessage << mTestName << "_"
                 << ((int)(mFractionOfCpu * 100)) << " = " << measurement;
-            resultMessage << ", normalized to 100% = " << (measurement / mFractionOfCpu);
+            resultMessage << ", normalized to 100% = "
+                    << (measurement / mFractionOfCpu) << std::endl;
         }
 
         mResult->setResultCode(resultCode);

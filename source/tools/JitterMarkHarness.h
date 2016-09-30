@@ -15,6 +15,7 @@
  */
 
 #include <cstdint>
+#include <iomanip>
 #include <math.h>
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
@@ -26,8 +27,7 @@
 #ifndef SYNTHMARK_JITTERMARK_HARNESS_H
 #define SYNTHMARK_JITTERMARK_HARNESS_H
 
-// TODO increase resolution when we have a nice chart to show the histogram
-#define JITTER_BINS_PER_MSEC  4
+#define JITTER_BINS_PER_MSEC  10
 #define JITTER_MAX_MSEC       100
 /**
  * Determine buffer latency required to avoid glitches.
@@ -49,12 +49,14 @@ public:
     virtual void onBeginMeasurement() override {
         mResult->setTestName(mTestName);
         mLogTool->log("---- Measure scheduling jitter ---- #voices = %d\n", mNumVoices);
-        int32_t blocksPerBurst = 8;
-        int32_t desiredSizeInFrames = blocksPerBurst * mFramesPerBurst;
+        /*
+        int32_t burstsPerBuffer = 8;
+        int32_t desiredSizeInFrames = burstsPerBuffer * mFramesPerBurst;
         int32_t actualSizeInFrames = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
         if (actualSizeInFrames < desiredSizeInFrames) {
             mLogTool->log("WARNING - could not set desired buffer size\n");
         }
+         */
         // set resolution and size of histogram
         int32_t nanosPerMilli = (int32_t)(SYNTHMARK_NANOS_PER_SECOND / SYNTHMARK_MILLIS_PER_SECOND);
         mNanosPerBin = nanosPerMilli / JITTER_BINS_PER_MSEC;
@@ -70,26 +72,31 @@ public:
 
         double measurement = 0.0;
         std::stringstream resultMessage;
-        resultMessage << mTestName << " = " << measurement;
+        resultMessage << mTestName << " = " << measurement << std::endl;
 
-        printJitterBins();
-        mResult->setMeasurement(measurement);
-        mResult->setResultMessage(resultMessage.str());
-    }
-
-    void printJitterBins() {
+        // Print jitter histogram
         int32_t numBins = mTimer.getNumBins();
         int32_t *bins = mTimer.getBins();
         int32_t *lastMarkers = mTimer.getLastMarkers();
-        mLogTool->log("bin#, msec, count, last\n");
+        resultMessage << " bin#,  msec,  count,   last" << std::endl;
         for (int i = 0; i < numBins; i++) {
             if (bins[i] > 0) {
                 double msec = (double) i * mNanosPerBin * SYNTHMARK_MILLIS_PER_SECOND
                               / SYNTHMARK_NANOS_PER_SECOND;
-                mLogTool->log("%3d, %5.2f, %6d, %6d\n", i, msec, bins[i], lastMarkers[i]);
+                resultMessage << "  " << std::setw(3) << i
+                        << ", " << std::fixed << std::setw(5) << std::setprecision(2) << msec
+                        << ", " << std::setw(6) << bins[i]
+                        << ", " << std::setw(6) << lastMarkers[i]
+                        << std::endl;
             }
         }
+
+        resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
+
+        mResult->setMeasurement(measurement);
+        mResult->setResultMessage(resultMessage.str());
     }
+
 
     int32_t mNanosPerBin;
 

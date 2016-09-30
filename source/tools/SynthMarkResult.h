@@ -19,12 +19,14 @@
 
 
 #include <cstdint>
+#include <string>
 
 #define SYNTHMARK_RESULT_SUCCESS 0
 #define SYNTHMARK_RESULT_TOO_FEW_MEASUREMENTS -1
 #define SYNTHMARK_RESULT_UNINITIALIZED -2
 #define SYNTHMARK_RESULT_AUDIO_SINK_START_FAILURE -3
 #define SYNTHMARK_RESULT_AUDIO_SINK_WRITE_FAILURE -4
+#define SYNTHMARK_RESULT_THREAD_FAILURE -5
 
 /**
  * Class for holding the results of SynthMark test
@@ -42,7 +44,6 @@ public:
             : mResultCode(SYNTHMARK_RESULT_UNINITIALIZED)
             , mMeasurement(0)
     {
-
     }
 
     std::string getTestName(){

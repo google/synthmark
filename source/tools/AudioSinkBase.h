@@ -93,14 +93,36 @@ public:
 
     virtual int32_t getSampleRate() = 0;
 
+    void setSchedFifoEnabled(bool schedFifoEnabled) {
+        mSchedFifoEnabled = schedFifoEnabled;
+    }
+
+    bool isSchedFifoEnabled() {
+        return mSchedFifoEnabled;
+    }
+
+    void setSchedFifoUsed(bool schedFifoUsed) {
+        mSchedFifoUsed = schedFifoUsed;
+    }
+    bool wasSchedFifoUsed() {
+        return mSchedFifoUsed;
+    }
+
+    void setFramesWritten(int32_t framesWritten) {
+        mFramesWritten = framesWritten;
+    }
+
+    int32_t getFramesWritten() {
+        return mFramesWritten;
+    }
+
     /**
      * @return valid time or zero
      */
     virtual int64_t convertFrameToTime(int64_t framePosition) {
         (void) framePosition;
-        return 0;
+        return (int64_t) 0;
     }
-
 
     virtual int32_t terminate() {
         return 0;
@@ -108,6 +130,9 @@ public:
 
 private:
     IAudioSinkCallback *mCallback = NULL;
+    int64_t        mFramesWritten = 0;
+    bool           mSchedFifoEnabled = false;
+    bool           mSchedFifoUsed = false;
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H

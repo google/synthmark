@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "SynthMark.h"
+#include "HostTools.h"
 #include "SynthMarkResult.h"
 #include "AudioSinkBase.h"
 
@@ -28,7 +29,8 @@
 #define MAX_BUFFER_CAPACITY_IN_BURSTS 128
 #endif
 
-#define BUFFER_SIZE_IN_BURSTS 2 // Double buffered
+// Use 2 for double buffered
+#define BUFFER_SIZE_IN_BURSTS 8
 
 class VirtualAudioSink : public AudioSinkBase
 {
@@ -42,7 +44,6 @@ public:
         mFramesPerBurst = framesPerBurst;
         mBufferSizeInFrames = BUFFER_SIZE_IN_BURSTS * framesPerBurst;
         mMaxBufferCapacityInFrames = MAX_BUFFER_CAPACITY_IN_BURSTS * framesPerBurst;
-        mFramesWritten = mBufferSizeInFrames;  // start full and primed
         mNanosPerBurst = (int32_t) (SYNTHMARK_NANOS_PER_SECOND * mFramesPerBurst / mSampleRate);
 
         mBurstBuffer = new float[samplesPerFrame * framesPerBurst];
@@ -50,13 +51,14 @@ public:
     }
 
     virtual int32_t start() override {
-        mStartTimeNanos = TimingAnalyzer::getNanoTime();
+        setFramesWritten(mBufferSizeInFrames);  // start full and primed
+        mStartTimeNanos = HostTools::getNanoTime();
         mNextHardwareReadTimeNanos = mStartTimeNanos;
         return 0;
     }
 
-    virtual int64_t convertFrameToTime(int64_t framePosition) {
-        return mStartTimeNanos + (framePosition * mNanosPerBurst / mFramesPerBurst);
+    virtual int64_t convertFrameToTime(int64_t framePosition) override {
+        return (int64_t) (mStartTimeNanos + (framePosition * mNanosPerBurst / mFramesPerBurst));
     }
 
     int32_t getEmptyFramesAvailable() {
@@ -64,7 +66,7 @@ public:
     }
 
     int32_t getFullFramesAvailable() {
-        return (int32_t) (mFramesWritten - mFramesConsumed);
+        return (int32_t) (getFramesWritten() - mFramesConsumed);
     }
 
     virtual int32_t getUnderrunCount() override {
@@ -109,7 +111,7 @@ public:
      */
     static int64_t sleepUntilNanoTime(int64_t wakeupTime) {
         const int32_t kMaxMicros = 999999; // from usleep documentation
-        int64_t currentTime = TimingAnalyzer::getNanoTime();
+        int64_t currentTime = HostTools::getNanoTime();
         int64_t nanosToSleep = wakeupTime - currentTime;
         while (nanosToSleep > 0) {
             int32_t microsToSleep = (int32_t)
@@ -122,7 +124,7 @@ public:
             }
             //printf("Sleep for %d micros\n", microsToSleep);
             usleep(microsToSleep);
-            currentTime = TimingAnalyzer::getNanoTime();
+            currentTime = HostTools::getNanoTime();
             nanosToSleep = wakeupTime - currentTime;
         }
         return currentTime;
@@ -149,7 +151,7 @@ public:
             if (available > 0) {
                 // Simulate writing to a buffer.
                 int32_t framesToWrite = (available > framesLeft) ? framesLeft : available;
-                mFramesWritten += framesToWrite;
+                setFramesWritten(getFramesWritten() + framesToWrite);
                 framesLeft -= framesToWrite;
             }
         }
@@ -169,41 +171,85 @@ public:
      * Call the callback in a loop until it is finished or an error occurs.
      * Data from the callback will be passed to the write() method.
      */
-    virtual int32_t runCallbackLoop() override {
+    int32_t innerCallbackLoop() {
+        int32_t result = SYNTHMARK_RESULT_SUCCESS;
         IAudioSinkCallback *callback = getCallback();
+        setSchedFifoUsed(false);
         if (callback != NULL) {
-            IAudioSinkCallback::audio_sink_callback_result_t result
-                     = IAudioSinkCallback::CALLBACK_CONTINUE;
-            while (result == IAudioSinkCallback::CALLBACK_CONTINUE) {
+            if (mUseRealThread && isSchedFifoEnabled()) {
+                int err = HostThread::promote(mThreadPriority);
+                if (err) {
+                    result = err;
+                } else {
+                    setSchedFifoUsed(true);
+                }
+            }
+
+            IAudioSinkCallback::audio_sink_callback_result_t callbackResult
+                    = IAudioSinkCallback::CALLBACK_CONTINUE;
+            while (callbackResult == IAudioSinkCallback::CALLBACK_CONTINUE
+                    && result == SYNTHMARK_RESULT_SUCCESS) {
                 // Gather audio data from the synthesizer.
-                result = fireCallback(mBurstBuffer, mFramesPerBurst);
-                if (result == IAudioSinkCallback::CALLBACK_CONTINUE) {
+                callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
+                if (callbackResult == IAudioSinkCallback::CALLBACK_CONTINUE) {
                     // Output the audio using a blocking write.
                     if (write(mBurstBuffer, mFramesPerBurst) < 0) {
-                        return SYNTHMARK_RESULT_AUDIO_SINK_WRITE_FAILURE;
+                        result = SYNTHMARK_RESULT_AUDIO_SINK_WRITE_FAILURE;
                     }
-
                 }
             }
         }
-        return SYNTHMARK_RESULT_SUCCESS;
+        mCallbackLoopResult = result;
+        return result;
     }
+
+    static void * threadProcWrapper(void *arg) {
+        VirtualAudioSink *sink = (VirtualAudioSink *) arg;
+        sink->innerCallbackLoop();
+        return NULL;
+    }
+
+    /**
+     * Call the callback directly or from a thread.
+     */
+    virtual int32_t runCallbackLoop() override {
+        if (mUseRealThread) {
+            mCallbackLoopResult = SYNTHMARK_RESULT_THREAD_FAILURE;
+            HostThread thread(threadProcWrapper, this);
+            int err = thread.start();
+            if (err != 0) {
+                return SYNTHMARK_RESULT_THREAD_FAILURE;
+            } else {
+                err = thread.join();
+                if (err != 0) {
+                    return SYNTHMARK_RESULT_THREAD_FAILURE;
+                }
+            }
+            // TODO use memory barrier or pass back through join()
+            return mCallbackLoopResult;
+        } else {
+            return innerCallbackLoop();
+        }
+    }
+
 
 private:
     int32_t mSampleRate = SYNTHMARK_SAMPLE_RATE;
-    int32_t mFramesPerBurst = 128;
+    int32_t mFramesPerBurst = 64;
     int64_t mStartTimeNanos = 0;
     int32_t mNanosPerBurst = 1;
     int64_t mNextHardwareReadTimeNanos = 0;
     int32_t mBufferSizeInFrames = 0;
     int32_t mMaxBufferCapacityInFrames = 0;
-    int64_t mFramesWritten = 0;
     int64_t mFramesConsumed = 0;
     int32_t mUnderrunCount = 0;
     float*  mBurstBuffer = NULL;   // contains output of the synthesizer
+    bool    mUseRealThread = true;   // TODO control using new settings object
+    int     mThreadPriority = 2;   // TODO control using new settings object
+    int32_t mCallbackLoopResult = 0;
 
     void updateHardwareSimulator() {
-        int64_t currentTime = TimingAnalyzer::getNanoTime();
+        int64_t currentTime = HostTools::getNanoTime();
         int countdown = 16; // Avoid spinning like crazy.
         // Is it time to consume a block?
         while ((currentTime >= mNextHardwareReadTimeNanos) && (countdown-- > 0)) {
