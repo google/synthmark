@@ -17,25 +17,41 @@
 package com.sonodroid.synthmark;
 
 import android.annotation.TargetApi;
+import android.app.ActionBar;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class MainActivity extends BaseActivity {
-    TextView mTextViewDeviceInfo, mTextViewOutput;
-    Button mButtonTest1, mButtonTest2, mButtonTest3;
-    View.OnClickListener mButtonListener;
-    Switch mSwitchFakeTouches;
-    FakeKeyGenerator mKeyGenerator;
-    ProgressBar mProgressBarRunning;
-    TextView mTextViewShortUpdate;
+    private TextView mTextViewDeviceInfo, mTextViewOutput;
+    private View.OnClickListener mButtonListener;
+    private Switch mSwitchFakeTouches;
+    private FakeKeyGenerator mKeyGenerator;
+    private ProgressBar mProgressBarRunning;
+    private TextView mTextViewShortUpdate;
+
+    private Spinner mSpinnerTest;
+    private Button mButtonTest;
+    private Button mButtonSettings;
+
 
 
     @Override
@@ -54,20 +70,12 @@ public class MainActivity extends BaseActivity {
         mProgressBarRunning = (ProgressBar) findViewById(R.id.progressBarRunning);
         mTextViewShortUpdate = (TextView) findViewById(R.id.textViewShortUpdate);
 
-        // Hook up the buttons
-        mButtonTest1 = (Button) findViewById(R.id.buttonTest1);
-        mButtonTest2 = (Button) findViewById(R.id.buttonTest2);
-        mButtonTest3 = (Button) findViewById(R.id.buttonTest3);
-
         mButtonListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 onButtonClicked(view);
             }
         };
-        mButtonTest1.setOnClickListener(mButtonListener);
-        mButtonTest2.setOnClickListener(mButtonListener);
-        mButtonTest3.setOnClickListener(mButtonListener);
 
         mSwitchFakeTouches = (Switch) findViewById(R.id.switchFakeTouches);
         mKeyGenerator = FakeKeyGenerator.getInstance();
@@ -83,6 +91,48 @@ public class MainActivity extends BaseActivity {
                 }
             });
         }
+
+        mButtonTest = (Button) findViewById(R.id.buttonTest);
+        mButtonTest.setOnClickListener(mButtonListener);
+
+        mSpinnerTest = (Spinner) findViewById(R.id.spinnerTest);
+        List<String> spinnerList = new ArrayList<String>();
+
+        int testCount = getApp().getTestCount();
+
+        for (int i=0; i<testCount; i++) {
+            String name = getApp().getTestName(i);
+            spinnerList.add(name);
+        }
+
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_item, spinnerList);
+
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinnerTest.setAdapter(spinnerAdapter);
+
+        if (testCount > 0) {
+            getApp().setCurrentTestId(0);
+
+            mSpinnerTest.setSelection(getApp().getCurrentTestId());
+        }
+        mSpinnerTest.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                log("Selected " + position);
+                getApp().setCurrentTestId(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        mButtonSettings = (Button) findViewById(R.id.buttonSettings);
+        mButtonSettings.setOnClickListener(mButtonListener);
+
     }
 
     @TargetApi(Build.VERSION_CODES.N)
@@ -96,7 +146,7 @@ public class MainActivity extends BaseActivity {
         if (mSwitchFakeTouches.isChecked()){
             mKeyGenerator.start();
         }
-        mTextViewOutput.setText("Starting test " + testId + "\n");
+        mTextViewOutput.setText("Starting test " + getApp().getTestName(testId) + "\n");
 
         // TODO: Add this to the result object
         mTextViewOutput.append(
@@ -104,18 +154,28 @@ public class MainActivity extends BaseActivity {
                 (mSwitchFakeTouches.isChecked() ? "On" : "Off") +
                 "\n");
         mProgressBarRunning.setVisibility(View.VISIBLE);
+
+        //disable stuff
+        mButtonSettings.setEnabled(false);
+        mSpinnerTest.setEnabled(false);
+        mButtonTest.setEnabled(false);
     }
 
     @Override
     public void notificationTestUpdate(int testId, String message) {
-        mTextViewOutput.append("[" + testId +"] " + message + "\n");
+        mTextViewOutput.append(message + "\n");
     }
 
     @Override
     public void notificationTestCompleted(int testId) {
         mKeyGenerator.stop();
-        mTextViewOutput.append("Finished test " + testId + "\n");
+        mTextViewOutput.append("Finished test " + getApp().getTestName(testId) + "\n");
         mProgressBarRunning.setVisibility(View.INVISIBLE);
+
+        //enable stuff
+        mButtonSettings.setEnabled(true);
+        mSpinnerTest.setEnabled(true);
+        mButtonTest.setEnabled(true);
     }
 
     @Override
@@ -128,14 +188,15 @@ public class MainActivity extends BaseActivity {
         int id = view.getId();
 
         switch(id) {
-            case R.id.buttonTest1:
-                getApp().startTest(1);
+            case R.id.buttonTest:
+                int currentTestId = getApp().getCurrentTestId();
+                if (currentTestId > -1) {
+                    getApp().startTest(currentTestId);
+                }
                 break;
-            case R.id.buttonTest2:
-                getApp().startTest(2);
-                break;
-            case R.id.buttonTest3:
-                getApp().startTest(3);
+            case R.id.buttonSettings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 break;
         }
     }

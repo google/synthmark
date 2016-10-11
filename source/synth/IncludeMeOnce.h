@@ -18,38 +18,15 @@
  * JSyn is licensed under the Apache License, Version 2.0
  */
 
-#ifndef SYNTHMARK_UNIT_GENERATOR_H
-#define SYNTHMARK_UNIT_GENERATOR_H
+#ifndef INCLUDE_ME_ONCE_H
+#define INCLUDE_ME_ONCE_H
+#include "UnitGenerator.h"
+#include "PitchToFrequency.h"
 
-#include <cstdint>
-#include <assert.h>
-#include <math.h>
-#include "SynthMark.h"
-#include "DifferentiatedParabola.h"
+//synth statics
+int32_t UnitGenerator::mSampleRate = SYNTHMARK_SAMPLE_RATE;
+synth_float_t UnitGenerator::mSamplePeriod = 1.0f / SYNTHMARK_SAMPLE_RATE;
 
-class UnitGenerator
-{
-public:
-    UnitGenerator() {}
+PowerOfTwoTable PitchToFrequency::mPowerTable(64);
 
-    virtual ~UnitGenerator() = default;
-
-    static void setSampleRate(int32_t sampleRate) {
-        assert(sampleRate > 0);
-        mSampleRate = sampleRate;
-        mSamplePeriod = 1.0f / sampleRate;
-    }
-
-    static int32_t getSampleRate() {
-        return mSampleRate;
-    }
-
-    synth_float_t output[SYNTHMARK_FRAMES_PER_RENDER];
-
-public:
-    static int32_t mSampleRate;
-    static synth_float_t mSamplePeriod;
-};
-
-#endif // SYNTHMARK_UNIT_GENERATOR_H
-
+#endif //INCLUDE_ME_ONCE_H

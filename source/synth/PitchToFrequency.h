@@ -100,7 +100,5 @@ private:
 
 };
 
-PowerOfTwoTable PitchToFrequency::mPowerTable(64);
-
 #endif // SYNTHMARK_PITCH_TO_FREQUENCY_H
 

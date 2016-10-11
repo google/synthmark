@@ -23,6 +23,9 @@ import android.os.Build;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AppObject extends Application {
     public final static String TAG = "SynthMark";
 
@@ -31,17 +34,144 @@ public class AppObject extends Application {
 
     private final static int NATIVETEST_STATUS_RUNNING = 2; //from NativeTest.h
 
+    public final static int PARAM_INTEGER = 0; //From Params.h
+    public final static int PARAM_FLOAT = 1;
+
+    private int mCurrentTestId = -1;
+
     static {
         System.loadLibrary("native-lib");
     }
-    public native long testInit(int testId);
+    public native long native_create();
+    public native int testInit(long nativeTest, int testId);
     public native int testClose(long nativeTest);
     public native int testRun(long nativeTest);
     public native int testProgress(long nativeTest);
     public native int testStatus(long nativeTest);
     public native String testResult(long nativeTest);
 
-    private long mNativeTest = 0; //pointer to native test class
+    private native int native_getTestCount(long nativeTest);
+    private native String native_getTestName(long nativeTest, int testId);
+
+    //params
+    private native int native_getParamCount(long nativeTest, int testId);
+    private native int native_getParamType(long nativeTest, int testId, int paramIndex);
+    private native int native_resetParamValue(long nativeTest, int testId, int paramIndex);
+    private native String native_getParamName(long nativeTest, int testId, int paramIndex);
+    private native String native_getparamDesc(long nativeTest, int testId, int paramIndex);
+
+    //INT params
+    private native int native_getParamIntMin(long nativeTest, int testId, int paramIndex);
+    private native int native_getParamIntMax(long nativeTest, int testId, int paramIndex);
+    private native int native_getParamIntValue(long nativeTest, int testId, int paramIndex);
+    private native int native_getParamIntDefault(long nativeTest, int testId, int paramIndex);
+
+    private native int native_setParamIntValue(long nativeTest, int testId, int paramIndex,
+                                               int value);
+
+    //float
+    private native float native_getParamFloatMin(long nativeTest, int testId, int paramIndex);
+    private native float native_getParamFloatMax(long nativeTest, int testId, int paramIndex);
+    private native float native_getParamFloatValue(long nativeTest, int testId, int paramIndex);
+    private native float native_getParamFloatDefault(long nativeTest, int testId, int paramIndex);
+
+    private native int native_setParamFloatValue(long nativeTest, int testId, int paramIndex,
+                                                 float value);
+
+
+    private long mNativeTest = native_create(); //pointer to native test class
+
+    public int getTestCount() {
+        return native_getTestCount(mNativeTest);
+    }
+
+    public String getTestName(int testId) {
+        return native_getTestName(mNativeTest, testId);
+    }
+
+    public int getParamCount(int testId) {
+        return native_getParamCount(mNativeTest, testId);
+    }
+
+    public int getParamType(int testId, int paramIndex) {
+        return native_getParamType(mNativeTest, testId, paramIndex);
+    }
+
+    public int resetParamValue(int testId, int paramIndex) {
+        return native_resetParamValue(mNativeTest, testId, paramIndex);
+    }
+
+    public String getParamName(int testId, int paramIndex) {
+        return native_getParamName(mNativeTest, testId, paramIndex);
+    }
+
+    public String getParamDesc(int testId, int paramIndex) {
+        return native_getparamDesc(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamIntMin(int testId, int paramIndex) {
+        return native_getParamIntMin(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamIntMax(int testId, int paramIndex) {
+        return native_getParamIntMax(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamIntValue(int testId, int paramIndex) {
+        return native_getParamIntValue(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamIntDefault(int testId, int paramIndex) {
+        return native_getParamIntDefault(mNativeTest, testId, paramIndex);
+    }
+
+    public int setParamIntValue(int testId, int paramIndex, int value) {
+        return native_setParamIntValue(mNativeTest, testId, paramIndex, value);
+    }
+
+    public float getParamFloatMin(int testId, int paramIndex) {
+        return native_getParamFloatMin(mNativeTest, testId, paramIndex);
+    }
+
+    public float getParamFloatMax(int testId, int paramIndex) {
+        return native_getParamFloatMax(mNativeTest, testId, paramIndex);
+    }
+
+    public float getParamFloatValue(int testId, int paramIndex) {
+        return native_getParamFloatValue(mNativeTest, testId, paramIndex);
+    }
+
+    public float getParamFloatDefault(int testId, int paramIndex) {
+        return native_getParamFloatDefault(mNativeTest, testId, paramIndex);
+    }
+
+    public int setParamFloatValue(int testId, int paramIndex, float value) {
+        return native_setParamFloatValue(mNativeTest, testId, paramIndex, value);
+    }
+
+    public int getCurrentTestId() {
+        return mCurrentTestId;
+    }
+
+    public void setCurrentTestId(int currentTestId) {
+        mCurrentTestId = currentTestId;
+    }
+
+    List<Param> getParamsForTest(int testId) {
+        List<Param> paramList = new ArrayList<Param>();
+        int paramCount = getParamCount(testId);
+
+        for (int i = 0; i < paramCount; i++) {
+            paramList.add(new Param(getApplicationContext(), testId, i));
+        }
+        return paramList;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        testClose(mNativeTest);
+        super.finalize();
+    }
 
     public static String getDeviceInfo(){
 
@@ -145,15 +275,13 @@ public class AppObject extends Application {
             setRunning(true);
             postNotificationTestStarted(mTestId);
             log("Started running test... ["+mTestId +"]");
-            mNativeTest = testInit(mTestId);
+            testInit(mNativeTest, mTestId);
 
             postNotificationTestUpdate(mTestId, "Test inited");
             testRun(mNativeTest);
             String result = testResult(mNativeTest);
             postNotificationTestUpdate(mTestId, result);
-            testClose(mNativeTest);
-
-            mNativeTest = 0;
+            setRunning(false);
 
             return result;
         }
@@ -173,6 +301,13 @@ public class AppObject extends Application {
             log(msg);
             postNotificationTestUpdate(testId, msg);
             return;
+        }
+    }
+
+    public void resetSettings(int testId) {
+        int paramCount = getParamCount(testId);
+        for (int i = 0; i<paramCount; i++) {
+            resetParamValue(testId,i);
         }
     }
 

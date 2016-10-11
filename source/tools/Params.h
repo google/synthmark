@@ -55,6 +55,7 @@ public:
 
     virtual std::string getValueAsString() = 0;
     virtual void setValueFromString(const std::string & value) = 0;
+    virtual void setDefaultValue() = 0;
 
     typedef enum {
         PARAM_UNDEF = -1,
@@ -149,6 +150,10 @@ public:
     int getMin() { return mMin; };
     int getDefaultValue() { return mDefaultValue; }
 
+    void setDefaultValue() {
+        setValue(getDefaultValue());
+    }
+
     std::string toString(int level = PRINT_ALL) {
         std::stringstream ss;
         switch (level) {
@@ -231,6 +236,10 @@ public:
     float getMax() { return mMax; };
     float getMin() { return mMin; };
     float getDefaultValue() { return mDefaultValue; }
+
+    void setDefaultValue() {
+        setValue(getDefaultValue());
+    }
 
     std::string toString(int level = PRINT_ALL) {
         std::stringstream ss;

@@ -17,25 +17,19 @@
 #import <UIKit/UIKit.h>
 #import "AppObject.h"
 
-@interface ViewController : UIViewController <UIAlertViewDelegate> {
+@interface ParamTableViewCell : UITableViewCell {
 
 }
-
 @property (weak, nonatomic) AppObject *m_appObject;
-@property (weak, nonatomic) IBOutlet UITextView *textViewOutput;
+@property (atomic) int mTestId;
+@property (atomic) int mParamId;
 
-@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicatorRunning;
-@property (weak, nonatomic) IBOutlet UILabel *labelShortStatus;
-
-@property (weak, nonatomic) IBOutlet UIButton *buttonTest;
-@property (weak, nonatomic) IBOutlet UIButton *buttonPickTest;
-@property (weak, nonatomic) IBOutlet UIButton *buttonSettings;
+@property (weak, nonatomic) IBOutlet UILabel *labelDescription;
+@property (weak, nonatomic) IBOutlet UILabel *labelValue;
+@property (weak, nonatomic) IBOutlet UISlider *sliderValue;
 
 
+-(void) setTestId:(int) testId paramId:(int) paramId;
 
-
-
--(IBAction) buttonPressed:(id)sender;
-
+-(IBAction) sliderChanged:(id)sender;
 @end
-

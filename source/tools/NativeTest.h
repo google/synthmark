@@ -41,11 +41,11 @@
 
 
 typedef enum {
-    NATIVETEST_ID_MIN           = 1,
-    NATIVETEST_ID_VOICEMARK     = 1,
-    NATIVETEST_ID_LATENCYMARK   = 2,
-    NATIVETEST_ID_JITTERMARK    = 3,
-    NATIVETEST_ID_MAX           = 3,
+    NATIVETEST_ID_MIN           = 0,
+    NATIVETEST_ID_VOICEMARK     = 0,
+    NATIVETEST_ID_LATENCYMARK   = 1,
+    NATIVETEST_ID_JITTERMARK    = 2,
+    NATIVETEST_ID_MAX           = 2,
 } native_test_t;
 
 
@@ -86,6 +86,10 @@ public:
 
     std::string getTestName() {
         return mTitle;
+    }
+
+    ParamGroup * getParamGroup() {
+        return &mParams;
     }
 
 protected:
@@ -318,36 +322,40 @@ public:
 
     void initTests() {
 
-        mTestVoiceMark.init();
-        mTestLatencyMark.init();
-        mTestJitterMark.init();
+        int testCount = getTestCount();
+        for (int i = 0; i < testCount; i ++) {
+            NativeTestUnit * pTestUnit = getNativeTestUnit(i);
+            if (pTestUnit != NULL) {
+                pTestUnit->init();
+            }
+        }
     }
 
     int init(int testId) {
         mCurrentStatus = NATIVETEST_STATUS_READY;
         mCurrentTest = testId;
 
+        mStream.str("");
+        mStream.clear();
         return NATIVETEST_SUCCESS;
     }
 
     int run() {
         mCurrentStatus = NATIVETEST_STATUS_RUNNING;
-        switch(mCurrentTest) {
-            case NATIVETEST_ID_VOICEMARK: {
-                mTestVoiceMark.run();
-            }
-                break;
-            case NATIVETEST_ID_LATENCYMARK: {
-                mTestLatencyMark.run();
-            }
-                break;
-            case NATIVETEST_ID_JITTERMARK: {
-                mTestJitterMark.run();
-            }
-                break;
+        NativeTestUnit *pTestUnit = getNativeTestUnit(mCurrentTest);
+        if (pTestUnit != NULL) {
+            pTestUnit->run();
         }
         mCurrentStatus = NATIVETEST_STATUS_COMPLETED;
         return NATIVETEST_SUCCESS;
+    }
+
+    int finish() {
+        NativeTestUnit *pTestUnit = getNativeTestUnit(mCurrentTest);
+        if (pTestUnit != NULL) {
+            return pTestUnit->finish();
+        }
+        return NATIVETEST_ERROR;
     }
 
     int getProgress() {
@@ -368,26 +376,58 @@ public:
 
     std::string getTestName(int testId) {
         std::string name = "--";
-        switch (testId) {
-            case NATIVETEST_ID_VOICEMARK: name = mTestVoiceMark.getTestName(); break;
-            case NATIVETEST_ID_LATENCYMARK: name = mTestLatencyMark.getTestName(); break;
-            case NATIVETEST_ID_JITTERMARK: name = mTestJitterMark.getTestName(); break;
+        NativeTestUnit *pTestUnit = getNativeTestUnit(testId);
+        if (pTestUnit != NULL) {
+            name = pTestUnit->getTestName();
         }
         return name;
     }
 
+    int getTestCount() {
+        return NATIVETEST_ID_MAX + 1;
+    }
+
+    ParamGroup * getParamGroup(int testId) {
+        ParamGroup *pParamGroup = NULL;
+
+        NativeTestUnit *pTestUnit = getNativeTestUnit(testId);
+
+        if (pTestUnit != NULL) {
+            pParamGroup = pTestUnit->getParamGroup();
+        }
+
+        return pParamGroup;
+    }
+
+    int getParamCount(int testId) {
+        int count = 0;
+        ParamGroup * pParamGroup = getParamGroup(testId);
+        if (pParamGroup != NULL) {
+            count = pParamGroup->getParamCount();
+        }
+        return count;
+    }
+
 private:
+    NativeTestUnit * getNativeTestUnit(int testId) {
+        NativeTestUnit *pTestUnit = NULL;
+        switch (testId) {
+            case NATIVETEST_ID_VOICEMARK: pTestUnit = &mTestVoiceMark; break;
+            case NATIVETEST_ID_LATENCYMARK: pTestUnit = &mTestLatencyMark; break;
+            case NATIVETEST_ID_JITTERMARK: pTestUnit = &mTestJitterMark; break;
+        }
+        return pTestUnit;
+    }
+
     int mCurrentTest;
     int mCurrentStatus;
 
-    TestVoiceMark mTestVoiceMark;
+    TestVoiceMark   mTestVoiceMark;
     TestLatencyMark mTestLatencyMark;
-    TestJitterMark mTestJitterMark;
+    TestJitterMark  mTestJitterMark;
 
     LogTool mLog;
     std::stringstream mStream;
 };
-
-
 
 #endif //ANDROID_NATIVETEST_H

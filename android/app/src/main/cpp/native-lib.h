@@ -28,9 +28,15 @@ extern "C" {
 #endif
 
 JNIEXPORT jlong JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1create(
+    JNIEnv* env,
+    jobject obj);
+
+JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_testInit(
     JNIEnv* env,
     jobject obj,
+    jlong nativeTest,
     jint testId);
 
 JNIEXPORT jint JNICALL
@@ -63,6 +69,141 @@ Java_com_sonodroid_synthmark_AppObject_testResult(
     jobject obj __unused,
     jlong nativeTest);
 
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getTestCount(
+    JNIEnv* env,
+    jobject obj __unused,
+    jlong nativeTest);
+
+JNIEXPORT jstring JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getTestName(
+    JNIEnv* env,
+    jobject obj __unused,
+    jlong nativeTest,
+    jint testId);
+
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamCount(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId);
+
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamType(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jstring JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamName(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jstring JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getparamDesc(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1resetParamValue(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamIntMin(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamIntMax(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamIntValue(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamIntDefault(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1setParamIntValue(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex,
+        jint value);
+
+JNIEXPORT jfloat JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamFloatMin(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jfloat JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamFloatMax(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jfloat JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamFloatValue(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jfloat JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamFloatDefault(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1setParamFloatValue(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex,
+        jfloat value);
 
 #ifdef __cplusplus
 }

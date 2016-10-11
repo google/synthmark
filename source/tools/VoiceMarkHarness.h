@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef SYNTHMARK_VOICEMARK_HARNESS_H
+#define SYNTHMARK_VOICEMARK_HARNESS_H
+
 #include <cstdint>
 #include <sstream>
 #include <math.h>
@@ -24,8 +27,6 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 
-#ifndef SYNTHMARK_VOICEMARK_HARNESS_H
-#define SYNTHMARK_VOICEMARK_HARNESS_H
 
 #define SYNTHMARK_MINIMUM_VOICE_COUNT 4
 

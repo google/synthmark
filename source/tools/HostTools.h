@@ -23,7 +23,7 @@
 #include <sched.h>
 #include <pthread.h>
 
-#if TARGET_OS_IPHONE
+#if defined(__APPLE__)
 #include <mach/mach_time.h>
 #endif
 

@@ -1,10 +1,18 @@
-//
-//  AppObject.m
-//  SynthMark
-//
-//  Created by Ricardo Garcia on 7/26/16.
-//  Copyright © 2016 google. All rights reserved.
-//
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #import "AppObject.h"
 #include <stdio.h>
@@ -18,12 +26,20 @@
 #include "tools/VoiceMarkHarness.h"
 #include "tools/LatencyMarkHarness.h"
 
-@interface AppObject ()
+
+#include "synth/IncludeMeOnce.h"
+
+@interface AppObject () {
+
+}
 @property (nonatomic) NativeTest *pNativeTest;
+
+
 @end
 
 @implementation AppObject
 @synthesize mTestRunning;
+@synthesize mCurrentTest;
 
 -(id) init {
     self = [super init];
@@ -31,12 +47,22 @@
         //init any relevant data
         mTestRunning = false;
         self.pNativeTest = new NativeTest();
+
+        if (self.pNativeTest->getTestCount() > 0) {
+            mCurrentTest = 0;
+        } else {
+            mCurrentTest = -1;
+        }
     }
     return self;
 }
 
 -(void) dealloc {
     delete self.pNativeTest;
+}
+
+-(BOOL) isTestRunning {
+    return mTestRunning;
 }
 
 
@@ -92,6 +118,18 @@
             }
         });
     }
+}
+
+-(NativeTest*) getNativeTest {
+    return self.pNativeTest;
+}
+
+-(int) getCurrentTestId {
+    return mCurrentTest;
+}
+
+-(void) setCurrentTest:(int) currentTest {
+    mCurrentTest = currentTest;
 }
 
 #pragma mark - notifications

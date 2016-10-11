@@ -22,8 +22,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.ViewGroupCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 public class BaseActivity extends AppCompatActivity {
     private String TAG = "SynthMark";
@@ -42,7 +46,8 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, new IntentFilter(AppObject.INTENT_NOTIFICATION));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver,
+                new IntentFilter(AppObject.INTENT_NOTIFICATION));
     }
 
     public void setLogTag(String logTag) {
@@ -55,6 +60,16 @@ public class BaseActivity extends AppCompatActivity {
 
     protected AppObject getApp() {
         return (AppObject) this.getApplication();
+    }
+
+    public void setViewEnable(View v, boolean enable) {
+        v.setEnabled(enable);
+        if (v instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup) v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                setViewEnable(vg.getChildAt(i), enable);
+            }
+        }
     }
 
     public void notificationTestStarted(int testId) {

@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
+#include "tools/NativeTest.h"
 #import "ViewController.h"
 #import "AppDelegate.h"
 
-@interface ViewController ()
+
+@interface ViewController () {
+
+}
 
 @end
 
 @implementation ViewController
 @synthesize m_appObject;
-@synthesize buttonTest1;
-@synthesize buttonTest2;
-@synthesize buttonTest3;
 @synthesize textViewOutput;
 @synthesize activityIndicatorRunning;
 @synthesize labelShortStatus;
+@synthesize buttonPickTest;
+@synthesize buttonTest;
+@synthesize buttonSettings;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -36,6 +40,14 @@
 
     AppDelegate *appDelegate = (AppDelegate *) [UIApplication sharedApplication].delegate;
     m_appObject = appDelegate.m_appObject;
+
+    NativeTest * pNativeTest = [m_appObject getNativeTest];
+    int mCurrentTestId = [m_appObject getCurrentTestId];
+
+    if (pNativeTest != NULL) {
+        int testCount = pNativeTest->getTestCount();
+        NSLog(@" test count %d, currentTest: %d", testCount, mCurrentTestId);
+    }
 }
 
 -(void) viewWillAppear:(BOOL)animated {
@@ -60,6 +72,8 @@
                                              selector:@selector(testShortUpdate:)
                                                  name:APP_NOTIFICATION_TEST_SHORT_UPDATE
                                                object:nil];
+
+    [self refreshSettings];
 }
 
 -(void) viewWillDisappear:(BOOL)animated {
@@ -89,13 +103,75 @@
 }
 
 -(IBAction) buttonPressed:(id)sender {
-  if (sender == buttonTest1) {
-      [m_appObject startTest:1];
-  } else if (sender == buttonTest2) {
-      [m_appObject startTest:2];
-  } else if (sender == buttonTest3) {
-      [m_appObject startTest:3];
+  if (sender == buttonPickTest) {
+      NativeTest * pNativeTest = [m_appObject getNativeTest];
+      int currentTestId = [m_appObject getCurrentTestId];
+
+      if (pNativeTest != NULL) {
+          int testCount = pNativeTest->getTestCount();
+          NSLog(@" test count %d, currentTest: %d", testCount, currentTestId);
+
+          NSString * title = @"Pick Test";
+          //NSString * message = @"Select Test";
+
+          UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:NULL delegate:self
+              cancelButtonTitle:@"cancel" otherButtonTitles:nil];
+
+          alert.alertViewStyle = UIAlertViewStyleDefault;
+
+          for (int i = 0; i < testCount; i++) {
+              NSString * buttonText = [[NSString alloc] initWithFormat:@"%s",
+                  pNativeTest->getTestName(i).c_str()];
+              [alert addButtonWithTitle:buttonText];
+          }
+          alert.tag = 100;
+          [alert show];
+
+      }
+
+  } else if (sender == buttonTest) {
+      int currentTestId = [m_appObject getCurrentTestId];
+      [m_appObject startTest:currentTestId];
+
+  } else if (sender == buttonSettings) {
+      [self performSegueWithIdentifier:@"showSettings" sender:self];
   }
+}
+
+-(void) refreshSettings {
+    NSLog(@"refresh Settings");
+
+    NativeTest * pNativeTest = [m_appObject getNativeTest];
+    int currentTestId = [m_appObject getCurrentTestId];
+
+    if (pNativeTest != NULL) {
+        NSString * buttonText = @"Pick a test";
+
+        if (currentTestId > -1) {
+            buttonText = [[NSString alloc] initWithFormat:@"%s",
+                pNativeTest->getTestName(currentTestId).c_str()];
+        }
+        [buttonPickTest setTitle:buttonText forState:UIControlStateNormal];
+    }
+}
+
+#pragma mark - Alert View
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if (alertView.tag == 100) {
+        if (buttonIndex == 0) {
+            //cancel
+        } else {
+            int testId = buttonIndex - 1;
+            [m_appObject setCurrentTest:testId];
+            [self refreshSettings];
+        }
+    }
+}
+
+-(void) setButtonsEnabled:(BOOL) enabled {
+    [buttonSettings setEnabled:enabled];
+    [buttonTest setEnabled:enabled];
+    [buttonPickTest setEnabled:enabled];
 }
 
 #pragma mark - notifications
@@ -103,10 +179,19 @@
     NSDictionary * dict = [notification userInfo];
     int testId = [[dict objectForKey:APP_NOTIFICATION_KEY_TEST_ID] intValue];
 
-    NSString *str = [[NSString alloc]initWithFormat:@"Starting test %d\n", testId];
+    NSString * testName = @"--";
+
+    NativeTest * pNativeTest = [m_appObject getNativeTest];
+    int currentTestId = [m_appObject getCurrentTestId];
+    if (pNativeTest != NULL) {
+        testName = [[NSString alloc] initWithFormat:@"%s",
+            pNativeTest->getTestName(currentTestId).c_str()];
+    }
+
+    NSString *str = [[NSString alloc]initWithFormat:@"Starting test %@\n", testName];
     [textViewOutput setText:str];
-//    [activityIndicatorRunning setHidden:false];
     [activityIndicatorRunning startAnimating];
+    [self setButtonsEnabled:false];
 }
 
 
@@ -115,18 +200,26 @@
     int testId = [[dict objectForKey:APP_NOTIFICATION_KEY_TEST_ID] intValue];
     NSString *message = [dict objectForKey:APP_NOTIFICATION_KEY_MESSAGE];
 
-    NSString *str = [[NSString alloc]initWithFormat:@"[%d] %@", testId, message];
+    NSString *str = [[NSString alloc]initWithFormat:@"%@", message];
     [textViewOutput setText:[textViewOutput.text stringByAppendingString:str]];
 }
 
 -(void) testCompleted:(NSNotification *) notification {
     NSDictionary * dict = [notification userInfo];
     int testId = [[dict objectForKey:APP_NOTIFICATION_KEY_TEST_ID] intValue];
-    NSString *str = [[NSString alloc]initWithFormat:@"Finished test %d\n", testId];
-    [textViewOutput setText:[textViewOutput.text stringByAppendingString:str]];
 
-//    [activityIndicatorRunning setHidden:true];
+    NSString * testName = @"--";
+    NativeTest * pNativeTest = [m_appObject getNativeTest];
+    int currentTestId = [m_appObject getCurrentTestId];
+    if (pNativeTest != NULL) {
+        testName = [[NSString alloc] initWithFormat:@"%s",
+            pNativeTest->getTestName(currentTestId).c_str()];
+    }
+
+    NSString *str = [[NSString alloc]initWithFormat:@"Finished test %@\n", testName];
+    [textViewOutput setText:[textViewOutput.text stringByAppendingString:str]];
     [activityIndicatorRunning stopAnimating];
+    [self setButtonsEnabled:true];
 }
 
 -(void) testShortUpdate:(NSNotification *) notification {

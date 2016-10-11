@@ -123,39 +123,38 @@ limitations under the License.
             android:text="@string/run_tests_title"
             android:textAppearance="@android:style/TextAppearance.Material.Subhead"
             />
+
         <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <Button
-                android:id="@+id/buttonTest1"
+            android:layout_height="match_parent">
+
+            <Spinner
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/test_1"
-                />
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                />
+                android:id="@+id/spinnerTest"
+                android:layout_weight="1" />
+
             <Button
-                android:id="@+id/buttonTest2"
-                android:text="@string/test_2"
+                android:text="Settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                />
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                />
-            <Button
-                android:id="@+id/buttonTest3"
-                android:text="@string/test_3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                />
+                android:id="@+id/buttonSettings" />
         </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:text="Test"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/buttonTest"
+                android:layout_weight="1" />
+        </LinearLayout>
+
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/activity_vertical_margin"

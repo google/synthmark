@@ -17,25 +17,19 @@
 #import <UIKit/UIKit.h>
 #import "AppObject.h"
 
-@interface ViewController : UIViewController <UIAlertViewDelegate> {
+@interface SettingsViewController : UIViewController <UITableViewDelegate, UITableViewDataSource> {
 
 }
 
 @property (weak, nonatomic) AppObject *m_appObject;
-@property (weak, nonatomic) IBOutlet UITextView *textViewOutput;
 
-@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicatorRunning;
-@property (weak, nonatomic) IBOutlet UILabel *labelShortStatus;
-
-@property (weak, nonatomic) IBOutlet UIButton *buttonTest;
-@property (weak, nonatomic) IBOutlet UIButton *buttonPickTest;
-@property (weak, nonatomic) IBOutlet UIButton *buttonSettings;
-
-
+@property (weak, nonatomic) IBOutlet UILabel *labelTitle;
+@property (weak, nonatomic) IBOutlet UIButton *buttonDone;
+@property (weak, nonatomic) IBOutlet UIButton *buttonDefaults;
+@property (weak, nonatomic) IBOutlet UITableView *tableViewParams;
 
 
 
 -(IBAction) buttonPressed:(id)sender;
 
 @end
-
