@@ -23,6 +23,10 @@
 #include <sched.h>
 #include <pthread.h>
 
+#if TARGET_OS_IPHONE
+#include <mach/mach_time.h>
+#endif
+
 #define NANOS_PER_SECOND ((int64_t)1000000000)
 
 #define HOST_IS_APPLE  defined(__APPLE__)
