@@ -23,6 +23,8 @@
 #include "tools/VoiceMarkHarness.h"
 #include "tools/LatencyMarkHarness.h"
 #include "tools/JitterMarkHarness.h"
+#include "synth/IncludeMeOnce.h"
+
 
 #define DEFAULT_TEST_CODE          'v'
 #define DEFAULT_SECONDS            10
@@ -162,5 +164,3 @@ int main(int argc, char **argv)
 
     return result.getResultCode();
 }
-
-
