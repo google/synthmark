@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include "SynthMark.h"
 #include "tools/TimingAnalyzer.h"
 #include "synth/Synthesizer.h"
@@ -30,12 +31,16 @@
 #define DEFAULT_SECONDS            10
 #define DEFAULT_FRAMES_PER_BURST   SYNTHMARK_FRAMES_PER_BURST
 #define DEFAULT_NUM_VOICES         8
+#define DEFAULT_NOTE_ON_DELAY      0
 #define DEFAULT_PERCENT_CPU        ((int)(100 * SYNTHMARK_TARGET_CPU_LOAD))
 
 void usage(const char *name) {
-    printf("%s -t{test} -n{numVoices} -r{sampleRate} -s{seconds} -b{burstSize} -f\n", name);
-    printf("    test, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n", DEFAULT_TEST_CODE);
+    printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -r{sampleRate} -s{seconds} -b{burstSize} -f\n", name);
+    printf("    test, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n",
+           DEFAULT_TEST_CODE);
     printf("    numVoices to render, default = %d\n", DEFAULT_NUM_VOICES);
+    printf("    noteOnDelay seconds to delay the first NoteOn, default = %d\n",
+           DEFAULT_NOTE_ON_DELAY);
     printf("    percentCPU to render, default = %d\n", DEFAULT_PERCENT_CPU);
     printf("    rate should be typical, 44100, 48000, etc. default is %d\n", SYNTHMARK_SAMPLE_RATE);
     printf("    seconds required to be glitch free, default is %d\n", DEFAULT_SECONDS);
@@ -51,6 +56,7 @@ int main(int argc, char **argv)
     int32_t framesPerBurst = DEFAULT_FRAMES_PER_BURST;
     int32_t numSeconds = DEFAULT_SECONDS;
     int32_t numVoices = DEFAULT_NUM_VOICES;
+    int32_t numSecondsDelayNoteOn = DEFAULT_NOTE_ON_DELAY;
     bool schedFifoEnabled = false;
     char testCode = DEFAULT_TEST_CODE;
     TestHarnessBase *harness = NULL;
@@ -68,6 +74,9 @@ int main(int argc, char **argv)
                     break;
                 case 'n':
                     numVoices = atoi(&arg[2]);
+                    break;
+                case 'd':
+                    numSecondsDelayNoteOn = atoi(&arg[2]);
                     break;
                 case 'r':
                     sampleRate = atoi(&arg[2]);
@@ -112,6 +121,10 @@ int main(int argc, char **argv)
         usage(argv[0]);
         return 1;
     }
+    if (numSecondsDelayNoteOn < 0 || numSecondsDelayNoteOn > numSeconds){
+        printf("Invalid delay for note on = %d\n", numSecondsDelayNoteOn);
+        return 1;
+    }
     if (framesPerBurst < 4) {
         printf("Block size too small = %d\n", framesPerBurst);
         usage(argv[0]);
@@ -130,9 +143,11 @@ int main(int argc, char **argv)
             break;
         case 'l':
             harness = new LatencyMarkHarness(&audioSink, &result);
+            harness->setDelayNotesOn(numSecondsDelayNoteOn);
             break;
         case 'j':
             harness = new JitterMarkHarness(&audioSink, &result);
+            harness->setDelayNotesOn(numSecondsDelayNoteOn);
             break;
         default:
             printf("ERROR - unrecognized testCode = %c\n", testCode);
@@ -146,6 +161,7 @@ int main(int argc, char **argv)
     // Print specified parameters.
     printf("--- %s V%d.%d ---\n", harness->getName(), SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
     printf("  numVoices      = %6d\n", numVoices);
+    printf("  noteOnDelay    = %6d\n", numSecondsDelayNoteOn);
     printf("  percentCpu     = %6d\n", percentCpu);
     printf("  framesPerBurst = %6d\n", framesPerBurst);
     printf("--- wait at least %d seconds for benchmark to complete ---\n", numSeconds);

@@ -40,6 +40,7 @@ public:
     : TestHarnessBase(audioSink, result, logTool)
     {
         mTestName = "LatencyMark";
+        mNumVoices = SYNTHMARK_NUM_VOICES_LATENCY;
     }
 
     virtual ~LatencyMarkHarness() {
@@ -48,7 +49,6 @@ public:
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;
         mAudioSink->setBufferSizeInFrames(mFramesPerBurst);
-        mNumVoices = SYNTHMARK_NUM_VOICES_LATENCY;
         mLogTool->log("---- Measure latency ---- #voices = %d\n", mNumVoices);
     }
 

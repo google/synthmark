@@ -45,6 +45,7 @@ public:
     , mNumVoices(8)
     , mFrameCounter(0)
     , mSchedFifoEnabled(false)
+    , mDelayNotesOnUntilFrame(0)
 
     {
         mAudioSink = audioSink;
@@ -177,7 +178,7 @@ public:
 
         // Variables for turning notes on and off.
         mAreNotesOn = false;
-        mBurstCountdown = 0;
+        mBurstCountdown = (mDelayNotesOnUntilFrame + mFramesPerBurst - 1) / mFramesPerBurst;
         mBurstsOn = (int) (0.2 * mSampleRate / mFramesPerBurst);
         mBurstsOff = (int) (0.3 * mSampleRate / mFramesPerBurst);
 
@@ -221,6 +222,10 @@ public:
         return mNumVoices;
     }
 
+    void setDelayNotesOn(int32_t delayInSeconds){
+        mDelayNotesOnUntilFrame = (int32_t)(delayInSeconds * mSampleRate);
+    }
+
     void setSchedFifoEnabled(bool schedFifoEnabled) {
         mSchedFifoEnabled = schedFifoEnabled;
     }
@@ -247,6 +252,7 @@ protected:
     int32_t        mFrameCounter;
     int32_t        mFramesNeeded;
     bool           mSchedFifoEnabled;
+    int32_t        mDelayNotesOnUntilFrame;
 
     // Variables for turning notes on and off.
     bool          mAreNotesOn;
