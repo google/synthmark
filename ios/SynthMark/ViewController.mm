@@ -48,6 +48,7 @@
         int testCount = pNativeTest->getTestCount();
         NSLog(@" test count %d, currentTest: %d", testCount, mCurrentTestId);
     }
+
 }
 
 -(void) viewWillAppear:(BOOL)animated {

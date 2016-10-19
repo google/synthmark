@@ -37,6 +37,10 @@ public class AppObject extends Application {
     public final static int PARAM_INTEGER = 0; //From Params.h
     public final static int PARAM_FLOAT = 1;
 
+    public final static int PARAM_HOLD_RANGE = 0; //From params.h
+    public final static int PARAM_HOLD_LIST = 1;
+
+
     private int mCurrentTestId = -1;
 
     static {
@@ -56,6 +60,14 @@ public class AppObject extends Application {
     //params
     private native int native_getParamCount(long nativeTest, int testId);
     private native int native_getParamType(long nativeTest, int testId, int paramIndex);
+    private native int native_getParamHoldType(long nativeTest, int testId, int paramIndex);
+    private native int native_getParamListSize(long nativeTest, int testId, int paramIndex);
+    private native int native_getParamListCurrentIndex(long nativeTest, int testId, int paramIndex);
+    private native int native_getParamListDefaultIndex(long nativeTest, int testId, int paramIndex);
+    private native int native_setParamListCurrentIndex(long nativeTest, int testId, int paramIndex,
+                                                       int index);
+    private native String native_getParamListNameFromIndex(long nativeTest, int testId,
+                                                           int paramIndex, int index);
     private native int native_resetParamValue(long nativeTest, int testId, int paramIndex);
     private native String native_getParamName(long nativeTest, int testId, int paramIndex);
     private native String native_getparamDesc(long nativeTest, int testId, int paramIndex);
@@ -95,6 +107,30 @@ public class AppObject extends Application {
 
     public int getParamType(int testId, int paramIndex) {
         return native_getParamType(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamHoldType(int testId, int paramIndex) {
+        return native_getParamHoldType(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamListSize(int testId, int paramIndex) {
+        return native_getParamListSize(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamListCurrentIndex(int testId, int paramIndex) {
+        return native_getParamListCurrentIndex(mNativeTest, testId, paramIndex);
+    }
+
+    public int getParamListDefaultIndex(int testId, int paramIndex) {
+        return native_getParamListDefaultIndex(mNativeTest, testId, paramIndex);
+    }
+
+    public String getParamListNameFromIndex(int testId, int paramIndex, int index) {
+        return native_getParamListNameFromIndex(mNativeTest, testId, paramIndex, index);
+    }
+
+    public int setParamListCurrentIndex(int testId, int paramIndex, int index) {
+        return native_setParamListCurrentIndex(mNativeTest, testId, paramIndex, index);
     }
 
     public int resetParamValue(int testId, int paramIndex) {

@@ -39,6 +39,11 @@
 #define NATIVETEST_STATUS_RUNNING 2
 #define NATIVETEST_STATUS_COMPLETED 3
 
+#define DEFAULT_TEST_SAMPLING_RATES {8000, 11025, 16000, 22050, 44100, 48000, 96000}
+#define DEFAULT_TEST_FRAMES_PER_BURST {8, 16, 32, 48, 64, 96, 128, 192, 256, 384, 512, 1024}
+#define DEFAULT_TEST_DURATIONS { 1, 2, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120, 180, 240, 300, \
+    600, 1200, 1800, 2400, 3600}
+
 
 typedef enum {
     NATIVETEST_ID_MIN           = 0,
@@ -55,6 +60,7 @@ typedef enum {
 #define PARAMS_FRAMES_PER_RENDER "frames_per_render"
 #define PARAMS_FRAMES_PER_BURST "frames_per_burst"
 #define PARAMS_NUM_SECONDS "num_seconds"
+#define PARAMS_NOTE_ON_DELAY "note_on_delay"
 
 #define PARAMS_TARGET_CPU_LOAD  "target_cpu_load"
 #define PARAMS_NUM_VOICES "num_voices"
@@ -113,25 +119,31 @@ public:
     int init()  {
         //Register parameters
 
-        // GENERAL Parameters:
-        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", SYNTHMARK_SAMPLE_RATE,
-        8000, 96000);
+        std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
+        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", &vSamplingRates, 5);
+
         ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
         SAMPLES_PER_FRAME, 1, 8);
         ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        SYNTHMARK_FRAMES_PER_RENDER, 1, 64);
+        SYNTHMARK_FRAMES_PER_RENDER, 1, 8);
+
+        std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
         ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
-        SYNTHMARK_FRAMES_PER_BURST, 1, 512);
+                                         &vFramesPerBurst, 4);
         ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load",
         SYNTHMARK_TARGET_CPU_LOAD, 0, 1.0);
-        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS,"Number of Seconds",
-        SYNTHMARK_NUM_SECONDS, 1, 3600);
+
+        ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
+
+        std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
+        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS, "Number of Seconds", &vDurations, 3);
 
         mParams.addParam(&paramSamplingRate);
         mParams.addParam(&paramSamplesPerFrame);
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
         mParams.addParam(&paramTargetCpuLoad);
+        mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
         return SYNTHMARK_RESULT_SUCCESS;
@@ -148,6 +160,7 @@ public:
         int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
 
         float targetCpuLoad = mParams.getValueFromFloat(PARAMS_TARGET_CPU_LOAD);
+        int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
 
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
@@ -156,6 +169,8 @@ public:
                      samplesPerFrame,
                      framesPerRender,
                      framesPerBurst);
+
+        harness.setDelayNotesOn(noteOnDelay);
         harness.setTargetCpuLoad(targetCpuLoad);
         harness.measure(numSeconds);
         harness.close();
@@ -182,22 +197,32 @@ public:
     int init()  {
         //Register parameters
 
-        // GENERAL Parameters:
-        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", SYNTHMARK_SAMPLE_RATE,
-        8000, 96000);
+        std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
+        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", &vSamplingRates, 5);
+
         ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
         SAMPLES_PER_FRAME, 1, 8);
         ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        SYNTHMARK_FRAMES_PER_RENDER, 1, 64);
-        ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst", 32, 1, 512);
+        SYNTHMARK_FRAMES_PER_RENDER, 1, 8);
 
-        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS,"Number of Seconds", SYNTHMARK_NUM_SECONDS,
-        1,1000);
+        std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
+                ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
+                                                 &vFramesPerBurst, 4);
+
+        ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
+        SYNTHMARK_NUM_VOICES_LATENCY, 1, 300);
+
+        ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
+
+        std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
+        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS, "Number of Seconds", &vDurations, 3);
 
         mParams.addParam(&paramSamplingRate);
         mParams.addParam(&paramSamplesPerFrame);
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
+        mParams.addParam(&paramNumVoices);
+        mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
         return SYNTHMARK_RESULT_SUCCESS;
@@ -213,6 +238,8 @@ public:
         int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER);
         int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
 
+        int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
+        int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
 
@@ -221,6 +248,8 @@ public:
                      framesPerRender,
                      framesPerBurst);
 
+        harness.setDelayNotesOn(noteOnDelay);
+        harness.setNumVoices(numVoices);
         harness.measure(numSeconds);
         harness.close();
 
@@ -246,19 +275,25 @@ public:
     int init()  {
         //Register parameters
 
-        // GENERAL Parameters:
-        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", SYNTHMARK_SAMPLE_RATE,
-        8000, 96000);
+        std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
+        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", &vSamplingRates, 5);
+
         ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
         SAMPLES_PER_FRAME, 1, 8);
         ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        SYNTHMARK_FRAMES_PER_RENDER, 1, 64);
-        ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst", 32, 1, 512);
+        SYNTHMARK_FRAMES_PER_RENDER, 1, 8);
+
+        std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
+        ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
+                                         &vFramesPerBurst, 4);
 
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
-        SYNTHMARK_NUM_VOICES_JITTER, 1,300);
-        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS,"Number of Seconds", SYNTHMARK_NUM_SECONDS,
-        1, 3600);
+        SYNTHMARK_NUM_VOICES_JITTER, 1, 300);
+
+        ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
+
+        std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
+        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS, "Number of Seconds", &vDurations, 3);
 
         mParams.addParam(&paramSamplingRate);
         mParams.addParam(&paramSamplesPerFrame);
@@ -266,6 +301,7 @@ public:
         mParams.addParam(&paramFramesPerBurst);
 
         mParams.addParam(&paramNumVoices);
+        mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
         return SYNTHMARK_RESULT_SUCCESS;
@@ -282,6 +318,7 @@ public:
         int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
 
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
+        int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
 
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
@@ -290,6 +327,8 @@ public:
                      samplesPerFrame,
                      framesPerRender,
                      framesPerBurst);
+
+        harness.setDelayNotesOn(noteOnDelay);
         harness.setNumVoices(numVoices);
         harness.measure(numSeconds);
         harness.close();

@@ -57,26 +57,39 @@
         [labelDescription setText:desc];
 
         int type = pBase->getType();
-        switch(type) {
-            case ParamBase::PARAM_INTEGER: {
-                ParamInteger * pInt = static_cast<ParamInteger*>(pBase);
-                if (pInt) {
-                    int max = pInt->getMax();
-                    int min = pInt->getMin();
+        int holdType = pBase->getHoldType();
 
-                    [sliderValue setMaximumValue:max];
-                    [sliderValue setMinimumValue:min];
-                }
+        switch (holdType) {
+            case ParamBase::PARAM_HOLD_LIST: {
+                int maxIndex = pBase->getListSize() - 1;
+                [sliderValue setMinimumValue:0];
+                [sliderValue setMaximumValue:maxIndex];
             }
                 break;
-            case ParamBase::PARAM_FLOAT: {
-                ParamFloat *pFloat = static_cast<ParamFloat*>(pBase);
-                if (pFloat) {
-                    float max = pFloat->getMax();
-                    float min = pFloat->getMin();
+            case ParamBase::PARAM_HOLD_RANGE: {
+                switch(type) {
+                    case ParamBase::PARAM_INTEGER: {
+                        ParamInteger * pInt = static_cast<ParamInteger*>(pBase);
+                        if (pInt) {
+                            int max = pInt->getMax();
+                            int min = pInt->getMin();
 
-                    [sliderValue setMaximumValue:max];
-                    [sliderValue setMinimumValue:min];
+                            [sliderValue setMaximumValue:max];
+                            [sliderValue setMinimumValue:min];
+                        }
+                    }
+                        break;
+                    case ParamBase::PARAM_FLOAT: {
+                        ParamFloat *pFloat = static_cast<ParamFloat*>(pBase);
+                        if (pFloat) {
+                            float max = pFloat->getMax();
+                            float min = pFloat->getMin();
+
+                            [sliderValue setMaximumValue:max];
+                            [sliderValue setMinimumValue:min];
+                        }
+                    }
+                        break;
                 }
             }
                 break;
@@ -86,41 +99,77 @@
 }
 
 -(void) updateScreenValue:(BOOL) updateSliders {
-
     ParamBase *pBase = [self getParamBase:mTestId paramId:mParamId];
 
     int type = pBase->getType();
+    int holdType = pBase->getHoldType();
 
-    switch(type) {
-        case ParamBase::PARAM_INTEGER: {
-            ParamInteger * pInt = static_cast<ParamInteger*>(pBase);
-            if (pInt) {
-                int value = pInt->getValue();
-                int defaultValue = pInt->getDefaultValue();
-                NSString * strValue = [[NSString alloc] initWithFormat:@"%d%s",value,
-                                       value == defaultValue ? "*":""];
-                [labelValue setText:strValue];
-                if (updateSliders) {
-                    [sliderValue setValue:value];
+    switch (holdType) {
+        case ParamBase::PARAM_HOLD_LIST: {
+            int index = pBase->getListCurrentIndex();
+            int defaultIndex = pBase->getListDefaultIndex();
+
+            std::string sName;
+
+            if (type == ParamBase::PARAM_INTEGER) {
+                ParamInteger * pInt = static_cast<ParamInteger*>(pBase);
+                if (pInt != NULL) {
+                    sName = pInt->getParamNameFromList(index);
                 }
+            } else if (type == ParamBase::PARAM_FLOAT) {
+                ParamFloat * pFloat = static_cast<ParamFloat*>(pBase);
+                if (pFloat != NULL) {
+                    sName = pFloat->getParamNameFromList(index);
+                }
+            }
+
+            NSString * strValue = [[NSString alloc] initWithFormat:@"%s%s",
+                                   sName.c_str(),
+                                   index == defaultIndex ? "*":""];
+            [labelValue setText:strValue];
+            if (updateSliders) {
+                [sliderValue setValue:index];
+            }
+
+        }
+            break;
+        case ParamBase::PARAM_HOLD_RANGE: {
+            switch(type) {
+                case ParamBase::PARAM_INTEGER: {
+                    ParamInteger * pInt = static_cast<ParamInteger*>(pBase);
+                    if (pInt) {
+                        int value = pInt->getValue();
+                        int valueToDisplay = value;
+                        int defaultValue = pInt->getDefaultValue();
+
+                        NSString * strValue = [[NSString alloc] initWithFormat:@"%d%s",
+                                               valueToDisplay,
+                                               value == defaultValue ? "*":""];
+                        [labelValue setText:strValue];
+                        if (updateSliders) {
+                            [sliderValue setValue:value];
+                        }
+                    }
+                }
+                    break;
+                case ParamBase::PARAM_FLOAT: {
+                    ParamFloat *pFloat = static_cast<ParamFloat*>(pBase);
+                    if (pFloat) {
+                        float value = pFloat->getValue();
+                        float defaultValue = pFloat->getDefaultValue();
+                        NSString * strValue = [[NSString alloc] initWithFormat:@"%0.3f%s",value,
+                                               value == defaultValue ? "*":""];
+                        [labelValue setText:strValue];
+                        if (updateSliders) {
+                            [sliderValue setValue:value];
+                        }
+                    }
+                }
+                    break;
             }
         }
             break;
-        case ParamBase::PARAM_FLOAT: {
-            ParamFloat *pFloat = static_cast<ParamFloat*>(pBase);
-            if (pFloat) {
-                float value = pFloat->getValue();
-                float defaultValue = pFloat->getDefaultValue();
-                NSString * strValue = [[NSString alloc] initWithFormat:@"%0.3f%s",value,
-                                       value == defaultValue ? "*":""];
-                [labelValue setText:strValue];
-                if (updateSliders) {
-                    [sliderValue setValue:value];
-                }
-            }
-        }
-            break;
-    }
+    } //hold type
 }
 
 -(IBAction) sliderChanged:(id)sender {
@@ -132,25 +181,36 @@
         ParamBase *pBase = [self getParamBase:mTestId paramId:mParamId];
         if (pBase != NULL) {
             int type = pBase->getType();
-            switch(type) {
-                case ParamBase::PARAM_INTEGER: {
-                    ParamInteger * pInt = static_cast<ParamInteger*>(pBase);
-                    if (pInt) {
-                        pInt->setValue((int)value);
+            int holdType = pBase->getHoldType();
+
+            switch (holdType) {
+                case ParamBase::PARAM_HOLD_LIST: {
+                    pBase->setListCurrentIndex(value);
+                }
+                    break;
+                case ParamBase::PARAM_HOLD_RANGE: {
+                    switch(type) {
+                        case ParamBase::PARAM_INTEGER: {
+                            ParamInteger * pInt = static_cast<ParamInteger*>(pBase);
+                            if (pInt) {
+                                pInt->setValue(value);
+                            }
+                        }
+                            break;
+                        case ParamBase::PARAM_FLOAT: {
+                            ParamFloat *pFloat = static_cast<ParamFloat*>(pBase);
+                            if (pFloat) {
+                                pFloat->setValue(value);
+                            }
+                            break;
+                        }
                     }
                 }
                     break;
-                case ParamBase::PARAM_FLOAT: {
-                    ParamFloat *pFloat = static_cast<ParamFloat*>(pBase);
-                    if (pFloat) {
-                        pFloat->setValue(value);
-                    }
-                    break;
-                }
-            }
+            } //hold type
         }
 
-        [self updateScreenValue:false];
+        [self updateScreenValue:true];
     }
 }
 

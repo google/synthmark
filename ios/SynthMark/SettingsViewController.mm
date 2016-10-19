@@ -37,6 +37,7 @@
 
     AppDelegate *appDelegate = (AppDelegate *) [UIApplication sharedApplication].delegate;
     m_appObject = appDelegate.m_appObject;
+    
 
 }
 

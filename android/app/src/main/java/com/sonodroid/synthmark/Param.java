@@ -23,6 +23,7 @@ public class Param {
     private int mTestId;
     private int mParamId;
     private int mType;
+    private int mHoldType;
 
     private String mDescription;
 
@@ -33,6 +34,7 @@ public class Param {
 
         mDescription = getApp().getParamDesc(testId, paramId);
         mType = getApp().getParamType(testId, paramId);
+        mHoldType = getApp().getParamHoldType(testId, paramId);
 
         //compute min/max
     }
@@ -49,6 +51,29 @@ public class Param {
         return mType;
     }
 
+    public int getHoldType() {
+        return mHoldType;
+    }
+
+    public int getListSize() {
+        return getApp().getParamListSize(mTestId, mParamId);
+    }
+
+    public int getListCurrentIndex() {
+        return getApp().getParamListCurrentIndex(mTestId, mParamId);
+    }
+
+    public int getListDefaultIndex() {
+        return getApp().getParamListDefaultIndex(mTestId, mParamId);
+    }
+
+    public String getParamNameFromList(int index) {
+        return getApp().getParamListNameFromIndex(mTestId, mParamId, index);
+    }
+
+    public int setListCurrentIndex(int index) {
+        return getApp().setParamListCurrentIndex(mTestId, mParamId, index);
+    }
     public String getDescription() {
         return mDescription;
     }
@@ -85,14 +110,21 @@ public class Param {
 
     public String getValueAsString() {
         String result ="";
-        if (mType == AppObject.PARAM_INTEGER) {
-            int value = getApp().getParamIntValue(mTestId, mParamId);
-            int defaultValue = getApp().getParamIntDefault(mTestId, mParamId);
-            result = String.format("%d%s", value, value == defaultValue ? "*":"");
-        } else if (mType == AppObject.PARAM_FLOAT) {
-            float value = getApp().getParamFloatValue(mTestId, mParamId);
-            float defaultValue = getApp().getParamFloatDefault(mTestId, mParamId);
-            result = String.format("%.3f%s", value, value == defaultValue ? "*":"");
+        if (mHoldType == AppObject.PARAM_HOLD_RANGE) {
+            if (mType == AppObject.PARAM_INTEGER) {
+                int value = getApp().getParamIntValue(mTestId, mParamId);
+                int defaultValue = getApp().getParamIntDefault(mTestId, mParamId);
+                result = String.format("%d%s", value, value == defaultValue ? "*" : "");
+            } else if (mType == AppObject.PARAM_FLOAT) {
+                float value = getApp().getParamFloatValue(mTestId, mParamId);
+                float defaultValue = getApp().getParamFloatDefault(mTestId, mParamId);
+                result = String.format("%.3f%s", value, value == defaultValue ? "*" : "");
+            }
+        } else if (mHoldType == AppObject.PARAM_HOLD_LIST) {
+            int index = getListCurrentIndex();
+            int defaultIndex = getListDefaultIndex();
+            String name = getParamNameFromList(index);
+            result = String.format("%s.%s", name, index == defaultIndex ? "*" : "");
         }
         return result;
     }

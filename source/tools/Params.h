@@ -27,6 +27,111 @@
 #include <sstream>
 #include <vector>
 
+template <class T>
+class ParamListItem {
+    T mValue;
+    std::string mName;
+public:
+    ParamListItem(const T & value, const std::string & name) {
+        mValue = value;
+        mName = name;
+    }
+
+    T getValue() { return mValue; }
+    std::string getName() { return mName; }
+};
+
+template <class T>
+class ParamList {
+    std::vector<ParamListItem<T>> mList;
+public:
+    ParamList() {
+        mCurrentIndex = -1;
+        mDefaultIndex = -1;
+    }
+
+    void addParamItem(ParamListItem<T> &param) {
+        mList.push_back(param);
+    }
+
+    void addParamItem(T &value,const std::string &name) {
+        ParamListItem<T> param(value, name);
+        addParamItem(param);
+    }
+
+    void addParams(std::vector<T> *pValues, std::vector<std::string> *pNames) {
+        if (pValues != NULL) {
+            for (int i = 0; i < pValues->size(); i++) {
+                if (pNames != NULL && pNames->size()< i) {
+                    addParamItem(pValues->at(i), pNames->at(i));
+                } else {
+                    //convert to string...
+                    std::stringstream ss;
+                    ss << pValues->at(i);
+                    addParamItem(pValues->at(i), ss.str());
+                }
+            }
+        }
+    }
+
+    ParamListItem<T>* getParamItem(int index) {
+        if (index >= 0 && index < mList.size()) {
+            return &(mList[index]);
+        }
+        return NULL;
+    }
+
+    size_t size() {
+        return mList.size();
+    }
+
+    T getValueForIndex(int index) {
+        if (index >= 0 && index < mList.size()) {
+            return mList[index].getValue();
+        }
+        return T();
+    }
+
+    std::string getNameForIndex(int index) {
+        if (index >= 0 && index < mList.size()) {
+            return mList[index].getName();
+        }
+        return "";
+    }
+
+    int getIndexForValue(T value) {
+        for (int i = 0; i < mList.size(); i++) {
+            if (value <= mList[i].getValue() || i == mList.size() - 1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int getCurrentIndex() {
+        return mCurrentIndex;
+    }
+
+    int getDefaultIndex() {
+        return mDefaultIndex;
+    }
+
+    void setCurrentIndex(int currentIndex) {
+        if (currentIndex > -2 && currentIndex < mList.size()) {
+            mCurrentIndex = currentIndex;
+        }
+    }
+
+    void setDefaultIndex(int defaultIndex) {
+        if (defaultIndex > -2 && defaultIndex < mList.size()) {
+            mDefaultIndex = defaultIndex;
+        }
+    }
+private:
+    int mCurrentIndex;
+    int mDefaultIndex;
+};
+
 
 class ParamBase {
 public:
@@ -50,6 +155,7 @@ public:
         mName = source.mName;
         mDescription = source.mDescription;
         mType = source.mType;
+        mHoldType = source.mHoldType;
         return *this;
     }
 
@@ -63,10 +169,15 @@ public:
         PARAM_FLOAT = 1,
     } param_base_types;
 
-    typedef enum{
+    typedef enum {
         PRINT_ALL = 0,
         PRINT_COMPACT = 1,
     } param_print_level;
+
+    typedef enum {
+        PARAM_HOLD_RANGE = 0,
+        PARAM_HOLD_LIST = 1,
+    } param_hold_type;
 
     std::string getName() {
         return mName;
@@ -79,6 +190,15 @@ public:
     int getType() {
         return mType;
     }
+
+    int getHoldType() {
+        return mHoldType;
+    }
+
+    virtual int getListSize() = 0;
+    virtual int getListCurrentIndex() = 0;
+    virtual void setListCurrentIndex(int index) = 0;
+    virtual int getListDefaultIndex() = 0;
 
     std::string typeToString(int type) {
         std::string result = "Undefined";
@@ -95,27 +215,28 @@ public:
     }
 
 protected:
-    ParamBase(const std::string &name, const std::string &description, int type) : mName(name),
-        mDescription(description), mType(type) {
+    ParamBase(const std::string &name, const std::string &description, int type, int holdType) :
+    mName(name), mDescription(description), mType(type), mHoldType(holdType) {
     }
 
 private:
     std::string mDescription; //for display purposes
     std::string mName;   //for indexing, no spaces
     int mType;  //param type:
+    int mHoldType; //param hold type.
 };
 
+//EXPERIMENT WITH TEMPLATE
 //integer parameter
-class ParamInteger : public ParamBase {
+template <class T>
+class ParamType : public ParamBase {
 public:
-    ParamInteger(const std::string &name, const std::string &description, int defaultValue=0,
-    int min=0, int max =100) : ParamBase(name, description, PARAM_INTEGER),
-    mDefaultValue(defaultValue), mMin(min), mMax(max) {
-        setValue(defaultValue);
+    ParamType(const std::string &name, const std::string &description, int type, int holdType) :
+    ParamBase(name, description, type, holdType) {
     }
 
-    ParamInteger * clone() const {
-        return new ParamInteger(*this);
+    ParamType * clone() const {
+        return new ParamType(*this);
     }
     ParamBase & operator= (const ParamBase & source) {
         if (this == &source) {
@@ -123,17 +244,18 @@ public:
         }
         ParamBase::operator=(source);
 
-        const ParamInteger * pSource = static_cast<const ParamInteger*>(&source);
+        const ParamType * pSource = static_cast<const ParamType*>(&source);
         if (pSource) {
             mValue = pSource->mValue;
             mDefaultValue = pSource->mDefaultValue;
             mMin = pSource->mMin;
             mMax = pSource->mMax;
+            mPList = pSource->mPList;
         }
         return *this;
     }
 
-    ParamInteger & operator= (const ParamInteger & source) {
+    ParamType & operator= (const ParamType & source) {
         if (this == &source) {
             return *this;
         }
@@ -141,17 +263,64 @@ public:
         return *this;
     }
 
-    void setValue(int value) {
-        mValue = PARAM_MIN(mMax, PARAM_MAX(value, mMin));
+    void setValue(T value) {
+        switch (getHoldType()) {
+            case PARAM_HOLD_RANGE:
+                mValue = PARAM_MIN(mMax, PARAM_MAX(value, mMin));
+                break;
+            case PARAM_HOLD_LIST: {
+                int index = mPList.getIndexForValue(value);
+                setListCurrentIndex(index);
+            }
+            default:
+                break;
+        }
     }
 
-    int getValue() { return mValue; };
-    int getMax() { return mMax; };
-    int getMin() { return mMin; };
-    int getDefaultValue() { return mDefaultValue; }
+    T getValue() { return mValue; };
+    T getMax() { return mMax; };
+    T getMin() { return mMin; };
+    T getDefaultValue() { return mDefaultValue; }
 
     void setDefaultValue() {
         setValue(getDefaultValue());
+    }
+
+    //list
+    int getListSize() {
+        return mPList.size();
+    }
+    int getListCurrentIndex() {
+        return mPList.getCurrentIndex();
+    }
+
+    void setListCurrentIndex(int index) {
+        mPList.setCurrentIndex(index);
+        mValue = mPList.getValueForIndex(index);
+    }
+
+    int getListDefaultIndex() {
+        return mPList.getDefaultIndex();
+    }
+
+    void addParamToList(T value, const std::string & name) {
+        mPList.addParamItem(value, name);
+        //recompute min, max
+        mMin = 0;
+        mMax = (int)(mPList.size() - 1);
+    }
+
+    ParamListItem<T> * getParamFromList(int index) {
+        return mPList.getParamItem(index);
+    }
+
+    std::string getParamNameFromList(int index) {
+        std::string name;
+        ParamListItem<T> *pItem = getParamFromList(index);
+        if (pItem != NULL) {
+            name = pItem->getName();
+        }
+        return name;
     }
 
     std::string toString(int level = PRINT_ALL) {
@@ -180,102 +349,77 @@ public:
         return ss.str();
     }
     void setValueFromString(const std::string & value) {
-        int val = atoi(value.c_str());
-        setValue(val);
     }
 
-private:
-    int mDefaultValue;
-    int mValue;
-    int mMax;
-    int mMin;
+protected:
+    T mDefaultValue;
+    T mValue;
+    T mMax;
+    T mMin;
 
+    ParamList<T> mPList;
 };
 
-//float parameter
-class ParamFloat : public ParamBase {
+class ParamInteger : public ParamType<int> {
 public:
-    ParamFloat(const std::string &name, const std::string &description, float defaultValue=0,
-    float min=0, float max =100) : ParamBase(name, description, PARAM_FLOAT),
-    mDefaultValue(defaultValue), mMin(min), mMax(max) {
+
+    ParamInteger(const std::string &name, const std::string &description, int defaultValue,
+                    int min=0, int max =100) : ParamType<int>(name, description, PARAM_INTEGER,
+                                                              PARAM_HOLD_RANGE)
+    {
+        mDefaultValue = defaultValue;
+        mMin = min;
+        mMax = max;
         setValue(defaultValue);
     }
 
-    ParamFloat * clone() const {
-        return new ParamFloat(*this);
-    }
-    ParamBase & operator= (const ParamBase & source) {
-        if (this == &source) {
-            return *this;
-        }
-        ParamBase::operator=(source);
-
-        const ParamFloat * pSource = static_cast<const ParamFloat*>(&source);
-        if (pSource) {
-            mValue = pSource->mValue;
-            mDefaultValue = pSource->mDefaultValue;
-            mMin = pSource->mMin;
-            mMax = pSource->mMax;
-        }
-        return *this;
+    ParamInteger(const std::string &name, const std::string &description,
+                 std::vector<int> *pValues = NULL,
+                 int defaultIndexValue = -1,
+                 std::vector<std::string> *pNames = NULL) :
+    ParamType<int>(name, description, PARAM_INTEGER, PARAM_HOLD_LIST) {
+        mPList.addParams(pValues, pNames);
+        mPList.setDefaultIndex(defaultIndexValue);
+        mPList.setCurrentIndex(defaultIndexValue);
+        mDefaultValue = mPList.getValueForIndex(defaultIndexValue);
+        setValue(mDefaultValue);
     }
 
-    ParamFloat & operator= (const ParamFloat & source) {
-        if (this == &source) {
-            return *this;
-        }
-        *this = *static_cast<const ParamBase*>(&source);
-        return *this;
+    void setValueFromString(const std::string & value) {
+        int val = atoi(value.c_str());
+        setValue(val);
+    }
+};
+
+class ParamFloat : public ParamType<float> {
+public:
+
+    ParamFloat(const std::string &name, const std::string &description, float defaultValue,
+                 float min=0, float max =100) : ParamType<float>(name, description, PARAM_FLOAT,
+                                                           PARAM_HOLD_RANGE)
+    {
+        mDefaultValue = defaultValue;
+        mMin = min;
+        mMax = max;
+        setValue(defaultValue);
     }
 
-    void setValue(float value) {
-        mValue = PARAM_MIN(mMax, PARAM_MAX(value, mMin));
+    ParamFloat(const std::string &name, const std::string &description,
+                 std::vector<float> *pValues = NULL,
+                 int defaultIndexValue = -1,
+                 std::vector<std::string> *pNames = NULL) :
+    ParamType<float>(name, description, PARAM_FLOAT, PARAM_HOLD_LIST) {
+        mPList.addParams(pValues, pNames);
+        mPList.setDefaultIndex(defaultIndexValue);
+        mPList.setCurrentIndex(defaultIndexValue);
+        mDefaultValue = mPList.getValueForIndex(defaultIndexValue);
+        setValue(mDefaultValue);
     }
 
-    float getValue() { return mValue; };
-    float getMax() { return mMax; };
-    float getMin() { return mMin; };
-    float getDefaultValue() { return mDefaultValue; }
-
-    void setDefaultValue() {
-        setValue(getDefaultValue());
-    }
-
-    std::string toString(int level = PRINT_ALL) {
-        std::stringstream ss;
-        switch (level) {
-            case PRINT_ALL:
-                ss << ParamBase::toString();
-                ss << "Value: " << mValue << END_LINE;
-                ss << "Default Value: " << mDefaultValue << END_LINE;
-                ss << "Min: " << mMin << END_LINE;
-                ss << "Max: " << mMax << END_LINE;
-                break;
-            case PRINT_COMPACT:
-                ss << getDescription() <<" : ";
-                ss << getValueAsString();
-                if (mValue == mDefaultValue) {
-                    ss <<"*";
-                }
-                break;
-        }
-        return ss.str();
-    }
-    std::string getValueAsString() {
-        std::stringstream ss;
-        ss << mValue;
-        return ss.str();
-    }
     void setValueFromString(const std::string & value) {
         float val = atof(value.c_str());
         setValue(val);
     }
-
-private:
-    float mDefaultValue;
-    float mValue;
-    float mMax;
-    float mMin;
 };
 
 //===========================

@@ -99,6 +99,56 @@ Java_com_sonodroid_synthmark_AppObject_native_1getParamType(
         jint testId,
         jint paramIndex);
 
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamHoldType(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamListSize(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamListCurrentIndex(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamListDefaultIndex(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex);
+
+JNIEXPORT jint JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1setParamListCurrentIndex(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex,
+        jint index);
+
+JNIEXPORT jstring JNICALL
+Java_com_sonodroid_synthmark_AppObject_native_1getParamListNameFromIndex(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex,
+        jint index);
+
 JNIEXPORT jstring JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1getParamName(
         JNIEnv* env,

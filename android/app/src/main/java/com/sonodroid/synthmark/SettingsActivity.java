@@ -79,25 +79,34 @@ public class SettingsActivity extends BaseActivity {
         ParamSeekBar(Context context, final Param myParam, final TextView tvValue) {
             super(context);
             final int type = myParam.getType();//
+            final int holdType = myParam.getHoldType();
 
             final Number nMin = myParam.getMin();
             final Number nMax = myParam.getMax();
             Number nValue = myParam.getValue();
             final int points = 10000; //points for slider if float
 
-            if (type == AppObject.PARAM_INTEGER) {
-                final int min = nMin.intValue();
-                final int max = nMax.intValue();
-                int value = nValue.intValue();
-                setMax(max - min);
-                setProgress(value - min);
+            if (holdType == AppObject.PARAM_HOLD_RANGE) {
+                if (type == AppObject.PARAM_INTEGER) {
+                    final int min = nMin.intValue();
+                    final int max = nMax.intValue();
+                    int value = nValue.intValue();
+                    setMax(max - min);
+                    setProgress(value - min);
 
-            } else if (type == AppObject.PARAM_FLOAT) {
-                final float min = nMin.floatValue();
-                final float max = nMax.floatValue();
-                float value = nValue.floatValue();
-                setMax(points);
-                setProgress((int) (0.5 + value * points / (max - min)));
+                } else if (type == AppObject.PARAM_FLOAT) {
+                    final float min = nMin.floatValue();
+                    final float max = nMax.floatValue();
+                    float value = nValue.floatValue();
+                    setMax(points);
+                    setProgress((int) (0.5 + value * points / (max - min)));
+                }
+            } else if (holdType == AppObject.PARAM_HOLD_LIST) {
+                int min = 0;
+                int max = myParam.getListSize() - 1;
+                int currentIndex = myParam.getListCurrentIndex();
+                setMax(max);
+                setProgress(currentIndex);
             }
 
             tvValue.setText("  " + myParam.getValueAsString());
@@ -105,12 +114,17 @@ public class SettingsActivity extends BaseActivity {
             setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                    if (type == AppObject.PARAM_INTEGER) {
-                        int value = i + nMin.intValue();
-                        myParam.setValue(new Integer(value));
-                    } else if (type == AppObject.PARAM_FLOAT) {
-                        float value = (nMax.floatValue() - nMin.floatValue())*i/points;
-                        myParam.setValue(new Float(value));
+                    if (holdType == AppObject.PARAM_HOLD_RANGE) {
+                        if (type == AppObject.PARAM_INTEGER) {
+                            int value = i + nMin.intValue();
+                            myParam.setValue(new Integer(value));
+                        } else if (type == AppObject.PARAM_FLOAT) {
+                            float value = (nMax.floatValue() - nMin.floatValue()) * i / points;
+                            myParam.setValue(new Float(value));
+                        }
+
+                    } else if (holdType == AppObject.PARAM_HOLD_LIST) {
+                        myParam.setListCurrentIndex(i);
                     }
                     tvValue.setText("  " + myParam.getValueAsString());
                 }
