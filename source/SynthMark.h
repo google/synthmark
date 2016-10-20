@@ -19,7 +19,7 @@
 #define SYNTHMARK_SYNTHMARK_H
 
 #define SYNTHMARK_MAJOR_VERSION        1
-#define SYNTHMARK_MINOR_VERSION        4
+#define SYNTHMARK_MINOR_VERSION        5
 
 #ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.
