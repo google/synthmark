@@ -35,18 +35,21 @@
 #define DEFAULT_PERCENT_CPU        ((int)(100 * SYNTHMARK_TARGET_CPU_LOAD))
 
 void usage(const char *name) {
-    printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -r{sampleRate} -s{seconds} -b{burstSize} -f\n", name);
-    printf("    test, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n",
+    printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
+           " -s{seconds} -b{burstSize} -f\n", name);
+    printf("    -t{test}, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n",
            DEFAULT_TEST_CODE);
-    printf("    numVoices to render, default = %d\n", DEFAULT_NUM_VOICES);
-    printf("    noteOnDelay seconds to delay the first NoteOn, default = %d\n",
+    printf("    -n{numVoices} to render, default = %d\n", DEFAULT_NUM_VOICES);
+    printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
            DEFAULT_NOTE_ON_DELAY);
-    printf("    percentCPU to render, default = %d\n", DEFAULT_PERCENT_CPU);
-    printf("    rate should be typical, 44100, 48000, etc. default is %d\n", SYNTHMARK_SAMPLE_RATE);
-    printf("    seconds required to be glitch free, default is %d\n", DEFAULT_SECONDS);
-    printf("    -f to use SCHED_FIFO\n");
-    printf("    burstSize frames read by virtual hardware at one time , default = %d\n",
+    printf("    -p{percentCPU} target load, default = %d\n", DEFAULT_PERCENT_CPU);
+    printf("    -r{sampleRate} should be typical, 44100, 48000, etc. default is %d\n",
+           SYNTHMARK_SAMPLE_RATE);
+    printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
+           DEFAULT_SECONDS);
+    printf("    -b{burstSize} frames read by virtual hardware at one time , default = %d\n",
             DEFAULT_FRAMES_PER_BURST);
+    printf("    -f to use SCHED_FIFO - IMPORTANT for latency and jitter tests\n");
 }
 
 int main(int argc, char **argv)
@@ -59,6 +62,7 @@ int main(int argc, char **argv)
     int32_t numSecondsDelayNoteOn = DEFAULT_NOTE_ON_DELAY;
     bool schedFifoEnabled = false;
     char testCode = DEFAULT_TEST_CODE;
+
     TestHarnessBase *harness = NULL;
 
     SynthMarkResult result;
