@@ -66,6 +66,9 @@ public:
                     return -1;
                 }
                 // Reset clock so we get a full run without glitches.
+                float glitchTime = ((float)mFrameCounter / mSampleRate);
+                mLogTool->log("Audio glitch at %.2fs, restarting test with buffer size %d\n",
+                              glitchTime, actualSize);
                 mFrameCounter = 0;
             }
         }

@@ -115,30 +115,33 @@ public:
             return CALLBACK_FINISHED;
         }
 
-        // Turn notes on and off so they never stop sounding.
-        if (mBurstCountdown <= 0) {
-            if (mAreNotesOn) {
-                mSynth.allNotesOff();
-                mBurstCountdown = mBurstsOff;
-                mAreNotesOn = false;
-            } else {
-                result = onBeforeNoteOn();
-                if (result < 0) {
-                    mLogTool->log("renderAudio() onBeforeNoteOn() returned %d\n", result);
-                    mResult->setResultCode(result);
-                    return CALLBACK_ERROR;
+        // Only start turning notes on and off after the initial delay
+        if (mFrameCounter >= mDelayNotesOnUntilFrame){
+            // Turn notes on and off so they never stop sounding.
+            if (mBurstCountdown <= 0) {
+                if (mAreNotesOn) {
+                    mSynth.allNotesOff();
+                    mBurstCountdown = mBurstsOff;
+                    mAreNotesOn = false;
+                } else {
+                    result = onBeforeNoteOn();
+                    if (result < 0) {
+                        mLogTool->log("renderAudio() onBeforeNoteOn() returned %d\n", result);
+                        mResult->setResultCode(result);
+                        return CALLBACK_ERROR;
+                    }
+                    result = mSynth.allNotesOn(mNumVoices);
+                    if (result < 0) {
+                        mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);
+                        mResult->setResultCode(result);
+                        return CALLBACK_ERROR;
+                    }
+                    mBurstCountdown = mBurstsOn;
+                    mAreNotesOn = true;
                 }
-                result = mSynth.allNotesOn(mNumVoices);
-                if (result < 0) {
-                    mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);
-                    mResult->setResultCode(result);
-                    return CALLBACK_ERROR;
-                }
-                mBurstCountdown = mBurstsOn;
-                mAreNotesOn = true;
             }
+            mBurstCountdown--;
         }
-        mBurstCountdown--;
 
         // Gather timing information.
         // mLogTool->log("renderAudio() call the synthesizer\n");
@@ -178,7 +181,7 @@ public:
 
         // Variables for turning notes on and off.
         mAreNotesOn = false;
-        mBurstCountdown = (mDelayNotesOnUntilFrame + mFramesPerBurst - 1) / mFramesPerBurst;
+        mBurstCountdown = 0;
         mBurstsOn = (int) (0.2 * mSampleRate / mFramesPerBurst);
         mBurstsOff = (int) (0.3 * mSampleRate / mFramesPerBurst);
 

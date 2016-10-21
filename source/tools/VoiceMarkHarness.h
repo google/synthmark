@@ -29,6 +29,7 @@
 
 
 #define SYNTHMARK_MINIMUM_VOICE_COUNT 4
+#define SYNTHMARK_MINIMUM_NOTE_ON_COUNT 1
 
 /**
  * Play notes on a Synthesizer and measure the number
@@ -65,7 +66,7 @@ public:
     }
 
     virtual int32_t onBeforeNoteOn() override {
-        if (mTimer.getActiveTime() > 0) {
+        if (mNoteOnCount >= SYNTHMARK_MINIMUM_NOTE_ON_COUNT) {
             // Estimate how many voices it would take to use a fraction of the CPU.
             double cpuLoad = mTimer.getDutyCycle();
             int32_t oldNumVoices = mNumVoices;
@@ -93,9 +94,10 @@ public:
             }
             mLogTool->log("%3d voices used %5.3f of CPU, %s\n", oldNumVoices, cpuLoad,
                           accepted ? "" : " - not used");
-            mTimer.reset();
             mNumVoices = newNumVoices;
         }
+        mTimer.reset();
+        mNoteOnCount++;
         return 0;
     }
 
@@ -147,6 +149,7 @@ public:
 
 private:
     bool mStable = false;
+    int32_t mNoteOnCount = 0;
     int32_t mInitialVoiceCount = 10;
 };
 

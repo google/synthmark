@@ -147,11 +147,9 @@ int main(int argc, char **argv)
             break;
         case 'l':
             harness = new LatencyMarkHarness(&audioSink, &result);
-            harness->setDelayNotesOn(numSecondsDelayNoteOn);
             break;
         case 'j':
             harness = new JitterMarkHarness(&audioSink, &result);
-            harness->setDelayNotesOn(numSecondsDelayNoteOn);
             break;
         default:
             printf("ERROR - unrecognized testCode = %c\n", testCode);
@@ -161,6 +159,7 @@ int main(int argc, char **argv)
     }
     harness->setSchedFifoEnabled(schedFifoEnabled);
     harness->setNumVoices(numVoices);
+    harness->setDelayNotesOn(numSecondsDelayNoteOn);
 
     // Print specified parameters.
     printf("--- %s V%d.%d ---\n", harness->getName(), SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
