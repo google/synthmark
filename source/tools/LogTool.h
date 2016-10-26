@@ -21,7 +21,7 @@
 #ifndef SYNTHMARK_LOGTOOL_H
 #define SYNTHMARK_LOGTOOL_H
 
-#define LOGTOOL_BUFFER_SIZE 500 //max single log that can be added at once
+#define LOGTOOL_BUFFER_SIZE 5000 //max single log that can be added at once
 #define LOGTOLL_PREFIX_MAX 10
 class LogTool
 {
