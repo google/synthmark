@@ -44,7 +44,6 @@ public:
     , mSamplesPerFrame(2)
     , mNumVoices(8)
     , mFrameCounter(0)
-    , mSchedFifoEnabled(false)
     , mDelayNotesOnUntilFrame(0)
 
     {
@@ -102,7 +101,6 @@ public:
         mFramesPerBurst = framesPerBurst;
 
         mSynth.setup(sampleRate, SYNTHMARK_MAX_VOICES);
-        mAudioSink->setSchedFifoEnabled(mSchedFifoEnabled);
         return mAudioSink->open(sampleRate, samplesPerFrame, framesPerBurst);
     }
 
@@ -229,14 +227,6 @@ public:
         mDelayNotesOnUntilFrame = (int32_t)(delayInSeconds * mSampleRate);
     }
 
-    void setSchedFifoEnabled(bool schedFifoEnabled) {
-        mSchedFifoEnabled = schedFifoEnabled;
-    }
-
-    bool getSchedFifoEnabled() {
-        return mSchedFifoEnabled;
-    }
-
     const char *getName() {
         return mTestName.c_str();
     }
@@ -254,7 +244,6 @@ protected:
     int32_t        mNumVoices;
     int32_t        mFrameCounter;
     int32_t        mFramesNeeded;
-    bool           mSchedFifoEnabled;
     int32_t        mDelayNotesOnUntilFrame;
 
     // Variables for turning notes on and off.

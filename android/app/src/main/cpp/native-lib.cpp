@@ -23,6 +23,16 @@
 
 #include "tools/NativeTest.h"
 
+#include "OpenSLHostThread.h"
+
+#define USE_OPENSL_THREAD 1
+
+#if USE_OPENSL_THREAD
+// We need OpenSL to give us a thread with SCHED_FIFO.
+// We use a factory so that we can inject OpenSL code into portable SynthMark code.
+OpenSLHostThreadFactory sOpenSLHostThreadFactory;
+#endif /* USE_OPENSL_THREAD */
+
 JNIEXPORT jlong JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1create(
     JNIEnv* env,
@@ -42,6 +52,9 @@ Java_com_sonodroid_synthmark_AppObject_testInit(
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
 
     if (pNativeTest != NULL) {
+#if USE_OPENSL_THREAD
+        pNativeTest->setHostThreadFactory(&sOpenSLHostThreadFactory);
+#endif /* USE_OPENSL_THREAD */
         return pNativeTest->init(testId);
     }
     return NATIVETEST_ERROR;

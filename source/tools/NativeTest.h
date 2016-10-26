@@ -98,11 +98,19 @@ public:
         return &mParams;
     }
 
+    HostThreadFactory *getHostThreadFactory() {
+        return mHostThreadFactory;
+    }
+    void setHostThreadFactory(HostThreadFactory *factory) {
+        mHostThreadFactory = factory;
+    }
+
 protected:
     int mCurrentStatus;
     LogTool *mLogTool;
     std::string mTitle;
     ParamGroup mParams;
+    HostThreadFactory *mHostThreadFactory = NULL;
 };
 
 
@@ -151,8 +159,10 @@ public:
 
     int run() {
         SynthMarkResult result;
-        VirtualAudioSink audioSink;
+        VirtualAudioSink audioSink(mLogTool);
         VoiceMarkHarness harness(&audioSink, &result, mLogTool);
+
+        audioSink.setHostThread(mHostThreadFactory->createThread());
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
         int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
@@ -230,8 +240,10 @@ public:
 
     int run() {
         SynthMarkResult result;
-        VirtualAudioSink audioSink;
+        VirtualAudioSink audioSink(mLogTool);
         LatencyMarkHarness harness(&audioSink, &result, mLogTool);
+
+        audioSink.setHostThread(mHostThreadFactory->createThread());
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
         int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
@@ -309,8 +321,10 @@ public:
 
     int run() {
         SynthMarkResult result;
-        VirtualAudioSink audioSink;
+        VirtualAudioSink audioSink(mLogTool);
         JitterMarkHarness harness(&audioSink, &result, mLogTool);
+
+        audioSink.setHostThread(mHostThreadFactory->createThread());
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
         int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
@@ -353,6 +367,7 @@ public:
     mTestVoiceMark(&mLog), mTestLatencyMark(&mLog), mTestJitterMark(&mLog){
         mLog.setStream(&mStream);
         initTests();
+        setHostThreadFactory(&mHostThreadFactoryOwned);
     }
 
     ~NativeTest() {
@@ -413,6 +428,21 @@ public:
         return NATIVETEST_SUCCESS;
     }
 
+    HostThreadFactory *getHostThreadFactory() {
+        return mHostThreadFactory;
+    }
+
+    void setHostThreadFactory(HostThreadFactory *factory) {
+        mHostThreadFactory = factory;
+        int testCount = getTestCount();
+        for (int i = 0; i < testCount; i ++) {
+            NativeTestUnit * pTestUnit = getNativeTestUnit(i);
+            if (pTestUnit != NULL) {
+                pTestUnit->setHostThreadFactory(factory);
+            }
+        }
+    }
+
     std::string getTestName(int testId) {
         std::string name = "--";
         NativeTestUnit *pTestUnit = getNativeTestUnit(testId);
@@ -447,6 +477,7 @@ public:
         return count;
     }
 
+
 private:
     NativeTestUnit * getNativeTestUnit(int testId) {
         NativeTestUnit *pTestUnit = NULL;
@@ -467,6 +498,8 @@ private:
 
     LogTool mLog;
     std::stringstream mStream;
+    HostThreadFactory mHostThreadFactoryOwned;
+    HostThreadFactory *mHostThreadFactory = NULL;
 };
 
 #endif //ANDROID_NATIVETEST_H

@@ -36,7 +36,7 @@
 
 void usage(const char *name) {
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
-           " -s{seconds} -b{burstSize} -f\n", name);
+           " -s{seconds} -b{burstSize}\n", name);
     printf("    -t{test}, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n",
            DEFAULT_TEST_CODE);
     printf("    -n{numVoices} to render, default = %d\n", DEFAULT_NUM_VOICES);
@@ -49,7 +49,6 @@ void usage(const char *name) {
            DEFAULT_SECONDS);
     printf("    -b{burstSize} frames read by virtual hardware at one time , default = %d\n",
             DEFAULT_FRAMES_PER_BURST);
-    printf("    -f to use SCHED_FIFO - IMPORTANT for latency and jitter tests\n");
 }
 
 int main(int argc, char **argv)
@@ -60,7 +59,6 @@ int main(int argc, char **argv)
     int32_t numSeconds = DEFAULT_SECONDS;
     int32_t numVoices = DEFAULT_NUM_VOICES;
     int32_t numSecondsDelayNoteOn = DEFAULT_NOTE_ON_DELAY;
-    bool schedFifoEnabled = false;
     char testCode = DEFAULT_TEST_CODE;
 
     TestHarnessBase *harness = NULL;
@@ -90,9 +88,6 @@ int main(int argc, char **argv)
                     break;
                 case 'b':
                     framesPerBurst = atoi(&arg[2]);
-                    break;
-                case 'f':
-                    schedFifoEnabled = true;
                     break;
                 case 't':
                     testCode = arg[2];
@@ -157,7 +152,6 @@ int main(int argc, char **argv)
             return 1;
             break;
     }
-    harness->setSchedFifoEnabled(schedFifoEnabled);
     harness->setNumVoices(numVoices);
     harness->setDelayNotesOn(numSecondsDelayNoteOn);
 

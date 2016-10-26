@@ -67,14 +67,15 @@ typedef void * host_thread_proc_t(void *arg);
  */
 class HostThread {
 public:
-    HostThread(host_thread_proc_t proc, void *arg)
-            : mProcedure(proc), mArgument(arg) { }
+    HostThread() { }
 
-    ~HostThread() {
+    virtual ~HostThread() {
         join();
     }
 
-    int start() {
+    virtual int start(host_thread_proc_t proc, void *arg) {
+        mProcedure = proc;
+        mArgument = arg;
         int err = 1;
         if (!mRunning && !mDead) {
             err = pthread_create(&mPthread, NULL, mProcedure, mArgument);
@@ -83,7 +84,7 @@ public:
         return err;
     }
 
-    int join() {
+    virtual int join() {
         int err = 0;
         if (mRunning && !mDead) {
             err = pthread_join(mPthread, NULL);
@@ -99,11 +100,11 @@ public:
      * WARNING: This call may not be permitted unless you are running as root!
      */
 #if HOST_IS_APPLE
-    static int promote(int priority) {
+    virtual int promote(int priority) {
         return -1;
     }
 #else
-    static int promote(int priority) {
+    virtual int promote(int priority) {
         struct sched_param sp;
         memset(&sp, 0, sizeof(sp));
         sp.sched_priority = priority;
@@ -111,12 +112,24 @@ public:
     }
 #endif
 
-private:
+protected:
     host_thread_proc_t *mProcedure = NULL;
     void *mArgument = NULL;
-    bool mRunning = false;
+    volatile bool mRunning = false;
     bool mDead = false;
 
     pthread_t mPthread;
+};
+
+class HostThreadFactory
+{
+public:
+    HostThreadFactory() { }
+
+    virtual ~HostThreadFactory() = default;
+
+    virtual HostThread * createThread() {
+        return new HostThread();
+    }
 };
 #endif //ANDROID_HOSTTOOLS_H

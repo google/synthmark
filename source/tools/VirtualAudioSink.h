@@ -19,6 +19,7 @@
 #include <time.h>
 #include "SynthMark.h"
 #include "HostTools.h"
+#include "LogTool.h"
 #include "SynthMarkResult.h"
 #include "AudioSinkBase.h"
 
@@ -35,8 +36,13 @@
 class VirtualAudioSink : public AudioSinkBase
 {
 public:
-    VirtualAudioSink() {}
-    virtual ~VirtualAudioSink() {}
+    VirtualAudioSink(LogTool *logTool = NULL)
+    : mLogTool(logTool)
+    {}
+
+    virtual ~VirtualAudioSink() {
+        delete mThread;
+    }
 
     virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame __unused,
             int32_t framesPerBurst) override {
@@ -47,13 +53,6 @@ public:
         mNanosPerBurst = (int32_t) (SYNTHMARK_NANOS_PER_SECOND * mFramesPerBurst / mSampleRate);
 
         mBurstBuffer = new float[samplesPerFrame * framesPerBurst];
-        return 0;
-    }
-
-    virtual int32_t start() override {
-        setFramesWritten(mBufferSizeInFrames);  // start full and primed
-        mStartTimeNanos = HostTools::getNanoTime();
-        mNextHardwareReadTimeNanos = mStartTimeNanos;
         return 0;
     }
 
@@ -144,6 +143,10 @@ public:
 
     virtual int32_t write(const float *buffer, int32_t numFrames) override {
         (void) buffer;
+        if (mStartTimeNanos == 0) {
+            mStartTimeNanos = HostTools::getNanoTime();
+            mNextHardwareReadTimeNanos = mStartTimeNanos;
+        }
         int32_t framesLeft = numFrames;
         while (framesLeft > 0) {
             // Calculate how much room is available in the buffer.
@@ -153,6 +156,32 @@ public:
                 int32_t framesToWrite = (available > framesLeft) ? framesLeft : available;
                 setFramesWritten(getFramesWritten() + framesToWrite);
                 framesLeft -= framesToWrite;
+            }
+        }
+        return 0;
+    }
+
+    HostThread *getHostThread() {
+        return mThread;
+    }
+    void setHostThread(HostThread *thread) {
+        mThread = thread;
+    }
+
+    virtual int32_t start() override {
+        setFramesWritten(mBufferSizeInFrames);  // start full and primed
+
+        if (mUseRealThread) {
+            mCallbackLoopResult = SYNTHMARK_RESULT_THREAD_FAILURE;
+            if (mThread == NULL) {
+                mThread = new HostThread();
+            }
+            int err = mThread->start(threadProcWrapper, this);
+            if (err != 0) {
+                if (mLogTool) {
+                    mLogTool->log("ERROR in VirtualAudioSink, thread start() failed, %d\n", err);
+                }
+                return SYNTHMARK_RESULT_THREAD_FAILURE;
             }
         }
         return 0;
@@ -176,8 +205,8 @@ public:
         IAudioSinkCallback *callback = getCallback();
         setSchedFifoUsed(false);
         if (callback != NULL) {
-            if (mUseRealThread && isSchedFifoEnabled()) {
-                int err = HostThread::promote(mThreadPriority);
+            if (mUseRealThread) {
+                int err = mThread->promote(mThreadPriority);
                 if (err) {
                     result = err;
                 } else {
@@ -185,6 +214,7 @@ public:
                 }
             }
 
+            // Render and write audio in a loop.
             IAudioSinkCallback::audio_sink_callback_result_t callbackResult
                     = IAudioSinkCallback::CALLBACK_CONTINUE;
             while (callbackResult == IAudioSinkCallback::CALLBACK_CONTINUE
@@ -213,19 +243,13 @@ public:
      * Call the callback directly or from a thread.
      */
     virtual int32_t runCallbackLoop() override {
-        if (mUseRealThread) {
-            mCallbackLoopResult = SYNTHMARK_RESULT_THREAD_FAILURE;
-            HostThread thread(threadProcWrapper, this);
-            int err = thread.start();
-            if (err != 0) {
-                return SYNTHMARK_RESULT_THREAD_FAILURE;
-            } else {
-                err = thread.join();
-                if (err != 0) {
-                    return SYNTHMARK_RESULT_THREAD_FAILURE;
-                }
+        if (mThread != NULL) {
+            int err = mThread->join();
+            if (err == 0) {
+                mCallbackLoopResult = 0;
             }
-            // TODO use memory barrier or pass back through join()
+            delete mThread;
+            mThread = NULL;
             return mCallbackLoopResult;
         } else {
             return innerCallbackLoop();
@@ -244,9 +268,11 @@ private:
     int64_t mFramesConsumed = 0;
     int32_t mUnderrunCount = 0;
     float*  mBurstBuffer = NULL;   // contains output of the synthesizer
-    bool    mUseRealThread = true;   // TODO control using new settings object
+    bool    mUseRealThread = true; // TODO control using new settings object
     int     mThreadPriority = 2;   // TODO control using new settings object
     int32_t mCallbackLoopResult = 0;
+    HostThread * mThread = NULL;
+    LogTool    * mLogTool = NULL;
 
     void updateHardwareSimulator() {
         int64_t currentTime = HostTools::getNanoTime();

@@ -19,7 +19,8 @@
 #define SYNTHMARK_SYNTHMARK_H
 
 #define SYNTHMARK_MAJOR_VERSION        1
-#define SYNTHMARK_MINOR_VERSION        5
+// #define SYNTHMARK_MINOR_VERSION        5
+#define SYNTHMARK_MINOR_VERSION        6   /* Run under OpenSL thread for SCHED_FIFO. */
 
 #ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.

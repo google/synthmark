@@ -93,14 +93,6 @@ public:
 
     virtual int32_t getSampleRate() = 0;
 
-    void setSchedFifoEnabled(bool schedFifoEnabled) {
-        mSchedFifoEnabled = schedFifoEnabled;
-    }
-
-    bool isSchedFifoEnabled() {
-        return mSchedFifoEnabled;
-    }
-
     void setSchedFifoUsed(bool schedFifoUsed) {
         mSchedFifoUsed = schedFifoUsed;
     }
@@ -131,8 +123,7 @@ public:
 private:
     IAudioSinkCallback *mCallback = NULL;
     int64_t        mFramesWritten = 0;
-    bool           mSchedFifoEnabled = false;
-    bool           mSchedFifoUsed = false;
+    volatile bool  mSchedFifoUsed = false;
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H
