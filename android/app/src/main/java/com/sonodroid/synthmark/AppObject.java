@@ -20,6 +20,7 @@ import android.app.Application;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -262,6 +263,13 @@ public class AppObject extends Application {
 
         protected String doInBackground(String... params) {
             log("Started running progress...");
+
+            // Acquire a wakelock
+            PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    "SynthMarkWakeLock");
+            wakeLock.acquire();
+
             try {
                 Thread.sleep(PROGRESS_WARM_UP_WAIT);
             } catch (InterruptedException e) {
@@ -289,6 +297,10 @@ public class AppObject extends Application {
                     break;
                 }
             }
+
+            // Release the wakelock
+            wakeLock.release();
+
             return "done";
         }
 
