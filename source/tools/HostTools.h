@@ -74,11 +74,6 @@ public:
         join();
     }
 
-#if HOST_IS_APPLE
-    int start() {
-        return EPERM;
-    }
-#else
     int start() {
         int err = 1;
         if (!mRunning && !mDead) {
@@ -87,14 +82,7 @@ public:
         }
         return err;
     }
-#endif
 
-#if HOST_IS_APPLE
-    int join() {
-        return EPERM;
-    }
-
-#else
     int join() {
         int err = 0;
         if (mRunning && !mDead) {
@@ -103,7 +91,6 @@ public:
         }
         return err;
     }
-#endif
 
     /**
      * Boost performance of the calling thread and set the thread priority.
@@ -130,9 +117,6 @@ private:
     bool mRunning = false;
     bool mDead = false;
 
-#if HOST_IS_APPLE
-#else
     pthread_t mPthread;
-#endif
 };
 #endif //ANDROID_HOSTTOOLS_H
