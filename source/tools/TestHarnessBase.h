@@ -45,6 +45,7 @@ public:
     , mNumVoices(8)
     , mFrameCounter(0)
     , mDelayNotesOnUntilFrame(0)
+    , mNoteCounter(0)
 
     {
         mAudioSink = audioSink;
@@ -121,6 +122,7 @@ public:
                     mSynth.allNotesOff();
                     mBurstCountdown = mBurstsOff;
                     mAreNotesOn = false;
+                    mNoteCounter++;
                 } else {
                     result = onBeforeNoteOn();
                     if (result < 0) {
@@ -128,7 +130,7 @@ public:
                         mResult->setResultCode(result);
                         return CALLBACK_ERROR;
                     }
-                    result = mSynth.allNotesOn(mNumVoices);
+                    result = mSynth.allNotesOn(getCurrentNumVoices());
                     if (result < 0) {
                         mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);
                         mResult->setResultCode(result);
@@ -223,6 +225,14 @@ public:
         return mNumVoices;
     }
 
+    virtual int32_t getCurrentNumVoices() {
+        return mNumVoices;
+    }
+
+    int32_t getNoteCounter() {
+        return mNoteCounter;
+    }
+
     void setDelayNotesOn(int32_t delayInSeconds){
         mDelayNotesOnUntilFrame = (int32_t)(delayInSeconds * mSampleRate);
     }
@@ -245,6 +255,7 @@ protected:
     int32_t        mFrameCounter;
     int32_t        mFramesNeeded;
     int32_t        mDelayNotesOnUntilFrame;
+    int32_t        mNoteCounter;
 
     // Variables for turning notes on and off.
     bool          mAreNotesOn;

@@ -27,6 +27,8 @@
 #ifndef SYNTHMARK_LATENCYMARK_HARNESS_H
 #define SYNTHMARK_LATENCYMARK_HARNESS_H
 
+#define NOTES_PER_STEP   10
+
 /**
  * Determine buffer latency required to avoid glitches.
  * The "LatencyMark" is the minimum buffer size that is a multiple
@@ -67,8 +69,9 @@ public:
                 }
                 // Reset clock so we get a full run without glitches.
                 float glitchTime = ((float)mFrameCounter / mSampleRate);
-                mLogTool->log("Audio glitch at %.2fs, restarting test with buffer size %d\n",
-                              glitchTime, actualSize);
+                mLogTool->log("Audio glitch at %.2fs, restarting test with buffer size %d = %d * %d\n",
+                              glitchTime, actualSize,
+                              actualSize / mFramesPerBurst, mFramesPerBurst);
                 mFrameCounter = 0;
             }
         }
@@ -91,8 +94,29 @@ public:
         mResult->setMeasurement((double) sizeFrames);
     }
 
+
+    void setNumVoicesHigh(int32_t numVoicesHigh) {
+        mNumVoicesHigh = numVoicesHigh;
+    }
+
+    int32_t getNumVoicesHigh() {
+        return mNumVoicesHigh;
+    }
+
+    int32_t getCurrentNumVoices() override {
+        // Toggle back and forth between high and low
+        if (mNumVoicesHigh > 0) {
+            return ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2)) ? mNumVoices : mNumVoicesHigh;
+        } else {
+            return mNumVoices;
+        }
+    }
+
     int32_t mPreviousUnderrunCount;
 
+private:
+
+    int32_t        mNumVoicesHigh = 0;
 };
 
 
