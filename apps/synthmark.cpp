@@ -40,6 +40,7 @@ void usage(const char *name) {
     printf("    -t{test}, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n",
            DEFAULT_TEST_CODE);
     printf("    -n{numVoices} to render, default = %d\n", DEFAULT_NUM_VOICES);
+    printf("    -N{numVoices} to render for toggling high load\n");
     printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
            DEFAULT_NOTE_ON_DELAY);
     printf("    -p{percentCPU} target load, default = %d\n", DEFAULT_PERCENT_CPU);
@@ -58,6 +59,7 @@ int main(int argc, char **argv)
     int32_t framesPerBurst = DEFAULT_FRAMES_PER_BURST;
     int32_t numSeconds = DEFAULT_SECONDS;
     int32_t numVoices = DEFAULT_NUM_VOICES;
+    int32_t numVoicesHigh = 0;
     int32_t numSecondsDelayNoteOn = DEFAULT_NOTE_ON_DELAY;
     char testCode = DEFAULT_TEST_CODE;
 
@@ -76,6 +78,9 @@ int main(int argc, char **argv)
                     break;
                 case 'n':
                     numVoices = atoi(&arg[2]);
+                    break;
+                case 'N':
+                    numVoicesHigh = atoi(&arg[2]);
                     break;
                 case 'd':
                     numSecondsDelayNoteOn = atoi(&arg[2]);
@@ -97,12 +102,14 @@ int main(int argc, char **argv)
                     usage(argv[0]);
                     return 0;
                 default:
-                    printf("Unrecognized switch -%c\n", arg[1]);
+                    printf("Unrecognized switch: %s\n", arg);
                     usage(argv[0]);
                     return 1;
             }
         } else {
+            printf("Unrecognized argument: %s\n", arg);
             usage(argv[0]);
+            return 1;
         }
     }
     if (percentCpu < 1 || percentCpu > 100) {
@@ -110,8 +117,15 @@ int main(int argc, char **argv)
         usage(argv[0]);
         return 1;
     }
-    if (numVoices < 1 || numVoices > SYNTHMARK_MAX_VOICES) {
+    if ((numVoices < 1 && numVoicesHigh <= 0)
+        || numVoices < 0
+        || numVoices > SYNTHMARK_MAX_VOICES) {
         printf("Invalid num voices = %d\n", numVoices);
+        usage(argv[0]);
+        return 1;
+    }
+    if (numVoicesHigh != 0 && numVoicesHigh < numVoices) {
+        printf("Invalid num voices high = %d\n", numVoicesHigh);
         usage(argv[0]);
         return 1;
     }
@@ -141,7 +155,11 @@ int main(int argc, char **argv)
             }
             break;
         case 'l':
-            harness = new LatencyMarkHarness(&audioSink, &result);
+            {
+                LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result);
+                latencyHarness->setNumVoicesHigh(numVoicesHigh);
+                harness = latencyHarness;
+            }
             break;
         case 'j':
             harness = new JitterMarkHarness(&audioSink, &result);
@@ -158,6 +176,7 @@ int main(int argc, char **argv)
     // Print specified parameters.
     printf("--- %s V%d.%d ---\n", harness->getName(), SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
     printf("  numVoices      = %6d\n", numVoices);
+    printf("  numVoicesHigh  = %6d\n", numVoicesHigh);
     printf("  noteOnDelay    = %6d\n", numSecondsDelayNoteOn);
     printf("  percentCpu     = %6d\n", percentCpu);
     printf("  framesPerBurst = %6d\n", framesPerBurst);
