@@ -75,22 +75,39 @@ public:
         resultMessage << mTestName << " = " << measurement << std::endl;
 
         // Print jitter histogram
-        int32_t numBins = mTimer.getNumBins();
-        int32_t *bins = mTimer.getBins();
-        int32_t *lastMarkers = mTimer.getLastMarkers();
-        resultMessage << " bin#,  msec,  count,   last" << std::endl;
-        for (int i = 0; i < numBins; i++) {
-            if (bins[i] > 0) {
-                double msec = (double) i * mNanosPerBin * SYNTHMARK_MILLIS_PER_SECOND
-                              / SYNTHMARK_NANOS_PER_SECOND;
-                resultMessage << "  " << std::setw(3) << i
-                        << ", " << std::fixed << std::setw(5) << std::setprecision(2) << msec
-                        << ", " << std::setw(6) << bins[i]
-                        << ", " << std::setw(6) << lastMarkers[i]
-                        << std::endl;
+        BinCounter *wakeupBins = mTimer.getWakeupBins();
+        BinCounter *renderBins = mTimer.getRenderBins();
+        BinCounter *deliveryBins = mTimer.getDeliveryBins();
+        if (wakeupBins != NULL && renderBins != NULL  && deliveryBins != NULL ) {
+            int32_t numBins = deliveryBins->getNumBins();
+            int32_t *wakeupCounts = wakeupBins->getBins();
+            int32_t *wakeupLast = wakeupBins->getLastMarkers();
+            int32_t *renderCounts = renderBins->getBins();
+            int32_t *renderLast = renderBins->getLastMarkers();
+            int32_t *deliveryCounts = deliveryBins->getBins();
+            int32_t *deliveryLast = deliveryBins->getLastMarkers();
+            resultMessage << " bin#,  msec,"
+                    << "   wakeup#,  wlast,"
+                    << "   render#,  rlast,"
+                    << " delivery#,  clast" << std::endl;
+            for (int i = 0; i < numBins; i++) {
+                if (wakeupCounts[i] > 0 || renderCounts[i] > 0 || deliveryCounts[i] > 0) {
+                    double msec = (double) i * mNanosPerBin * SYNTHMARK_MILLIS_PER_SECOND
+                                  / SYNTHMARK_NANOS_PER_SECOND;
+                    resultMessage << "  " << std::setw(3) << i
+                    << ", " << std::fixed << std::setw(5) << std::setprecision(2) << msec
+                    << ", " << std::setw(9) << wakeupCounts[i]
+                    << ", " << std::setw(6) << wakeupLast[i]
+                    << ", " << std::setw(9) << renderCounts[i]
+                    << ", " << std::setw(6) << renderLast[i]
+                    << ", " << std::setw(9) << deliveryCounts[i]
+                    << ", " << std::setw(6) << deliveryLast[i]
+                    << std::endl;
+                }
             }
+        } else {
+            resultMessage << "ERROR NULL BinCounter!\n";
         }
-
         resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
 
         mResult->setMeasurement(measurement);

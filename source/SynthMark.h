@@ -18,9 +18,14 @@
 #ifndef SYNTHMARK_SYNTHMARK_H
 #define SYNTHMARK_SYNTHMARK_H
 
+#ifndef SYNTHMARK_TRACE
+#define SYNTHMARK_TRACE  1
+#endif
+
 #define SYNTHMARK_MAJOR_VERSION        1
 // #define SYNTHMARK_MINOR_VERSION        5
-#define SYNTHMARK_MINOR_VERSION        6   /* Run under OpenSL thread for SCHED_FIFO. */
+// #define SYNTHMARK_MINOR_VERSION        6   /* Run under OpenSL thread for SCHED_FIFO. */
+#define SYNTHMARK_MINOR_VERSION        7   /* wakeup/render/delivery jitter */
 
 #ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.

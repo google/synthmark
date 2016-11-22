@@ -145,15 +145,14 @@ public:
 
         // Gather timing information.
         // mLogTool->log("renderAudio() call the synthesizer\n");
-        mTimer.markEntry();
-        mSynth.renderStereo(buffer, numFrames);
-        // Ideally we should write the data earlier than when it is read,
-        // by a full buffer's worth of time.
+        // Calculate time when we ideally would have woken up.
         int64_t fullFramePosition = mAudioSink->getFramesWritten()
                                     - mAudioSink->getBufferSizeInFrames()
                                     - mFramesPerBurst;
         int64_t idealTime = mAudioSink->convertFrameToTime(fullFramePosition);
-        mTimer.markExit(idealTime);
+        mTimer.markEntry(idealTime);
+        mSynth.renderStereo(buffer, numFrames);
+        mTimer.markExit();
 
         mFrameCounter += numFrames;
         mLogTool->setVar1(mFrameCounter);

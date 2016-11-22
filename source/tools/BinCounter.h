@@ -1,0 +1,76 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef ANDROID_BINCOUNTER_H
+#define ANDROID_BINCOUNTER_H
+
+#include <stdint.h>
+
+class BinCounter
+{
+public:
+    BinCounter(int32_t numBins)
+            : mBins(NULL)
+            , mLastMarkers(NULL)
+            , mNumBins(0)
+            , mIndex(0)
+    {
+        mBins = new int32_t[numBins];
+        mLastMarkers = new int32_t[numBins];
+        memset(mBins, 0, numBins * sizeof(int32_t));
+        mNumBins = numBins;
+    }
+
+    virtual ~BinCounter() {
+        delete[] mBins;
+        delete[] mLastMarkers;
+    }
+
+    void increment(int32_t binIndex) {
+        if (binIndex < 0) {
+            binIndex = 0;
+        } else if (binIndex >= mNumBins) {
+            binIndex = mNumBins - 1;
+        }
+        mBins[binIndex] += 1;
+        mLastMarkers[binIndex] = mIndex++;
+    }
+
+    void reset() {
+        mIndex = 0;
+        delete[] mBins;
+        mBins = NULL;
+        delete[] mLastMarkers;
+        mLastMarkers = NULL;
+    }
+
+    int32_t getNumBins() {
+        return mNumBins;
+    }
+    int32_t *getBins() {
+        return mBins;
+    }
+    int32_t *getLastMarkers() {
+        return mLastMarkers;
+    }
+
+private:
+    int32_t *mBins;
+    int32_t *mLastMarkers;
+    int32_t  mNumBins;
+    int32_t  mIndex;
+};
+#endif //ANDROID_BINCOUNTER_H

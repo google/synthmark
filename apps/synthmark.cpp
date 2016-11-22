@@ -180,6 +180,7 @@ int main(int argc, char **argv)
     printf("  noteOnDelay    = %6d\n", numSecondsDelayNoteOn);
     printf("  percentCpu     = %6d\n", percentCpu);
     printf("  framesPerBurst = %6d\n", framesPerBurst);
+    printf("  msecPerBurst   = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
     printf("--- wait at least %d seconds for benchmark to complete ---\n", numSeconds);
     fflush(stdout);
 
