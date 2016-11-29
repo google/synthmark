@@ -35,8 +35,9 @@
 #define DEFAULT_PERCENT_CPU        ((int)(100 * SYNTHMARK_TARGET_CPU_LOAD))
 
 void usage(const char *name) {
+    printf("SynthMark version %d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
-           " -s{seconds} -b{burstSize}\n", name);
+           " -s{seconds} -b{burstSize} -c{cpuAffinity}\n", name);
     printf("    -t{test}, v=voiceMark, l=latencyMark, j=jitterMark, default is %c\n",
            DEFAULT_TEST_CODE);
     printf("    -n{numVoices} to render, default = %d\n", DEFAULT_NUM_VOICES);
@@ -49,7 +50,8 @@ void usage(const char *name) {
     printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
            DEFAULT_SECONDS);
     printf("    -b{burstSize} frames read by virtual hardware at one time , default = %d\n",
-            DEFAULT_FRAMES_PER_BURST);
+           DEFAULT_FRAMES_PER_BURST);
+    printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
 }
 
 int main(int argc, char **argv)
@@ -61,6 +63,7 @@ int main(int argc, char **argv)
     int32_t numVoices = DEFAULT_NUM_VOICES;
     int32_t numVoicesHigh = 0;
     int32_t numSecondsDelayNoteOn = DEFAULT_NOTE_ON_DELAY;
+    int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
     char testCode = DEFAULT_TEST_CODE;
 
     TestHarnessBase *harness = NULL;
@@ -73,6 +76,9 @@ int main(int argc, char **argv)
         char * arg = argv[iarg];
         if (arg[0] == '-') {
             switch(arg[1]) {
+                case 'c':
+                    cpuAffinity = atoi(&arg[2]);
+                    break;
                 case 'p':
                     percentCpu = atoi(&arg[2]);
                     break;
@@ -144,6 +150,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    audioSink.setRequestedCpu(cpuAffinity);
+
     // Create a test harness and set the parameters.
     switch(testCode) {
         case 'v':
@@ -181,6 +189,7 @@ int main(int argc, char **argv)
     printf("  percentCpu     = %6d\n", percentCpu);
     printf("  framesPerBurst = %6d\n", framesPerBurst);
     printf("  msecPerBurst   = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
+    printf("  cpuAffinity    = %6d\n", cpuAffinity);
     printf("--- wait at least %d seconds for benchmark to complete ---\n", numSeconds);
     fflush(stdout);
 

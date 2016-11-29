@@ -110,6 +110,13 @@ public:
         sp.sched_priority = priority;
         return sched_setscheduler((pid_t) 0, SCHED_FIFO, &sp);
     }
+
+    virtual int setCpuAffinity(int cpuIndex) {
+        cpu_set_t cpu_set;
+        CPU_ZERO(&cpu_set);
+        CPU_SET(cpuIndex, &cpu_set);
+        return sched_setaffinity((pid_t) 0, sizeof(cpu_set_t), &cpu_set);
+    }
 #endif
 
 protected:

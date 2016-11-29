@@ -212,6 +212,14 @@ public:
                 } else {
                     setSchedFifoUsed(true);
                 }
+                if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
+                    err = mThread->setCpuAffinity(getRequestedCpu());
+                    if (err) {
+                        result = err;
+                    } else {
+                        setActualCpu(getRequestedCpu());
+                    }
+                }
             }
 
             // Render and write audio in a loop.
@@ -273,6 +281,7 @@ private:
     int32_t mCallbackLoopResult = 0;
     HostThread * mThread = NULL;
     LogTool    * mLogTool = NULL;
+
 
     void updateHardwareSimulator() {
         int64_t currentTime = HostTools::getNanoTime();

@@ -25,7 +25,8 @@
 #define SYNTHMARK_MAJOR_VERSION        1
 // #define SYNTHMARK_MINOR_VERSION        5
 // #define SYNTHMARK_MINOR_VERSION        6   /* Run under OpenSL thread for SCHED_FIFO. */
-#define SYNTHMARK_MINOR_VERSION        7   /* wakeup/render/delivery jitter */
+// #define SYNTHMARK_MINOR_VERSION        7   /* wakeup/render/delivery jitter */
+#define SYNTHMARK_MINOR_VERSION        8   /* changed SYNTHMARK_FRAMES_PER_BURST from 128 => 64 */
 
 #ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.
@@ -47,7 +48,7 @@
 
 // The number of frames that are consumed by DMA or a mixer at one time.
 #ifndef SYNTHMARK_FRAMES_PER_BURST
-#define SYNTHMARK_FRAMES_PER_BURST     128
+#define SYNTHMARK_FRAMES_PER_BURST     64
 #endif
 
 #ifndef SYNTHMARK_SAMPLE_RATE

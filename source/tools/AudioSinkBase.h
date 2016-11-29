@@ -22,12 +22,12 @@
 #include "SynthMark.h"
 #include "IAudioSinkCallback.h"
 
+#define SYNTHMARK_CPU_UNSPECIFIED      -1
+
 /**
  * Base class for an audio output device.
  * This may be implemented using an actual audio device,
  * or a realtime hardware simulator.
- *
- * You can im
  */
 class AudioSinkBase
 {
@@ -120,10 +120,31 @@ public:
         return 0;
     }
 
+    int getActualCpu() {
+        return mActualCpu;
+    }
+    int getRequestedCpu() {
+        return mRequestedCpu;
+    }
+
+    /**
+     * Set CPU affinity to the requested index.
+     * Index range is zero to a device specific maximum, typically 3 or 7.
+     */
+    void setRequestedCpu(int cpuAffinity) {
+        mRequestedCpu = cpuAffinity;
+    }
+protected:
+    void setActualCpu(int cpuAffinity) {
+        mActualCpu = cpuAffinity;
+    }
+
 private:
     IAudioSinkCallback *mCallback = NULL;
     int64_t        mFramesWritten = 0;
     volatile bool  mSchedFifoUsed = false;
+    int            mRequestedCpu = SYNTHMARK_CPU_UNSPECIFIED;
+    int            mActualCpu = SYNTHMARK_CPU_UNSPECIFIED;
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H

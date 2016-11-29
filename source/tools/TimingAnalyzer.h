@@ -124,7 +124,12 @@ public:
 
     double getDutyCycle() {
         int64_t lastActivePeriod = mExitTime - mEntryTime;
-        return (double) (mActiveTime - lastActivePeriod)/ (mEntryTime - mBaseTime);
+        int64_t totalTime = mEntryTime - mBaseTime;
+        if (totalTime <= 0) {
+            return 0.0;
+        } else {
+            return (double) (mActiveTime - lastActivePeriod) / totalTime;
+        }
     }
 
     BinCounter *getWakeupBins() {

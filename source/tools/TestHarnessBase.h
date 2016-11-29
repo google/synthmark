@@ -210,6 +210,7 @@ public:
         mLogTool->log("bufferCapacityInFrames = %6d\n", mAudioSink->getBufferCapacityInFrames());
         mLogTool->log("sampleRate             = %6d\n", mAudioSink->getSampleRate());
         mLogTool->log("measured CPU load      = %6.2f%%\n", mTimer.getDutyCycle() * 100);
+        mLogTool->log("CPU affinity           = %6d\n", mAudioSink->getActualCpu());
     }
 
     int32_t close() {
