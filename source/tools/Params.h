@@ -394,9 +394,12 @@ public:
 class ParamFloat : public ParamType<float> {
 public:
 
-    ParamFloat(const std::string &name, const std::string &description, float defaultValue,
-                 float min=0, float max =100) : ParamType<float>(name, description, PARAM_FLOAT,
-                                                           PARAM_HOLD_RANGE)
+    ParamFloat(const std::string &name,
+               const std::string &description,
+               float defaultValue,
+               float min = 0,
+               float max = 100) :
+    ParamType<float>(name, description, PARAM_FLOAT, PARAM_HOLD_RANGE)
     {
         mDefaultValue = defaultValue;
         mMin = min;
@@ -404,11 +407,13 @@ public:
         setValue(defaultValue);
     }
 
-    ParamFloat(const std::string &name, const std::string &description,
-                 std::vector<float> *pValues = NULL,
-                 int defaultIndexValue = -1,
-                 std::vector<std::string> *pNames = NULL) :
-    ParamType<float>(name, description, PARAM_FLOAT, PARAM_HOLD_LIST) {
+    ParamFloat(const std::string &name,
+               const std::string &description,
+               std::vector<float> *pValues = NULL,
+               int defaultIndexValue = -1,
+               std::vector<std::string> *pNames = NULL) :
+    ParamType<float>(name, description, PARAM_FLOAT, PARAM_HOLD_LIST)
+    {
         mPList.addParams(pValues, pNames);
         mPList.setDefaultIndex(defaultIndexValue);
         mPList.setCurrentIndex(defaultIndexValue);
