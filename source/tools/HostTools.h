@@ -99,25 +99,27 @@ public:
      *
      * WARNING: This call may not be permitted unless you are running as root!
      */
+    virtual int promote(int priority) {
 #if HOST_IS_APPLE
-    virtual int promote(int priority) {
         return -1;
-    }
 #else
-    virtual int promote(int priority) {
         struct sched_param sp;
         memset(&sp, 0, sizeof(sp));
         sp.sched_priority = priority;
         return sched_setscheduler((pid_t) 0, SCHED_FIFO, &sp);
+#endif
     }
 
-    virtual int setCpuAffinity(int cpuIndex) {
+    virtual int setCpuAffinity(int cpuIndex){
+#if HOST_IS_APPLE
+        return -1;
+#else 
         cpu_set_t cpu_set;
         CPU_ZERO(&cpu_set);
         CPU_SET(cpuIndex, &cpu_set);
         return sched_setaffinity((pid_t) 0, sizeof(cpu_set_t), &cpu_set);
-    }
 #endif
+    }
 
 protected:
     host_thread_proc_t *mProcedure = NULL;
