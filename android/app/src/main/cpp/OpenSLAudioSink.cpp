@@ -156,7 +156,8 @@ int32_t OpenSLAudioSink::open(int32_t sampleRate, int32_t samplesPerFrame,
     (void) slResult;
 
     // register callback on the buffer queue
-    slResult = (*bqPlayerBufferQueue)->RegisterCallback(bqPlayerBufferQueue, bqPlayerCallback, this);
+    slResult = (*bqPlayerBufferQueue)->RegisterCallback(bqPlayerBufferQueue, bqPlayerCallback,
+            this);
     assert(SL_RESULT_SUCCESS == slResult);
     (void) slResult;
 

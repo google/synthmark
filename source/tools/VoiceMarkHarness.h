@@ -56,7 +56,8 @@ public:
         mResult->setTestName(mTestName);
         mLogTool->log("---- Starting %s ----\n", mTestName.c_str());
 
-        float bufferSizeInMs = (float) (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
+        float bufferSizeInMs = (float)
+                        (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                         / mAudioSink->getSampleRate();
         mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
         mNumVoices = mInitialVoiceCount;

@@ -127,7 +127,8 @@ public:
 
         synth_float_t x2 = (x * x);
         /* Taylor expansion out to x**11/11! factored into multiply-adds */
-        synth_float_t cosine = 1 + (x2 * (x2 * (x2 * (x2 * ((x2 * (-IF10)) + IF8) - IF6) + IF4) - IF2));
+        synth_float_t cosine =
+                1 + (x2 * (x2 * (x2 * (x2 * ((x2 * (-IF10)) + IF8) - IF6) + IF4) - IF2));
         return cosine * negate;
     }
 
