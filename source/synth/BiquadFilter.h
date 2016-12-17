@@ -158,4 +158,3 @@ private:
 };
 
 #endif // SYNTHMARK_BIQUAD_FILTER_H
-

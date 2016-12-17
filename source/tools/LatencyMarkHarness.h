@@ -119,6 +119,4 @@ private:
     int32_t        mNumVoicesHigh = 0;
 };
 
-
 #endif // SYNTHMARK_LATENCYMARK_HARNESS_H
-

@@ -66,6 +66,4 @@ private:
     synth_float_t *mTable;
 };
 
-
 #endif // SYNTHMARK_LOOKUP_TABLE_H
-

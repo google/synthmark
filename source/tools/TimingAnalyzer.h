@@ -156,4 +156,3 @@ private:
 };
 
 #endif // SYNTHMARK_TIMING_ANALYZER_H
-

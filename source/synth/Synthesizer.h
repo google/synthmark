@@ -128,4 +128,3 @@ private:
 };
 
 #endif // SYNTHMARK_SYNTHESIZER_H
-

@@ -73,4 +73,5 @@ private:
     int32_t  mNumBins;
     int32_t  mIndex;
 };
+
 #endif //ANDROID_BINCOUNTER_H

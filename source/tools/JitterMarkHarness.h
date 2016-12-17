@@ -29,6 +29,7 @@
 
 #define JITTER_BINS_PER_MSEC  10
 #define JITTER_MAX_MSEC       100
+
 /**
  * Determine buffer latency required to avoid glitches.
  * The "LatencyMark" is the minimum buffer size that is a multiple
@@ -119,6 +120,4 @@ public:
 
 };
 
-
 #endif // SYNTHMARK_JITTERMARK_HARNESS_H
-

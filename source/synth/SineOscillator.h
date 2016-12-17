@@ -42,4 +42,3 @@ public:
 };
 
 #endif // SYNTHMARK_SINE_OSCILLATOR_H
-

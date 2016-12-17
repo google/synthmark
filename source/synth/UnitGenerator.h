@@ -52,4 +52,3 @@ public:
 };
 
 #endif // SYNTHMARK_UNIT_GENERATOR_H
-
