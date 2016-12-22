@@ -22,7 +22,8 @@
 #include "SynthMark.h"
 #include "IAudioSinkCallback.h"
 
-#define SYNTHMARK_CPU_UNSPECIFIED      -1
+#define SYNTHMARK_THREAD_PRIORITY_DEFAULT   2 // 2nd lowest priority, recommended by timmurray@
+#define SYNTHMARK_CPU_UNSPECIFIED           -1
 
 /**
  * Base class for an audio output device.

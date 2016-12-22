@@ -43,6 +43,9 @@
 #define DEFAULT_TEST_FRAMES_PER_BURST {8, 16, 32, 48, 64, 96, 128, 192, 256, 384, 512, 1024}
 #define DEFAULT_TEST_DURATIONS { 1, 2, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120, 180, 240, 300, \
     600, 1200, 1800, 2400, 3600}
+#define DEFAULT_TEST_TARGET_CPU_LOADS {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, \
+    0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}
+
 
 
 typedef enum {
@@ -138,8 +141,9 @@ public:
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
         ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
                                          &vFramesPerBurst, 4);
-        ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load",
-        SYNTHMARK_TARGET_CPU_LOAD, 0, 1.0);
+
+        std::vector<float> vCpuLoads = DEFAULT_TEST_TARGET_CPU_LOADS;
+        ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load", &vCpuLoads, 9);
 
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
 

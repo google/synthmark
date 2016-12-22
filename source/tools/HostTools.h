@@ -98,6 +98,8 @@ public:
      * Set the thread scheduler to SCHED_FIFO or host equivalent.
      *
      * WARNING: This call may not be permitted unless you are running as root!
+     *
+     * @return 0 on success, -1 on error
      */
     virtual int promote(int priority) {
 #if HOST_IS_APPLE

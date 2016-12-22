@@ -207,9 +207,7 @@ public:
         if (callback != NULL) {
             if (mUseRealThread) {
                 int err = mThread->promote(mThreadPriority);
-                if (err) {
-                    result = err;
-                } else {
+                if (err == 0) {
                     setSchedFifoUsed(true);
                 }
                 if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
@@ -277,7 +275,7 @@ private:
     int32_t mUnderrunCount = 0;
     float*  mBurstBuffer = NULL;   // contains output of the synthesizer
     bool    mUseRealThread = true; // TODO control using new settings object
-    int     mThreadPriority = 2;   // TODO control using new settings object
+    int     mThreadPriority = SYNTHMARK_THREAD_PRIORITY_DEFAULT;   // TODO control using new settings object
     int32_t mCallbackLoopResult = 0;
     HostThread * mThread = NULL;
     LogTool    * mLogTool = NULL;
