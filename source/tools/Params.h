@@ -573,4 +573,4 @@ private:
     std::vector<ParamBase*> mParams;
 };
 
-#endif
+#endif  // SYNTHMARK_PARAMS_H
