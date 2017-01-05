@@ -17,8 +17,8 @@
 #ifndef SYNTHMARK_PARAMS_H
 #define SYNTHMARK_PARAMS_H
 
-#define PARAM_MIN(a,b) ((a)<(b) ? (a) : (b))
-#define PARAM_MAX(a,b) ((a)>(b) ? (a) : (b))
+#define PARAM_MIN(a,b) ((a) < (b) ? (a) : (b))
+#define PARAM_MAX(a,b) ((a) > (b) ? (a) : (b))
 
 #define END_LINE "\n"
 
@@ -62,7 +62,7 @@ public:
     void addParams(std::vector<T> *pValues, std::vector<std::string> *pNames) {
         if (pValues != NULL) {
             for (int i = 0; i < pValues->size(); i++) {
-                if (pNames != NULL && pNames->size()< i) {
+                if (pNames != NULL && i < pNames->size()) {
                     addParamItem(pValues->at(i), pNames->at(i));
                 } else {
                     //convert to string...
@@ -326,12 +326,32 @@ public:
     std::string toString(int level = PRINT_ALL) {
         std::stringstream ss;
         switch (level) {
-            case PRINT_ALL:
+            case PRINT_ALL: {
                 ss << ParamBase::toString(level);
-                ss << "Value: " << mValue << END_LINE;
-                ss << "Default Value: " << mDefaultValue << END_LINE;
-                ss << "Min: " << mMin << END_LINE;
-                ss << "Max: " << mMax << END_LINE;
+                ss << "Value: " << getValueAsString() << END_LINE;
+                ss << "Default Value: " << getDefaultValueAsString() << END_LINE;
+                int holdType = getHoldType();
+                switch (holdType) {
+                    case PARAM_HOLD_RANGE:
+                        ss << "HoldType: RANGE" << END_LINE;
+                        ss << " Min: " << mMin << END_LINE;
+                        ss << " Max: " << mMax << END_LINE;
+                        break;
+                    case PARAM_HOLD_LIST: {
+                        ss << "HoldType: LIST" << END_LINE;
+                        int size = getListSize();
+                        ss << " Items: " << size << END_LINE;
+                        for (int i = 0; i < size; i++) {
+                            ParamListItem<T> *pItem = getParamFromList(i);
+                            ss << "  [" << i <<"] "<< pItem->getValue() << " , ";
+                            ss << pItem->getName() << END_LINE;
+                        }
+                    }
+                        break;
+                }
+
+
+            }
                 break;
             case PRINT_COMPACT:
                 ss << getDescription() <<" : ";
@@ -344,8 +364,36 @@ public:
         return ss.str();
     }
     std::string getValueAsString() {
+        int holdType = getHoldType();
         std::stringstream ss;
-        ss << mValue;
+        switch (holdType) {
+            default:
+            case PARAM_HOLD_RANGE:
+                ss << mValue;
+                break;
+            case PARAM_HOLD_LIST: {
+                 int index = getListCurrentIndex();
+                ss << getParamNameFromList(index);
+            }
+                break;
+        }
+        return ss.str();
+    }
+
+    std::string getDefaultValueAsString() {
+        int holdType = getHoldType();
+        std::stringstream ss;
+        switch (holdType) {
+            default:
+            case PARAM_HOLD_RANGE:
+                ss << mDefaultValue;
+                break;
+            case PARAM_HOLD_LIST: {
+                int index = getListDefaultIndex();
+                ss << getParamNameFromList(index);
+            }
+                break;
+        }
         return ss.str();
     }
     void setValueFromString(const std::string & value) {
@@ -364,7 +412,7 @@ class ParamInteger : public ParamType<int> {
 public:
 
     ParamInteger(const std::string &name, const std::string &description, int defaultValue,
-                    int min=0, int max =100) : ParamType<int>(name, description, PARAM_INTEGER,
+                    int min = 0, int max = 100) : ParamType<int>(name, description, PARAM_INTEGER,
                                                               PARAM_HOLD_RANGE)
     {
         mDefaultValue = defaultValue;
@@ -473,7 +521,7 @@ public:
     void cleanAll() {
         size_t count = mParams.size();
 
-        for (int i=0; i<count; i++) {
+        for (int i = 0; i < count; i++) {
             ParamBase * pBase = mParams[i];
             if (pBase != NULL) {
                 delete(pBase);
@@ -539,7 +587,7 @@ public:
     ParamBase * getParamByIndex(int index) {
         ParamBase *pBase = NULL;
 
-        if (index>=0 && index < mParams.size()) {
+        if (index >= 0 && index < mParams.size()) {
             pBase = mParams[index];
         }
         return pBase;

@@ -124,7 +124,7 @@ public class Param {
             int index = getListCurrentIndex();
             int defaultIndex = getListDefaultIndex();
             String name = getParamNameFromList(index);
-            result = String.format("%s.%s", name, index == defaultIndex ? "*" : "");
+            result = String.format("%s%s", name, index == defaultIndex ? "*" : "");
         }
         return result;
     }

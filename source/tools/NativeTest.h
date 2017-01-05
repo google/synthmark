@@ -17,6 +17,8 @@
 #ifndef ANDROID_NATIVETEST_H
 #define ANDROID_NATIVETEST_H
 
+#define HOST_IS_APPLE  defined(__APPLE__)
+
 #include <string>
 #include <sstream>
 #include "LogTool.h"
@@ -46,7 +48,8 @@
 #define DEFAULT_TEST_TARGET_CPU_LOADS {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, \
     0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}
 
-
+#define DEFAULT_CORE_AFFINITIES {-1, 0, 1, 2, 3, 4, 5, 6, 7}
+#define DEFAULT_CORE_AFFINITIES_LABELS {"UNSPECIFIED", "0", "1", "2", "3", "4", "5", "6", "7"}
 
 typedef enum {
     NATIVETEST_ID_MIN           = 0,
@@ -67,6 +70,8 @@ typedef enum {
 
 #define PARAMS_TARGET_CPU_LOAD  "target_cpu_load"
 #define PARAMS_NUM_VOICES "num_voices"
+#define PARAMS_NUMB_VOICES_HIGH "num_voices_high"
+#define PARAMS_CORE_AFFINITY "core_affinity"
 
 //============================
 // NativeTestUnit
@@ -127,7 +132,7 @@ public:
 
     }
 
-    int init()  {
+    int init() {
         //Register parameters
 
         std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
@@ -158,6 +163,14 @@ public:
         mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
+#if !HOST_IS_APPLE
+        std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
+        std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
+        ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
+            &vCoreAffinityLabels);
+        mParams.addParam(&paramCoreAffinity);
+#endif
+
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
@@ -177,7 +190,13 @@ public:
         int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
 
+#if !HOST_IS_APPLE
+        int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
+        audioSink.setRequestedCpu(CoreAffinity);
+#endif
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
+
+
 
         harness.open(sampleRate,
                      samplesPerFrame,
@@ -208,7 +227,7 @@ public:
 
     }
 
-    int init()  {
+    int init() {
         //Register parameters
 
         std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
@@ -226,6 +245,9 @@ public:
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
         SYNTHMARK_NUM_VOICES_LATENCY, 1, 300);
 
+        ParamInteger paramNumVoicesHigh(PARAMS_NUMB_VOICES_HIGH, "Number of Voices High", 0, 0,
+        300);
+
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
 
         std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
@@ -236,8 +258,17 @@ public:
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
         mParams.addParam(&paramNumVoices);
+        mParams.addParam(&paramNumVoicesHigh);
         mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
+
+#if !HOST_IS_APPLE
+        std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
+        std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
+        ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
+                                      &vCoreAffinityLabels);
+        mParams.addParam(&paramCoreAffinity);
+#endif
 
         return SYNTHMARK_RESULT_SUCCESS;
     }
@@ -255,9 +286,16 @@ public:
         int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
 
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
+        int32_t numVoicesHigh = mParams.getValueFromInt(PARAMS_NUMB_VOICES_HIGH);
         int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
+
+#if !HOST_IS_APPLE
+        int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
+        audioSink.setRequestedCpu(CoreAffinity);
+#endif
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
+
 
         harness.open(sampleRate,
                      samplesPerFrame,
@@ -266,6 +304,7 @@ public:
 
         harness.setDelayNotesOn(noteOnDelay);
         harness.setNumVoices(numVoices);
+        harness.setNumVoicesHigh(numVoicesHigh);
         harness.measure(numSeconds);
         harness.close();
 
@@ -288,7 +327,7 @@ public:
     TestJitterMark(LogTool *logTool = NULL) : NativeTestUnit("JitterMark", logTool) {
     }
 
-    int init()  {
+    int init() {
         //Register parameters
 
         std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
@@ -320,6 +359,14 @@ public:
         mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
+#if !HOST_IS_APPLE
+        std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
+        std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
+        ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
+                                      &vCoreAffinityLabels);
+        mParams.addParam(&paramCoreAffinity);
+#endif
+
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
@@ -339,6 +386,10 @@ public:
         int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
 
+#if !HOST_IS_APPLE
+        int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
+        audioSink.setRequestedCpu(CoreAffinity);
+#endif
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
 
         harness.open(sampleRate,
@@ -367,7 +418,7 @@ protected:
 //Native Test manager.
 class NativeTest {
 public:
-    NativeTest() :  mCurrentStatus(NATIVETEST_STATUS_UNDEFINED),
+    NativeTest() : mCurrentStatus(NATIVETEST_STATUS_UNDEFINED),
     mTestVoiceMark(&mLog), mTestLatencyMark(&mLog), mTestJitterMark(&mLog){
         mLog.setStream(&mStream);
         initTests();
