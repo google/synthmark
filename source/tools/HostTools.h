@@ -115,7 +115,7 @@ public:
     virtual int setCpuAffinity(int cpuIndex){
 #if HOST_IS_APPLE
         return -1;
-#else 
+#else
         cpu_set_t cpu_set;
         CPU_ZERO(&cpu_set);
         CPU_SET(cpuIndex, &cpu_set);
