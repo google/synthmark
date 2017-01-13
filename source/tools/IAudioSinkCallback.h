@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_AUDIOSINKCALLBACK_H
-#define ANDROID_AUDIOSINKCALLBACK_H
+#ifndef ANDROID_IAUDIOSINKCALLBACK_H
+#define ANDROID_IAUDIOSINKCALLBACK_H
 
 #include <cstdint>
 
@@ -37,4 +37,5 @@ public:
 
     virtual audio_sink_callback_result_t renderAudio(float *buffer, int32_t numFrames) = 0;
 };
-#endif //ANDROID_AUDIOSINKCALLBACK_H
+
+#endif //ANDROID_IAUDIOSINKCALLBACK_H
