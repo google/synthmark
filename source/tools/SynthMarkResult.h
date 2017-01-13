@@ -17,7 +17,6 @@
 #ifndef ANDROID_SYNTHMARKRESULT_H
 #define ANDROID_SYNTHMARKRESULT_H
 
-
 #include <cstdint>
 #include <string>
 

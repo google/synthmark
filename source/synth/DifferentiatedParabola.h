@@ -74,4 +74,3 @@ private:
 };
 
 #endif // SYNTHMARK_DIFFERENTIATED_PARABOLA_H
-

@@ -101,4 +101,3 @@ private:
 };
 
 #endif // SYNTHMARK_PITCH_TO_FREQUENCY_H
-

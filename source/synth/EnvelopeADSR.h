@@ -224,4 +224,3 @@ private:
 };
 
 #endif // SYNTHMARK_ENVELOPE_ADSR_H
-

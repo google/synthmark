@@ -31,11 +31,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *buttonPickTest;
 @property (weak, nonatomic) IBOutlet UIButton *buttonSettings;
 
-
-
-
-
 -(IBAction) buttonPressed:(id)sender;
 
 @end
-

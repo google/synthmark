@@ -69,4 +69,3 @@ private:
 };
 
 #endif // SYNTHMARK_SQUARE_OSCILLATOR_DPW_H
-

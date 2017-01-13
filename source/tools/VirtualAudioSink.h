@@ -298,4 +298,3 @@ private:
 };
 
 #endif // SYNTHMARK_VIRTUAL_AUDIO_SINK_H
-

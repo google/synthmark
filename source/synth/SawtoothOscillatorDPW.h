@@ -49,4 +49,3 @@ private:
 };
 
 #endif // SYNTHMARK_SAWTOOTH_OSCILLATOR_DPW_H
-

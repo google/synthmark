@@ -149,4 +149,3 @@ private:
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H
-

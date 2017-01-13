@@ -153,6 +153,4 @@ private:
     int32_t mInitialVoiceCount = 10;
 };
 
-
 #endif // SYNTHMARK_VOICEMARK_HARNESS_H
-

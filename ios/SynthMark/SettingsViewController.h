@@ -28,8 +28,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *buttonDefaults;
 @property (weak, nonatomic) IBOutlet UITableView *tableViewParams;
 
-
-
 -(IBAction) buttonPressed:(id)sender;
 
 @end

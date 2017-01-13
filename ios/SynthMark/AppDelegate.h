@@ -25,4 +25,3 @@
 @property (strong, nonatomic) AppObject *m_appObject;
 
 @end
-

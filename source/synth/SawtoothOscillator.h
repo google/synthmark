@@ -76,4 +76,3 @@ private:
 };
 
 #endif // SYNTHMARK_SAWTOOTH_OSCILLATOR_H
-
