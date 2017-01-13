@@ -69,7 +69,8 @@ public:
                 }
                 // Reset clock so we get a full run without glitches.
                 float glitchTime = ((float)mFrameCounter / mSampleRate);
-                mLogTool->log("Audio glitch at %.2fs, restarting test with buffer size %d = %d * %d\n",
+                mLogTool->log("Audio glitch at %.2fs, "
+                              "restarting test with buffer size %d = %d * %d\n",
                               glitchTime, actualSize,
                               actualSize / mFramesPerBurst, mFramesPerBurst);
                 mFrameCounter = 0;
@@ -106,7 +107,8 @@ public:
     int32_t getCurrentNumVoices() override {
         // Toggle back and forth between high and low
         if (mNumVoicesHigh > 0) {
-            return ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2)) ? mNumVoices : mNumVoicesHigh;
+            return ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2)) ?
+                    mNumVoices : mNumVoicesHigh;
         } else {
             return mNumVoices;
         }

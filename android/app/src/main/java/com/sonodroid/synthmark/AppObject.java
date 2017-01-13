@@ -266,8 +266,8 @@ public class AppObject extends Application {
 
             // Acquire a wakelock
             PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                    "SynthMarkWakeLock");
+            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK, "SynthMarkWakeLock");
             wakeLock.acquire();
 
             try {

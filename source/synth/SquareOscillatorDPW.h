@@ -42,7 +42,8 @@ public:
 
     virtual ~SquareOscillatorDPW() = default;
 
-    virtual inline synth_float_t translatePhase(synth_float_t phase1, synth_float_t phaseIncrement) {
+    virtual inline synth_float_t translatePhase(synth_float_t phase1,
+            synth_float_t phaseIncrement) {
         synth_float_t val1 = dpw1.next(phase1, phaseIncrement);
 
         /* Generate second sawtooth so we can add them together. */
