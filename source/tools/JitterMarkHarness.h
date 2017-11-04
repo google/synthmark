@@ -17,10 +17,11 @@
 #include <cstdint>
 #include <iomanip>
 #include <math.h>
+#include "AudioSinkBase.h"
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
+#include "tools/CpuAnalyzer.h"
 #include "tools/TimingAnalyzer.h"
-#include "AudioSinkBase.h"
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 
@@ -81,12 +82,12 @@ public:
         BinCounter *deliveryBins = mTimer.getDeliveryBins();
         if (wakeupBins != NULL && renderBins != NULL  && deliveryBins != NULL ) {
             int32_t numBins = deliveryBins->getNumBins();
-            int32_t *wakeupCounts = wakeupBins->getBins();
-            int32_t *wakeupLast = wakeupBins->getLastMarkers();
-            int32_t *renderCounts = renderBins->getBins();
-            int32_t *renderLast = renderBins->getLastMarkers();
-            int32_t *deliveryCounts = deliveryBins->getBins();
-            int32_t *deliveryLast = deliveryBins->getLastMarkers();
+            const int32_t *wakeupCounts = wakeupBins->getBins();
+            const int32_t *wakeupLast = wakeupBins->getLastMarkers();
+            const int32_t *renderCounts = renderBins->getBins();
+            const int32_t *renderLast = renderBins->getLastMarkers();
+            const int32_t *deliveryCounts = deliveryBins->getBins();
+            const int32_t *deliveryLast = deliveryBins->getLastMarkers();
             resultMessage << " bin#,  msec,"
                     << "   wakeup#,  wlast,"
                     << "   render#,  rlast,"
@@ -111,7 +112,10 @@ public:
         }
         resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
 
+        resultMessage << mCpuAnalyzer.dump();
+
         mResult->setMeasurement(measurement);
+
         mResult->setResultMessage(resultMessage.str());
     }
 

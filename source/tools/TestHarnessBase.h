@@ -19,13 +19,17 @@
 
 #include <cstdint>
 #include <math.h>
-#include "SynthMark.h"
-#include "synth/Synthesizer.h"
-#include "tools/TimingAnalyzer.h"
+
 #include "AudioSinkBase.h"
-#include "tools/LogTool.h"
-#include "SynthMarkResult.h"
+#include "BinCounter.h"
+#include "HostTools.h"
 #include "IAudioSinkCallback.h"
+#include "SynthMark.h"
+#include "SynthMarkResult.h"
+#include "synth/Synthesizer.h"
+#include "tools/CpuAnalyzer.h"
+#include "tools/TimingAnalyzer.h"
+#include "tools/LogTool.h"
 
 /**
  * Base class for running a test.
@@ -38,6 +42,7 @@ public:
     : mSynth()
     , mAudioSink(NULL)
     , mTimer()
+    , mCpuAnalyzer()
     , mLogTool(NULL)
     , mResult(result)
     , mSampleRate(SYNTHMARK_SAMPLE_RATE)
@@ -154,6 +159,8 @@ public:
         mSynth.renderStereo(buffer, numFrames);
         mTimer.markExit();
 
+        mCpuAnalyzer.recordCpu(); // at end so we have less affect on timing
+
         mFrameCounter += numFrames;
         mLogTool->setVar1(mFrameCounter);
 
@@ -245,6 +252,7 @@ protected:
     Synthesizer    mSynth;
     AudioSinkBase *mAudioSink;
     TimingAnalyzer mTimer;
+    CpuAnalyzer    mCpuAnalyzer;
     LogTool       *mLogTool;
     SynthMarkResult *mResult;
     std::string    mTestName;

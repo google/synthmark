@@ -27,8 +27,8 @@
 // #define SYNTHMARK_MINOR_VERSION        6   /* Run under OpenSL thread for SCHED_FIFO. */
 // #define SYNTHMARK_MINOR_VERSION        7   /* wakeup/render/delivery jitter */
 // #define SYNTHMARK_MINOR_VERSION        8   /* changed SYNTHMARK_FRAMES_PER_BURST from 128 => 64 */
-#define SYNTHMARK_MINOR_VERSION        9   /* Fixed iOS version */
-
+// #define SYNTHMARK_MINOR_VERSION        9   /* Fixed iOS version */
+#define SYNTHMARK_MINOR_VERSION        10   /* Added CPU migration histogram */
 
 #ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.

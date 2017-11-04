@@ -57,13 +57,15 @@ public:
         mLastMarkers = NULL;
     }
 
-    int32_t getNumBins() {
+    int32_t getNumBins() const {
         return mNumBins;
     }
-    int32_t *getBins() {
+
+    const int32_t *getBins() const {
         return mBins;
     }
-    int32_t *getLastMarkers() {
+
+    const int32_t *getLastMarkers()  const {
         return mLastMarkers;
     }
 

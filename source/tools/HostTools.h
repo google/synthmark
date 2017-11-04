@@ -123,6 +123,14 @@ public:
 #endif
     }
 
+    static int getCpu() {
+#if HOST_IS_APPLE
+        return -1;
+#else
+        return sched_getcpu();
+#endif
+    }
+
 protected:
     host_thread_proc_t *mProcedure = NULL;
     void *mArgument = NULL;
