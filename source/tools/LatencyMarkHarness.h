@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <sstream>
 #include <math.h>
+
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
 #include "tools/TimingAnalyzer.h"
@@ -48,10 +49,64 @@ public:
     virtual ~LatencyMarkHarness() {
     }
 
+    // Print notices of glitches and restarts in another thread
+    // so that the printing will not cause a glitch.
+    void startMonitorCallback() {
+        mMonitorEnabled = true;
+        mMonitorThread = new HostThread();
+        int err = mMonitorThread->start(threadProcWrapper, this);
+        if (err != 0) {
+            delete mMonitorThread;
+            mMonitorThread = nullptr;
+        }
+    }
+
+    void stopMonitorCallback() {
+        if (mMonitorThread != nullptr) {
+            mMonitorEnabled = false;
+            mMonitorThread->join();
+            delete mMonitorThread;
+            mMonitorThread = nullptr;
+        }
+    }
+
+    //
+    void monitorCallback() {
+        int32_t previousBufferSize = mAudioSink->getBufferSizeInFrames();
+        while (mMonitorEnabled) {
+            HostTools::sleepForNanoseconds(200000 * SYNTHMARK_NANOS_PER_MICROSECOND);
+            int32_t currentBufferSize = mAudioSink->getBufferSizeInFrames();
+            if (currentBufferSize != previousBufferSize) {
+                printf("Audio glitch at %.2fs, "
+                               "restarting test with buffer size %d = %d * %d\n",
+                       mGlitchTime, currentBufferSize,
+                       currentBufferSize / mFramesPerBurst, mFramesPerBurst);
+                fflush (stdout);
+                previousBufferSize = currentBufferSize;
+            }
+        }
+    }
+
+    static void * threadProcWrapper(void *arg) {
+        LatencyMarkHarness *harness = (LatencyMarkHarness *) arg;
+        harness->monitorCallback();
+        return NULL;
+    }
+
+// Run the benchmark.
+    int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
+        startMonitorCallback();
+        int32_t result = TestHarnessBase::runTest(sampleRate, framesPerBurst, numSeconds);
+        stopMonitorCallback();
+        return result;
+    };
+
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;
         mAudioSink->setBufferSizeInFrames(mFramesPerBurst);
         mLogTool->log("---- Measure latency ---- #voices = %d\n", mNumVoices);
+
+        setupJitterRecording();
     }
 
     virtual int32_t onBeforeNoteOn() override {
@@ -65,18 +120,15 @@ public:
                 int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
                 if (actualSize < desiredSizeInFrames) {
                     mLogTool->log("ERROR - at maximum buffer size and still glitching\n");
-                    return -1;
+                    return SYNTHMARK_RESULT_UNRECOVERABLE_ERROR;
                 }
+
                 // Reset clock so we get a full run without glitches.
-                float glitchTime = ((float)mFrameCounter / mSampleRate);
-                mLogTool->log("Audio glitch at %.2fs, "
-                              "restarting test with buffer size %d = %d * %d\n",
-                              glitchTime, actualSize,
-                              actualSize / mFramesPerBurst, mFramesPerBurst);
+                mGlitchTime = ((float)mFrameCounter / mSampleRate);
                 mFrameCounter = 0;
             }
         }
-        return 0;
+        return SYNTHMARK_RESULT_SUCCESS;
     }
 
     /**
@@ -87,14 +139,15 @@ public:
         double latencyMsec = 1000.0 * sizeFrames / mSampleRate;
 
         std::stringstream resultMessage;
-        resultMessage << sizeFrames << " = " << latencyMsec << " msec at burst size " <<
+        resultMessage << dumpJitter();
+        resultMessage << "Latency is " << sizeFrames << " frames = " << latencyMsec << " msec at burst size " <<
                 mFramesPerBurst << " frames"
                 << std::endl;
+
         mResult->setResultMessage(resultMessage.str());
         mResult->setResultCode(SYNTHMARK_RESULT_SUCCESS);
         mResult->setMeasurement((double) sizeFrames);
     }
-
 
     void setNumVoicesHigh(int32_t numVoicesHigh) {
         mNumVoicesHigh = numVoicesHigh;
@@ -108,17 +161,20 @@ public:
         // Toggle back and forth between high and low
         if (mNumVoicesHigh > 0) {
             return ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2)) ?
-                    mNumVoices : mNumVoicesHigh;
+                   mNumVoices : mNumVoicesHigh;
         } else {
             return mNumVoices;
         }
     }
 
-    int32_t mPreviousUnderrunCount;
-
 private:
 
-    int32_t        mNumVoicesHigh = 0;
+    int32_t           mPreviousUnderrunCount = 0;
+    int32_t           mNumVoicesHigh = 0;
+
+    HostThread       *mMonitorThread = nullptr;
+    bool              mMonitorEnabled = true; // atomic is not sufficiently portable
+    float             mGlitchTime;
 };
 
 #endif // SYNTHMARK_LATENCYMARK_HARNESS_H

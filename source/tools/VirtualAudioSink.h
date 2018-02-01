@@ -104,37 +104,12 @@ public:
         return mMaxBufferCapacityInFrames;
     }
 
-    /**
-     * Sleep until the specified time.
-     * @return the time we actually woke up
-     */
-    static int64_t sleepUntilNanoTime(int64_t wakeupTime) {
-        const int32_t kMaxMicros = 999999; // from usleep documentation
-        int64_t currentTime = HostTools::getNanoTime();
-        int64_t nanosToSleep = wakeupTime - currentTime;
-        while (nanosToSleep > 0) {
-            int32_t microsToSleep = (int32_t)
-                    ((nanosToSleep + SYNTHMARK_NANOS_PER_MICROSECOND - 1)
-                    / SYNTHMARK_NANOS_PER_MICROSECOND);
-            if (microsToSleep < 1) {
-                microsToSleep = 1;
-            } else if (microsToSleep > kMaxMicros) {
-                microsToSleep = kMaxMicros;
-            }
-            //printf("Sleep for %d micros\n", microsToSleep);
-            usleep(microsToSleep);
-            currentTime = HostTools::getNanoTime();
-            nanosToSleep = wakeupTime - currentTime;
-        }
-        return currentTime;
-    }
-
     int32_t sleepUntilRoomAvailable() {
         updateHardwareSimulator();
         int32_t roomAvailable = getEmptyFramesAvailable();
         while (roomAvailable <= 0) {
             // Calculate when the next buffer will be consumed.
-            sleepUntilNanoTime(mNextHardwareReadTimeNanos);
+            HostTools::sleepUntilNanoTime(mNextHardwareReadTimeNanos);
             updateHardwareSimulator();
             roomAvailable = getEmptyFramesAvailable();
         }
@@ -221,17 +196,20 @@ public:
             }
 
             // Render and write audio in a loop.
-            IAudioSinkCallback::audio_sink_callback_result_t callbackResult
-                    = IAudioSinkCallback::CALLBACK_CONTINUE;
-            while (callbackResult == IAudioSinkCallback::CALLBACK_CONTINUE
+            IAudioSinkCallback::Result callbackResult
+                    = IAudioSinkCallback::Result::Continue;
+            while (callbackResult == IAudioSinkCallback::Result::Continue
                     && result == SYNTHMARK_RESULT_SUCCESS) {
                 // Gather audio data from the synthesizer.
                 callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
-                if (callbackResult == IAudioSinkCallback::CALLBACK_CONTINUE) {
+
+                if (callbackResult == IAudioSinkCallback::Result::Continue) {
                     // Output the audio using a blocking write.
                     if (write(mBurstBuffer, mFramesPerBurst) < 0) {
                         result = SYNTHMARK_RESULT_AUDIO_SINK_WRITE_FAILURE;
                     }
+                } else if (callbackResult != IAudioSinkCallback::Result::Finished) {
+                        result = callbackResult;
                 }
             }
         }
@@ -251,8 +229,8 @@ public:
     virtual int32_t runCallbackLoop() override {
         if (mThread != NULL) {
             int err = mThread->join();
-            if (err == 0) {
-                mCallbackLoopResult = 0;
+            if (err != 0) {
+                printf("Could not join() callback thread! err = %d\n", err);
             }
             delete mThread;
             mThread = NULL;
@@ -261,7 +239,6 @@ public:
             return innerCallbackLoop();
         }
     }
-
 
 private:
     int32_t mSampleRate = SYNTHMARK_SAMPLE_RATE;

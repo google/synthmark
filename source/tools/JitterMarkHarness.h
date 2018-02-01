@@ -28,8 +28,6 @@
 #ifndef SYNTHMARK_JITTERMARK_HARNESS_H
 #define SYNTHMARK_JITTERMARK_HARNESS_H
 
-#define JITTER_BINS_PER_MSEC  10
-#define JITTER_MAX_MSEC       100
 
 /**
  * Determine buffer latency required to avoid glitches.
@@ -39,31 +37,17 @@
 class JitterMarkHarness : public TestHarnessBase {
 public:
     JitterMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool *logTool = NULL)
-    : TestHarnessBase(audioSink, result, logTool)
-    , mNanosPerBin(1)
-    {
+    : TestHarnessBase(audioSink, result, logTool) {
         mTestName = "JitterMark";
     }
 
     virtual ~JitterMarkHarness() {
     }
 
-    virtual void onBeginMeasurement() override {
+    void onBeginMeasurement() override {
         mResult->setTestName(mTestName);
         mLogTool->log("---- Measure scheduling jitter ---- #voices = %d\n", mNumVoices);
-        /*
-        int32_t burstsPerBuffer = 8;
-        int32_t desiredSizeInFrames = burstsPerBuffer * mFramesPerBurst;
-        int32_t actualSizeInFrames = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
-        if (actualSizeInFrames < desiredSizeInFrames) {
-            mLogTool->log("WARNING - could not set desired buffer size\n");
-        }
-         */
-        // set resolution and size of histogram
-        int32_t nanosPerMilli = (int32_t)(SYNTHMARK_NANOS_PER_SECOND / SYNTHMARK_MILLIS_PER_SECOND);
-        mNanosPerBin = nanosPerMilli / JITTER_BINS_PER_MSEC;
-        int32_t numBins = JITTER_MAX_MSEC * JITTER_BINS_PER_MSEC;
-        mTimer.setupJitterRecording(mNanosPerBin, numBins);
+        setupJitterRecording();
     }
 
     virtual int32_t onBeforeNoteOn() override {
@@ -76,51 +60,14 @@ public:
         std::stringstream resultMessage;
         resultMessage << mTestName << " = " << measurement << std::endl;
 
-        // Print jitter histogram
-        BinCounter *wakeupBins = mTimer.getWakeupBins();
-        BinCounter *renderBins = mTimer.getRenderBins();
-        BinCounter *deliveryBins = mTimer.getDeliveryBins();
-        if (wakeupBins != NULL && renderBins != NULL  && deliveryBins != NULL ) {
-            int32_t numBins = deliveryBins->getNumBins();
-            const int32_t *wakeupCounts = wakeupBins->getBins();
-            const int32_t *wakeupLast = wakeupBins->getLastMarkers();
-            const int32_t *renderCounts = renderBins->getBins();
-            const int32_t *renderLast = renderBins->getLastMarkers();
-            const int32_t *deliveryCounts = deliveryBins->getBins();
-            const int32_t *deliveryLast = deliveryBins->getLastMarkers();
-            resultMessage << " bin#,  msec,"
-                    << "   wakeup#,  wlast,"
-                    << "   render#,  rlast,"
-                    << " delivery#,  clast" << std::endl;
-            for (int i = 0; i < numBins; i++) {
-                if (wakeupCounts[i] > 0 || renderCounts[i] > 0 || deliveryCounts[i] > 0) {
-                    double msec = (double) i * mNanosPerBin * SYNTHMARK_MILLIS_PER_SECOND
-                                  / SYNTHMARK_NANOS_PER_SECOND;
-                    resultMessage << "  " << std::setw(3) << i
-                    << ", " << std::fixed << std::setw(5) << std::setprecision(2) << msec
-                    << ", " << std::setw(9) << wakeupCounts[i]
-                    << ", " << std::setw(6) << wakeupLast[i]
-                    << ", " << std::setw(9) << renderCounts[i]
-                    << ", " << std::setw(6) << renderLast[i]
-                    << ", " << std::setw(9) << deliveryCounts[i]
-                    << ", " << std::setw(6) << deliveryLast[i]
-                    << std::endl;
-                }
-            }
-        } else {
-            resultMessage << "ERROR NULL BinCounter!\n";
-        }
+        resultMessage << dumpJitter();
         resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
-
         resultMessage << mCpuAnalyzer.dump();
 
         mResult->setMeasurement(measurement);
-
         mResult->setResultMessage(resultMessage.str());
     }
 
-
-    int32_t mNanosPerBin;
 
 };
 

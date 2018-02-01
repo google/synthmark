@@ -29,13 +29,12 @@ public:
 
     virtual ~IAudioSinkCallback() = default;
 
-    typedef enum {
-        CALLBACK_ERROR = -1,
-        CALLBACK_CONTINUE = 0,
-        CALLBACK_FINISHED = 1,   // stop calling the callback
-    } audio_sink_callback_result_t;
+    enum Result : int32_t {
+        Continue = 0,
+        Finished = 1,   // all done so stop calling the callback
+    };
 
-    virtual audio_sink_callback_result_t renderAudio(float *buffer, int32_t numFrames) = 0;
+    virtual Result renderAudio(float *buffer, int32_t numFrames) = 0;
 };
 
 #endif //ANDROID_IAUDIOSINKCALLBACK_H

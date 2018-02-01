@@ -27,9 +27,8 @@
 #include <mach/mach_time.h>
 #endif
 
-#define NANOS_PER_SECOND ((int64_t)1000000000)
-
-#define HOST_IS_APPLE  defined(__APPLE__)
+constexpr int64_t NANOS_PER_MICROSECOND  = 1000;
+constexpr int64_t NANOS_PER_SECOND       = 1000000 * NANOS_PER_MICROSECOND;
 
 /**
  * Put all low level host platform dependencies in this file.
@@ -41,7 +40,7 @@ public:
     /**
      * @return system time in nanoseconds, CLOCK_MONOTONIC on Linux
      */
-#if HOST_IS_APPLE
+#if defined(__APPLE__)
     static int64_t getNanoTime() {
         mach_timebase_info_data_t info;
         mach_timebase_info(&info);
@@ -57,6 +56,41 @@ public:
         return (res.tv_sec * NANOS_PER_SECOND) + res.tv_nsec;
     }
 #endif
+
+    /**
+     * Sleep for the specified nanoseconds.
+     * @return the time we actually woke up
+     */
+    static int64_t sleepForNanoseconds(int64_t sleepTime) {
+        int64_t wakeupTime = getNanoTime() + sleepTime;
+        return sleepUntilNanoTime(wakeupTime);
+    }
+
+    /**
+     * Sleep until the specified time.
+     * @return the time we actually woke up
+     */
+    static int64_t sleepUntilNanoTime(int64_t wakeupTime) {
+        const int32_t kMaxMicros = 999999; // from usleep documentation
+        int64_t currentTime = getNanoTime();
+        int64_t nanosToSleep = wakeupTime - currentTime;
+        while (nanosToSleep > 0) {
+            int32_t microsToSleep = (int32_t)
+                    ((nanosToSleep + SYNTHMARK_NANOS_PER_MICROSECOND - 1)
+                     / SYNTHMARK_NANOS_PER_MICROSECOND);
+            if (microsToSleep < 1) {
+                microsToSleep = 1;
+            } else if (microsToSleep > kMaxMicros) {
+                microsToSleep = kMaxMicros;
+            }
+            //printf("Sleep for %d micros\n", microsToSleep);
+            usleep(microsToSleep);
+            currentTime = getNanoTime();
+            nanosToSleep = wakeupTime - currentTime;
+        }
+        return currentTime;
+    }
+
 };
 
 typedef void * host_thread_proc_t(void *arg);
@@ -102,7 +136,7 @@ public:
      * @return 0 on success, -1 on error
      */
     virtual int promote(int priority) {
-#if HOST_IS_APPLE
+#if defined(__APPLE__)
         return -1;
 #else
         struct sched_param sp;
@@ -113,7 +147,7 @@ public:
     }
 
     virtual int setCpuAffinity(int cpuIndex){
-#if HOST_IS_APPLE
+#if defined(__APPLE__)
         return -1;
 #else
         cpu_set_t cpu_set;
@@ -124,7 +158,7 @@ public:
     }
 
     static int getCpu() {
-#if HOST_IS_APPLE
+#if defined(__APPLE__)
         return -1;
 #else
         return sched_getcpu();
@@ -133,11 +167,11 @@ public:
 
 protected:
     host_thread_proc_t *mProcedure = NULL;
-    void *mArgument = NULL;
-    volatile bool mRunning = false;
-    bool mDead = false;
+    void               *mArgument = NULL;
+    volatile bool       mRunning = false;
+    bool                mDead = false;
 
-    pthread_t mPthread;
+    pthread_t           mPthread;
 };
 
 class HostThreadFactory

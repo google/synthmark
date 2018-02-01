@@ -28,7 +28,8 @@
 // #define SYNTHMARK_MINOR_VERSION        7   /* wakeup/render/delivery jitter */
 // #define SYNTHMARK_MINOR_VERSION        8   /* changed SYNTHMARK_FRAMES_PER_BURST from 128 => 64 */
 // #define SYNTHMARK_MINOR_VERSION        9   /* Fixed iOS version */
-#define SYNTHMARK_MINOR_VERSION        10   /* Added CPU migration histogram */
+// #define SYNTHMARK_MINOR_VERSION        10  /* Added CPU migration histogram */
+#define SYNTHMARK_MINOR_VERSION        11  /* Added UtilizationMark, print Jitter after Latency */
 
 #ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.
@@ -67,10 +68,10 @@
 #endif
 
 // These should not be changed.
-#define SYNTHMARK_MILLIS_PER_SECOND  ((int64_t)1000)
-#define SYNTHMARK_MICROS_PER_SECOND  ((int64_t)1000000)
-#define SYNTHMARK_NANOS_PER_MICROSECOND  ((int64_t)1000)
-#define SYNTHMARK_NANOS_PER_SECOND   ((int64_t)1000000000)
+constexpr int64_t SYNTHMARK_MILLIS_PER_SECOND      = 1000;
+constexpr int64_t SYNTHMARK_MICROS_PER_SECOND      = 1000000;
+constexpr int64_t SYNTHMARK_NANOS_PER_MICROSECOND  = 1000;
+constexpr int64_t SYNTHMARK_NANOS_PER_SECOND       = 1000000000;
 
 typedef float synth_float_t;
 

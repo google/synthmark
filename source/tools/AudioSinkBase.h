@@ -67,7 +67,7 @@ public:
      */
     virtual int32_t runCallbackLoop() = 0;
 
-    virtual IAudioSinkCallback::audio_sink_callback_result_t
+    virtual IAudioSinkCallback::Result
             fireCallback(float *buffer, int32_t numFrames) {
         return mCallback->renderAudio(buffer, numFrames);
     }

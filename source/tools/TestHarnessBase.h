@@ -31,6 +31,9 @@
 #include "tools/TimingAnalyzer.h"
 #include "tools/LogTool.h"
 
+constexpr int JITTER_BINS_PER_MSEC  = 10;
+constexpr int JITTER_MAX_MSEC       = 100;
+
 /**
  * Base class for running a test.
  */
@@ -69,12 +72,34 @@ public:
         }
     }
 
+    void setupJitterRecording() {
+        // set resolution and size of histogram
+        int32_t nanosPerMilli = (int32_t) (SYNTHMARK_NANOS_PER_SECOND /
+                                           SYNTHMARK_MILLIS_PER_SECOND);
+        mNanosPerBin = nanosPerMilli / JITTER_BINS_PER_MSEC;
+        int32_t numBins = JITTER_MAX_MSEC * JITTER_BINS_PER_MSEC;
+        mTimer.setupJitterRecording(mNanosPerBin, numBins);
+    }
+
     // Customize the test by defining these virtual methods.
     virtual void onBeginMeasurement() = 0;
 
+    // TODO Use Result type return value.
     virtual int32_t onBeforeNoteOn() = 0;
 
     virtual void onEndMeasurement() = 0;
+
+    // Run the benchmark.
+    virtual int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) {
+        int32_t err = open(sampleRate, SAMPLES_PER_FRAME,
+                           SYNTHMARK_FRAMES_PER_RENDER, framesPerBurst);
+        if (err) {
+            return err;
+        }
+        err = measure(numSeconds);
+        close();
+        return err;
+    };
 
     int32_t open(int32_t sampleRate,
             int32_t samplesPerFrame,
@@ -111,12 +136,12 @@ public:
     }
 
     // This is called by the AudioSink in a loop.
-    virtual audio_sink_callback_result_t renderAudio(float *buffer,
+    virtual IAudioSinkCallback::Result renderAudio(float *buffer,
                                                      int32_t numFrames) override {
         // mLogTool->log("renderAudio() callback called\n");
         int32_t result;
         if (mFrameCounter >= mFramesNeeded) {
-            return CALLBACK_FINISHED;
+            return IAudioSinkCallback::Result::Finished;
         }
 
         // Only start turning notes on and off after the initial delay
@@ -133,13 +158,13 @@ public:
                     if (result < 0) {
                         mLogTool->log("renderAudio() onBeforeNoteOn() returned %d\n", result);
                         mResult->setResultCode(result);
-                        return CALLBACK_ERROR;
+                        return IAudioSinkCallback::Result::Finished;
                     }
                     result = mSynth.allNotesOn(getCurrentNumVoices());
                     if (result < 0) {
                         mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);
                         mResult->setResultCode(result);
-                        return CALLBACK_ERROR;
+                        return IAudioSinkCallback::Result::Finished;
                     }
                     mBurstCountdown = mBurstsOn;
                     mAreNotesOn = true;
@@ -164,7 +189,7 @@ public:
         mFrameCounter += numFrames;
         mLogTool->setVar1(mFrameCounter);
 
-        return CALLBACK_CONTINUE;
+        return IAudioSinkCallback::Result::Continue;
     }
 
     /**
@@ -173,7 +198,7 @@ public:
      *
      * @param seconds - duration of test
      */
-    void measure(double seconds) {
+    int32_t measure(double seconds) {
 
         assert(mResult != NULL);
 
@@ -198,7 +223,7 @@ public:
         result = mAudioSink->start();
         if (result < 0){
             mResult->setResultCode(SYNTHMARK_RESULT_AUDIO_SINK_START_FAILURE);
-            return;
+            return result;
         }
 
         // Run the test or wait for it to finish.
@@ -206,7 +231,7 @@ public:
         if (result < 0) {
             mLogTool->log("ERROR runCallbackLoop() failed, returned %d\n", result);
             mResult->setResultCode(result);
-            return;
+            return result;
         }
 
         mAudioSink->stop();
@@ -218,6 +243,56 @@ public:
         mLogTool->log("sampleRate             = %6d\n", mAudioSink->getSampleRate());
         mLogTool->log("measured CPU load      = %6.2f%%\n", mTimer.getDutyCycle() * 100);
         mLogTool->log("CPU affinity           = %6d\n", mAudioSink->getActualCpu());
+
+        mResult->setResultCode(result);
+        return result;
+    }
+
+    std::string dumpJitter() {
+        const bool showDeliveryTime = false;
+        std::stringstream resultMessage;
+        // Print jitter histogram
+        BinCounter *wakeupBins = mTimer.getWakeupBins();
+        BinCounter *renderBins = mTimer.getRenderBins();
+        BinCounter *deliveryBins = mTimer.getDeliveryBins();
+        if (wakeupBins != NULL && renderBins != NULL && deliveryBins != NULL) {
+            int32_t numBins = deliveryBins->getNumBins();
+            const int32_t *wakeupCounts = wakeupBins->getBins();
+            const int32_t *wakeupLast = wakeupBins->getLastMarkers();
+            const int32_t *renderCounts = renderBins->getBins();
+            const int32_t *renderLast = renderBins->getLastMarkers();
+            const int32_t *deliveryCounts = deliveryBins->getBins();
+            const int32_t *deliveryLast = deliveryBins->getLastMarkers();
+            resultMessage << " bin#,  msec,"
+                          << "   wakeup#,  wlast,"
+                          << "   render#,  rlast,";
+            if (showDeliveryTime) {
+                resultMessage << " delivery#,  dlast";
+            }
+            resultMessage << std::endl;
+            for (int i = 0; i < numBins; i++) {
+                if (wakeupCounts[i] > 0 || renderCounts[i] > 0
+                        || (deliveryCounts[i] > 0 && showDeliveryTime)) {
+                    double msec = (double) i * mNanosPerBin * SYNTHMARK_MILLIS_PER_SECOND
+                                  / SYNTHMARK_NANOS_PER_SECOND;
+                    resultMessage << "  " << std::setw(3) << i
+                                  << ", " << std::fixed << std::setw(5) << std::setprecision(2)
+                                  << msec
+                                  << ", " << std::setw(9) << wakeupCounts[i]
+                                  << ", " << std::setw(6) << wakeupLast[i]
+                                  << ", " << std::setw(9) << renderCounts[i]
+                                  << ", " << std::setw(6) << renderLast[i];
+                    if (showDeliveryTime) {
+                        resultMessage << ", " << std::setw(9) << deliveryCounts[i]
+                              << ", " << std::setw(6) << deliveryLast[i];
+                    }
+                    resultMessage << std::endl;
+                }
+            }
+        } else {
+            resultMessage << "ERROR NULL BinCounter!\n";
+        }
+        return resultMessage.str();
     }
 
     int32_t close() {
@@ -249,27 +324,29 @@ public:
     }
 
 protected:
-    Synthesizer    mSynth;
-    AudioSinkBase *mAudioSink;
-    TimingAnalyzer mTimer;
-    CpuAnalyzer    mCpuAnalyzer;
-    LogTool       *mLogTool;
+    Synthesizer      mSynth;
+    AudioSinkBase   *mAudioSink;
+    TimingAnalyzer   mTimer;
+    CpuAnalyzer      mCpuAnalyzer;
+    LogTool         *mLogTool;
     SynthMarkResult *mResult;
-    std::string    mTestName;
-    int32_t        mSampleRate;
-    int32_t        mSamplesPerFrame;
-    int32_t        mFramesPerBurst;  // number of frames read by hardware at one time
-    int32_t        mNumVoices;
-    int32_t        mFrameCounter;
-    int32_t        mFramesNeeded;
-    int32_t        mDelayNotesOnUntilFrame;
-    int32_t        mNoteCounter;
+    std::string      mTestName;
+
+    int32_t          mSampleRate = 0;
+    int32_t          mSamplesPerFrame = 0;
+    int32_t          mFramesPerBurst = 0;  // number of frames read by hardware at one time
+    int32_t          mNumVoices = 0;
+    int32_t          mFrameCounter = 0;
+    int32_t          mFramesNeeded = 0;
+    int32_t          mDelayNotesOnUntilFrame = 0;
+    int32_t          mNoteCounter = 0;
+    int32_t          mNanosPerBin = 1;
 
     // Variables for turning notes on and off.
-    bool          mAreNotesOn;
-    int32_t       mBurstCountdown;
-    int32_t       mBurstsOn;
-    int32_t       mBurstsOff;
+    bool             mAreNotesOn = false;
+    int32_t          mBurstCountdown = 0;
+    int32_t          mBurstsOn = 0;
+    int32_t          mBurstsOff = 0;
 };
 
 

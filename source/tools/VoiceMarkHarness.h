@@ -27,13 +27,12 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 
-
-#define SYNTHMARK_MINIMUM_VOICE_COUNT 4
-#define SYNTHMARK_MINIMUM_NOTE_ON_COUNT 1
+constexpr int SYNTHMARK_MINIMUM_VOICE_COUNT   = 4;
+constexpr int SYNTHMARK_MINIMUM_NOTE_ON_COUNT = 1;
 
 /**
  * Play notes on a Synthesizer and measure the number
- * of voices that consume 50% of the CPU.
+ * of voices that consume a specified percentage of the CPU.
  */
 class VoiceMarkHarness : public TestHarnessBase {
 public:
@@ -61,8 +60,8 @@ public:
                         / mAudioSink->getSampleRate();
         mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
         mNumVoices = mInitialVoiceCount;
-        sumVoicesOn = 0;
-        sumVoicesCount = 0;
+        mSumVoicesOn = 0;
+        mSumVoicesCount = 0;
         mStable = false;
     }
 
@@ -88,8 +87,8 @@ public:
                     mStable = true;
                 }
                 if (mStable) {
-                    sumVoicesOn += voicesFraction;
-                    sumVoicesCount++;
+                    mSumVoicesOn += voicesFraction;
+                    mSumVoicesCount++;
                     accepted = true;
                 }
             }
@@ -104,21 +103,20 @@ public:
 
     virtual void onEndMeasurement() override {
 
-        int8_t resultCode;
+        int8_t resultCode = SYNTHMARK_RESULT_SUCCESS;
         double measurement = 0.0;
         std::stringstream resultMessage;
 
-        if (sumVoicesCount < SYNTHMARK_MINIMUM_VOICE_COUNT) {
+        if (mSumVoicesCount < SYNTHMARK_MINIMUM_VOICE_COUNT) {
 
             resultCode = SYNTHMARK_RESULT_TOO_FEW_MEASUREMENTS;
-            resultMessage << "Only " << sumVoicesCount << " measurements. Minimum is " <<
+            resultMessage << "Only " << mSumVoicesCount << " measurements. Minimum is " <<
                     SYNTHMARK_MINIMUM_VOICE_COUNT << ". Not a valid result!"
                     << std::endl;
 
         } else {
 
-            double measurement = sumVoicesOn / sumVoicesCount;
-            resultCode = SYNTHMARK_RESULT_SUCCESS;
+            double measurement = mSumVoicesOn / mSumVoicesCount;
             resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
             resultMessage << mTestName << "_"
                 << ((int)(mFractionOfCpu * 100)) << " = " << measurement;
@@ -127,6 +125,9 @@ public:
         }
 
         mResult->setResultCode(resultCode);
+
+        resultMessage << mCpuAnalyzer.dump();
+
         mResult->setMeasurement(measurement);
         mResult->setResultMessage(resultMessage.str());
     }
@@ -144,12 +145,12 @@ public:
         mInitialVoiceCount = numVoices;
     }
 
-    double sumVoicesOn = 0;
-    int32_t sumVoicesCount = 0;
-    double mFractionOfCpu = SYNTHMARK_TARGET_CPU_LOAD;
 
 private:
-    bool mStable = false;
+    double  mSumVoicesOn = 0;
+    int32_t mSumVoicesCount = 0;
+    double  mFractionOfCpu = SYNTHMARK_TARGET_CPU_LOAD;
+    bool    mStable = false;
     int32_t mNoteOnCount = 0;
     int32_t mInitialVoiceCount = 10;
 };

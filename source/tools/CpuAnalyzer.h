@@ -19,6 +19,7 @@
 
 #include <iomanip>
 #include <math.h>
+#include <sstream>
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
@@ -27,7 +28,7 @@
 #include "HostTools.h"
 #include "BinCounter.h"
 
-#define MAX_CPUS  32
+constexpr int MAX_CPUS  = 32;
 
 /**
  * Measure CPU migration.
