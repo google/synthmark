@@ -44,7 +44,7 @@ public:
         delete mThread;
     }
 
-    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame __unused,
+    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame,
             int32_t framesPerBurst) override {
         mSampleRate = sampleRate;
         mFramesPerBurst = framesPerBurst;
