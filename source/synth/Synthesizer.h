@@ -54,24 +54,24 @@ public:
     }
 
     void allNotesOn() {
-        allNotesOn(mMaxVoices);
+        notesOn(mMaxVoices);
     }
 
-    int32_t allNotesOn(int32_t numVoices) {
+    int32_t notesOn(int32_t numVoices) {
         if (numVoices > mMaxVoices) {
             printf("allNotesOn(%d) exceeded maxVoices of %d\n", numVoices, mMaxVoices);
             return -1;
         }
         mNumVoicesOn = numVoices;
         // Leave some headroom so the resonant filter does not clip.
-        mVoiceAmplitude = 0.5 / mNumVoicesOn;
+        mVoiceAmplitude = 0.5f / mNumVoicesOn;
 
         int pitchIndex = 0;
         synth_float_t pitches[] = {60.0, 64.0, 67.0, 69.0};
         for(int iv = 0; iv < mNumVoicesOn; iv++ ) {
             SimpleVoice *voice = &mVoices[iv];
             // Randomize pitches by a few cents to smooth out the CPU load.
-            double pitchOffset = 0.03 * SynthTools::nextRandomDouble();
+            float pitchOffset = 0.03f * (float) SynthTools::nextRandomDouble();
             synth_float_t pitch = pitches[pitchIndex++] + pitchOffset;
             if (pitchIndex > 3) pitchIndex = 0;
             voice->noteOn(pitch, 1.0);
@@ -102,7 +102,7 @@ public:
                 synth_float_t leftGain = mVoiceAmplitude;
                 synth_float_t rightGain = mVoiceAmplitude;
                 if (mNumVoicesOn > 1) {
-                    synth_float_t pan = iv / (mNumVoicesOn - 1.0);
+                    synth_float_t pan = iv / (mNumVoicesOn - 1.0f);
                     leftGain *= pan;
                     rightGain *= 1.0 - pan;
                 }

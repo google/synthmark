@@ -46,7 +46,7 @@ public:
 
     void onBeginMeasurement() override {
         mResult->setTestName(mTestName);
-        mLogTool->log("---- Measure scheduling jitter ---- #voices = %d\n", mNumVoices);
+        mLogTool->log("---- Measure scheduling jitter ---- #voices = %d\n", getNumVoices());
         setupJitterRecording();
     }
 

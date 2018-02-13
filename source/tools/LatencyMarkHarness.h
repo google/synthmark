@@ -39,11 +39,11 @@ class LatencyMarkHarness : public TestHarnessBase {
 public:
     LatencyMarkHarness(AudioSinkBase *audioSink,
                        SynthMarkResult *result,
-                       LogTool *logTool = NULL)
+                       LogTool *logTool = nullptr)
     : TestHarnessBase(audioSink, result, logTool)
     {
         mTestName = "LatencyMark";
-        mNumVoices = SYNTHMARK_NUM_VOICES_LATENCY;
+        setNumVoices(SYNTHMARK_NUM_VOICES_LATENCY);
     }
 
     virtual ~LatencyMarkHarness() {
@@ -104,7 +104,7 @@ public:
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;
         mAudioSink->setBufferSizeInFrames(mFramesPerBurst);
-        mLogTool->log("---- Measure latency ---- #voices = %d\n", mNumVoices);
+        mLogTool->log("---- Measure latency ---- #voices = %d\n", getNumVoices());
 
         setupJitterRecording();
     }
@@ -161,9 +161,9 @@ public:
         // Toggle back and forth between high and low
         if (mNumVoicesHigh > 0) {
             return ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2)) ?
-                   mNumVoices : mNumVoicesHigh;
+                   TestHarnessBase::getNumVoices() : mNumVoicesHigh;
         } else {
-            return mNumVoices;
+            return TestHarnessBase::getNumVoices();
         }
     }
 

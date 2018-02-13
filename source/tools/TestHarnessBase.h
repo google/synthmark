@@ -41,12 +41,12 @@ class TestHarnessBase : public IAudioSinkCallback {
 public:
     TestHarnessBase(AudioSinkBase *audioSink,
                     SynthMarkResult *result,
-                    LogTool *logTool = NULL)
+                    LogTool *logTool = nullptr)
     : mSynth()
-    , mAudioSink(NULL)
+    , mAudioSink(nullptr)
     , mTimer()
     , mCpuAnalyzer()
-    , mLogTool(NULL)
+    , mLogTool(nullptr)
     , mResult(result)
     , mSampleRate(SYNTHMARK_SAMPLE_RATE)
     , mSamplesPerFrame(2)
@@ -68,7 +68,7 @@ public:
     virtual ~TestHarnessBase() {
         if (mLogTool && mLogTool->getOwner() == this) {
             delete(mLogTool);
-            mLogTool = NULL;
+            mLogTool = nullptr;
         }
     }
 
@@ -160,7 +160,10 @@ public:
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
                     }
-                    result = mSynth.allNotesOn(getCurrentNumVoices());
+                    int32_t currentNumVoices = getCurrentNumVoices();
+                    HostCpuManager::getInstance()->setApplicationLoad(currentNumVoices,
+                                                                      SYNTHMARK_MAX_VOICES);
+                    result = mSynth.notesOn(currentNumVoices);
                     if (result < 0) {
                         mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);
                         mResult->setResultCode(result);
@@ -181,7 +184,7 @@ public:
                                     - mFramesPerBurst;
         int64_t idealTime = mAudioSink->convertFrameToTime(fullFramePosition);
         mTimer.markEntry(idealTime);
-        mSynth.renderStereo(buffer, numFrames);
+        mSynth.renderStereo(buffer, numFrames);  // DO THE MATH!
         mTimer.markExit();
 
         mCpuAnalyzer.recordCpu(); // at end so we have less affect on timing
@@ -308,7 +311,7 @@ public:
     }
 
     virtual int32_t getCurrentNumVoices() {
-        return mNumVoices;
+        return getNumVoices();
     }
 
     int32_t getNoteCounter() {
@@ -335,7 +338,6 @@ protected:
     int32_t          mSampleRate = 0;
     int32_t          mSamplesPerFrame = 0;
     int32_t          mFramesPerBurst = 0;  // number of frames read by hardware at one time
-    int32_t          mNumVoices = 0;
     int32_t          mFrameCounter = 0;
     int32_t          mFramesNeeded = 0;
     int32_t          mDelayNotesOnUntilFrame = 0;
@@ -347,6 +349,9 @@ protected:
     int32_t          mBurstCountdown = 0;
     int32_t          mBurstsOn = 0;
     int32_t          mBurstsOff = 0;
+
+private:
+    int32_t          mNumVoices = 0;
 };
 
 

@@ -50,7 +50,10 @@ public:
         mFramesPerBurst = framesPerBurst;
         mBufferSizeInFrames = BUFFER_SIZE_IN_BURSTS * framesPerBurst;
         mMaxBufferCapacityInFrames = MAX_BUFFER_CAPACITY_IN_BURSTS * framesPerBurst;
-        mNanosPerBurst = (int32_t) (SYNTHMARK_NANOS_PER_SECOND * mFramesPerBurst / mSampleRate);
+
+        int64_t nanosPerBurst = mFramesPerBurst * SYNTHMARK_NANOS_PER_SECOND / mSampleRate;
+        mNanosPerBurst = (int32_t) nanosPerBurst;
+        HostCpuManager::getInstance()->setNanosPerBurst(nanosPerBurst);
 
         mBurstBuffer = new float[samplesPerFrame * framesPerBurst];
         return 0;
@@ -104,36 +107,29 @@ public:
         return mMaxBufferCapacityInFrames;
     }
 
-    int32_t sleepUntilRoomAvailable() {
-        updateHardwareSimulator();
-        int32_t roomAvailable = getEmptyFramesAvailable();
-        while (roomAvailable <= 0) {
-            // Calculate when the next buffer will be consumed.
-            HostTools::sleepUntilNanoTime(mNextHardwareReadTimeNanos);
-            updateHardwareSimulator();
-            roomAvailable = getEmptyFramesAvailable();
-        }
-        return roomAvailable;
-    }
-
-    virtual int32_t write(const float *buffer, int32_t numFrames) override {
+    virtual void writeBurst(const float *buffer) {
         (void) buffer;
         if (mStartTimeNanos == 0) {
             mStartTimeNanos = HostTools::getNanoTime();
             mNextHardwareReadTimeNanos = mStartTimeNanos;
         }
-        int32_t framesLeft = numFrames;
-        while (framesLeft > 0) {
-            // Calculate how much room is available in the buffer.
-            int32_t available = sleepUntilRoomAvailable();
-            if (available > 0) {
-                // Simulate writing to a buffer.
-                int32_t framesToWrite = (available > framesLeft) ? framesLeft : available;
-                setFramesWritten(getFramesWritten() + framesToWrite);
-                framesLeft -= framesToWrite;
-            }
+
+        updateHardwareSimulator();
+        int32_t available = getEmptyFramesAvailable();
+
+        // If there is not enough room then sleep until the hardware reads another burst.
+        if (available < mFramesPerBurst) {
+            HostCpuManager::getInstance()->sleepAndTuneCPU(mNextHardwareReadTimeNanos);
+            updateHardwareSimulator();
+            available = getEmptyFramesAvailable();
+            assert(available >= mFramesPerBurst);
+        } else {
+            // Just let CPU Manager know that a burst has occurred.
+            HostCpuManager::getInstance()->sleepAndTuneCPU(0);
         }
-        return 0;
+
+        // Simulate writing to a buffer.
+        setFramesWritten(getFramesWritten() + mFramesPerBurst);
     }
 
     HostThread *getHostThread() {
@@ -195,21 +191,20 @@ public:
                 }
             }
 
-            // Render and write audio in a loop.
+            // Write in a loop until the callback says we are done.
             IAudioSinkCallback::Result callbackResult
                     = IAudioSinkCallback::Result::Continue;
             while (callbackResult == IAudioSinkCallback::Result::Continue
-                    && result == SYNTHMARK_RESULT_SUCCESS) {
-                // Gather audio data from the synthesizer.
+                   && result == SYNTHMARK_RESULT_SUCCESS) {
+
+                // Call the synthesizer to render the audio data.
                 callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
 
                 if (callbackResult == IAudioSinkCallback::Result::Continue) {
                     // Output the audio using a blocking write.
-                    if (write(mBurstBuffer, mFramesPerBurst) < 0) {
-                        result = SYNTHMARK_RESULT_AUDIO_SINK_WRITE_FAILURE;
-                    }
+                    writeBurst(mBurstBuffer);
                 } else if (callbackResult != IAudioSinkCallback::Result::Finished) {
-                        result = callbackResult;
+                    result = callbackResult;
                 }
             }
         }
@@ -241,6 +236,7 @@ public:
     }
 
 private:
+
     int32_t mSampleRate = SYNTHMARK_SAMPLE_RATE;
     int32_t mFramesPerBurst = 64;
     int64_t mStartTimeNanos = 0;
@@ -258,9 +254,10 @@ private:
     LogTool    * mLogTool = NULL;
 
 
+    // Advance mFramesConsumed and mNextHardwareReadTimeNanos based on real-time clock.
     void updateHardwareSimulator() {
         int64_t currentTime = HostTools::getNanoTime();
-        int countdown = 16; // Avoid spinning like crazy.
+        int countdown = 32; // Avoid spinning like crazy.
         // Is it time to consume a block?
         while ((currentTime >= mNextHardwareReadTimeNanos) && (countdown-- > 0)) {
             int32_t available = getFullFramesAvailable();

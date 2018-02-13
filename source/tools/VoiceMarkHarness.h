@@ -59,9 +59,10 @@ public:
                         (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                         / mAudioSink->getSampleRate();
         mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
-        mNumVoices = mInitialVoiceCount;
+        setNumVoices(mInitialVoiceCount);
         mSumVoicesOn = 0;
         mSumVoicesCount = 0;
+
         mStable = false;
     }
 
@@ -69,7 +70,7 @@ public:
         if (mNoteOnCount >= SYNTHMARK_MINIMUM_NOTE_ON_COUNT) {
             // Estimate how many voices it would take to use a fraction of the CPU.
             double cpuLoad = mTimer.getDutyCycle();
-            int32_t oldNumVoices = mNumVoices;
+            int32_t oldNumVoices = getNumVoices();
             double voicesFraction = mFractionOfCpu * oldNumVoices / cpuLoad;
             int32_t newNumVoices = (int32_t)(voicesFraction + 0.5); // round
             if (newNumVoices > SYNTHMARK_MAX_VOICES) {
@@ -94,7 +95,7 @@ public:
             }
             mLogTool->log("%3d voices used %5.3f of CPU, %s\n", oldNumVoices, cpuLoad,
                           accepted ? "" : " - not used");
-            mNumVoices = newNumVoices;
+            setNumVoices(newNumVoices);
         }
         mTimer.reset();
         mNoteOnCount++;

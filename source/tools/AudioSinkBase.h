@@ -43,12 +43,6 @@ public:
     virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame, int32_t framesPerBurst) = 0;
     virtual int32_t start() = 0;
 
-    /**
-     * You don't need to implement a real blocking write if you are using
-     * a real audio callback, eg. OpenSL ES. You can just implement a stub.
-     */
-    virtual int32_t write(const float *buffer, int32_t numFrames) = 0;
-
     virtual int32_t stop() = 0;
     virtual int32_t close() = 0;
 

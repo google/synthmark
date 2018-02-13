@@ -28,8 +28,8 @@
 #include "tools/TestHarnessBase.h"
 
 /**
- * Play notes on a Synthesizer and measure the number
- * of voices that consume a specified percentage of the CPU.
+ * Play a specified number of voices on a Synthesizer and
+ * measure the percentage of the CPU that they consume.
  */
 class UtilizationMarkHarness : public TestHarnessBase {
 public:
@@ -60,7 +60,7 @@ public:
 
     virtual int32_t onBeforeNoteOn() override {
         mFractionOfCpu = mTimer.getDutyCycle();
-        mLogTool->log("%3d voices used %5.3f of CPU\n", mNumVoices, mFractionOfCpu);
+        mLogTool->log("%3d voices used %5.3f of CPU\n", getNumVoices(), mFractionOfCpu);
         mTimer.reset();
         return 0;
     }

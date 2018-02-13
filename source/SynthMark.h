@@ -29,7 +29,8 @@
 // #define SYNTHMARK_MINOR_VERSION        8   /* changed SYNTHMARK_FRAMES_PER_BURST from 128 => 64 */
 // #define SYNTHMARK_MINOR_VERSION        9   /* Fixed iOS version */
 // #define SYNTHMARK_MINOR_VERSION        10  /* Added CPU migration histogram */
-#define SYNTHMARK_MINOR_VERSION        11  /* Added UtilizationMark, print Jitter after Latency */
+// #define SYNTHMARK_MINOR_VERSION        11  /* Added UtilizationMark, print Jitter after Latency */
+#define SYNTHMARK_MINOR_VERSION        12  /* Added CPU Governor hints */
 
 #ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.
