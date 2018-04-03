@@ -93,10 +93,10 @@ public:
         // Clear mixing buffer.
         memset(output, 0, numFrames * SAMPLES_PER_FRAME * sizeof(float));
 
-        while (framesLeft >= SYNTHMARK_FRAMES_PER_RENDER) {
+        while (framesLeft >= kSynthmarkFramesPerRender) {
             for(int iv = 0; iv < mNumVoicesOn; iv++ ) {
                 SimpleVoice *voice = &mVoices[iv];
-                voice->generate(SYNTHMARK_FRAMES_PER_RENDER);
+                voice->generate(kSynthmarkFramesPerRender);
                 float *mix = renderBuffer;
 
                 synth_float_t leftGain = mVoiceAmplitude;
@@ -106,15 +106,15 @@ public:
                     leftGain *= pan;
                     rightGain *= 1.0 - pan;
                 }
-                for(int n = 0; n < SYNTHMARK_FRAMES_PER_RENDER; n++ ) {
+                for(int n = 0; n < kSynthmarkFramesPerRender; n++ ) {
                     synth_float_t sample = voice->output[n];
                     *mix++ += (float) (sample * leftGain);
                     *mix++ += (float) (sample * rightGain);
                 }
             }
-            framesLeft -= SYNTHMARK_FRAMES_PER_RENDER;
-            mFrameCounter += SYNTHMARK_FRAMES_PER_RENDER;
-            renderBuffer += SYNTHMARK_FRAMES_PER_RENDER * SAMPLES_PER_FRAME;
+            framesLeft -= kSynthmarkFramesPerRender;
+            mFrameCounter += kSynthmarkFramesPerRender;
+            renderBuffer += kSynthmarkFramesPerRender * SAMPLES_PER_FRAME;
         }
         assert(framesLeft == 0);
     }

@@ -26,7 +26,7 @@
 #include "SynthMark.h"
 #include "tools/SynthTools.h"
 
-#define DPW_VERY_LOW_FREQUENCY (2.0 * 0.1 / SYNTHMARK_SAMPLE_RATE)
+constexpr double kDPWVeryLowFrequency  = 2.0 * 0.1 / kSynthmarkSampleRate;
 
 /**
  * DPW is a tool for generating band-limited waveforms
@@ -50,7 +50,7 @@ public:
 
         // If the frequency is very low then just use the raw sawtooth.
         // This avoids divide by zero problems and scaling problems.
-        if (positivePhaseIncrement < DPW_VERY_LOW_FREQUENCY) {
+        if (positivePhaseIncrement < kDPWVeryLowFrequency) {
             dpw = phase;
         } else {
             // Calculate the parabola.

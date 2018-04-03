@@ -44,7 +44,7 @@ public:
         return mSampleRate;
     }
 
-    synth_float_t output[SYNTHMARK_FRAMES_PER_RENDER];
+    synth_float_t output[kSynthmarkFramesPerRender];
 
 public:
     static int32_t mSampleRate;

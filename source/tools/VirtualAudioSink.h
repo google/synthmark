@@ -26,12 +26,10 @@
 #ifndef SYNTHMARK_VIRTUAL_AUDIO_SINK_H
 #define SYNTHMARK_VIRTUAL_AUDIO_SINK_H
 
-#ifndef MAX_BUFFER_CAPACITY_IN_BURSTS
-#define MAX_BUFFER_CAPACITY_IN_BURSTS 128
-#endif
+constexpr int kMaxBufferCapacityInBursts = 128;
 
 // Use 2 for double buffered
-#define BUFFER_SIZE_IN_BURSTS 8
+constexpr int kBufferSizeInBursts = 8;
 
 class VirtualAudioSink : public AudioSinkBase
 {
@@ -48,8 +46,8 @@ public:
             int32_t framesPerBurst) override {
         mSampleRate = sampleRate;
         mFramesPerBurst = framesPerBurst;
-        mBufferSizeInFrames = BUFFER_SIZE_IN_BURSTS * framesPerBurst;
-        mMaxBufferCapacityInFrames = MAX_BUFFER_CAPACITY_IN_BURSTS * framesPerBurst;
+        mBufferSizeInFrames = kBufferSizeInBursts * framesPerBurst;
+        mMaxBufferCapacityInFrames = kMaxBufferCapacityInBursts * framesPerBurst;
 
         int64_t nanosPerBurst = mFramesPerBurst * SYNTHMARK_NANOS_PER_SECOND / mSampleRate;
         mNanosPerBurst = (int32_t) nanosPerBurst;
@@ -172,6 +170,8 @@ public:
      * Data from the callback will be passed to the write() method.
      */
     int32_t innerCallbackLoop() {
+        assert(mFramesPerBurst > 0); // set in open
+
         int32_t result = SYNTHMARK_RESULT_SUCCESS;
         IAudioSinkCallback *callback = getCallback();
         setSchedFifoUsed(false);
@@ -237,10 +237,10 @@ public:
 
 private:
 
-    int32_t mSampleRate = SYNTHMARK_SAMPLE_RATE;
-    int32_t mFramesPerBurst = 64;
+    int32_t mSampleRate = kSynthmarkSampleRate;
+    int32_t mFramesPerBurst = 0; // set in open
     int64_t mStartTimeNanos = 0;
-    int32_t mNanosPerBurst = 1;
+    int32_t mNanosPerBurst = 1; // set in open
     int64_t mNextHardwareReadTimeNanos = 0;
     int32_t mBufferSizeInFrames = 0;
     int32_t mMaxBufferCapacityInFrames = 0;

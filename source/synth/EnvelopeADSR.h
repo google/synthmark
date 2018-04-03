@@ -25,6 +25,7 @@
 #include <math.h>
 #include "SynthMark.h"
 #include "UnitGenerator.h"
+#include "tools/SynthTools.h"
 
 /**
  * Generate a contour that can be used to control amplitude or
@@ -118,7 +119,7 @@ public:
                     for (; i < numSamples; i++) {
                         output[i] = mLevel;
                         mLevel *= mScaler; // exponential decay
-                        if (mLevel < SYNTHMARK_DB96) {
+                        if (mLevel < kAmplitudeDb96) {
                             startIdle();
                             break;
                         } else if (!triggered) {
@@ -150,7 +151,7 @@ public:
                         if (triggered) {
                             startAttack();
                             break;
-                        } else if (mLevel < SYNTHMARK_DB96) {
+                        } else if (mLevel < kAmplitudeDb96) {
                             startIdle();
                             break;
                         }

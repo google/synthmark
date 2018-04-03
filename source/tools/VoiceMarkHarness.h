@@ -27,8 +27,8 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 
-constexpr int SYNTHMARK_MINIMUM_VOICE_COUNT   = 4;
-constexpr int SYNTHMARK_MINIMUM_NOTE_ON_COUNT = 1;
+constexpr int kMinimumVoiceCount  = 4;
+constexpr int kMinimumNoteOnCount = 1;
 
 /**
  * Play notes on a Synthesizer and measure the number
@@ -41,7 +41,6 @@ public:
                      LogTool *logTool = NULL)
     : TestHarnessBase(audioSink, result, logTool)
     {
-
         std::stringstream testName;
         testName << "VoiceMark";
         mTestName = testName.str();
@@ -67,15 +66,15 @@ public:
     }
 
     virtual int32_t onBeforeNoteOn() override {
-        if (mNoteOnCount >= SYNTHMARK_MINIMUM_NOTE_ON_COUNT) {
+        if (mNoteOnCount >= kMinimumNoteOnCount) {
             // Estimate how many voices it would take to use a fraction of the CPU.
             double cpuLoad = mTimer.getDutyCycle();
             int32_t oldNumVoices = getNumVoices();
             double voicesFraction = mFractionOfCpu * oldNumVoices / cpuLoad;
             int32_t newNumVoices = (int32_t)(voicesFraction + 0.5); // round
-            if (newNumVoices > SYNTHMARK_MAX_VOICES) {
-                mLogTool->log("measureSynthMark() - numVoices clipped to SYNTHMARK_MAX_VOICES\n");
-                newNumVoices = SYNTHMARK_MAX_VOICES;
+            if (newNumVoices > kSynthmarkMaxVoices) {
+                mLogTool->log("measureSynthMark() - numVoices clipped to kSynthmarkMaxVoices\n");
+                newNumVoices = kSynthmarkMaxVoices;
             }
 
             // Is this data point reliable?
@@ -108,11 +107,11 @@ public:
         double measurement = 0.0;
         std::stringstream resultMessage;
 
-        if (mSumVoicesCount < SYNTHMARK_MINIMUM_VOICE_COUNT) {
+        if (mSumVoicesCount < kMinimumVoiceCount) {
 
             resultCode = SYNTHMARK_RESULT_TOO_FEW_MEASUREMENTS;
             resultMessage << "Only " << mSumVoicesCount << " measurements. Minimum is " <<
-                    SYNTHMARK_MINIMUM_VOICE_COUNT << ". Not a valid result!"
+                    kMinimumVoiceCount << ". Not a valid result!"
                     << std::endl;
 
         } else {
@@ -150,7 +149,7 @@ public:
 private:
     double  mSumVoicesOn = 0;
     int32_t mSumVoicesCount = 0;
-    double  mFractionOfCpu = SYNTHMARK_TARGET_CPU_LOAD;
+    double  mFractionOfCpu = 0.0;
     bool    mStable = false;
     int32_t mNoteOnCount = 0;
     int32_t mInitialVoiceCount = 10;

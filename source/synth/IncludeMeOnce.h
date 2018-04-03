@@ -25,8 +25,8 @@
 #include "PitchToFrequency.h"
 
 //synth statics
-int32_t UnitGenerator::mSampleRate = SYNTHMARK_SAMPLE_RATE;
-synth_float_t UnitGenerator::mSamplePeriod = 1.0f / SYNTHMARK_SAMPLE_RATE;
+int32_t UnitGenerator::mSampleRate = kSynthmarkSampleRate;
+synth_float_t UnitGenerator::mSamplePeriod = 1.0f / kSynthmarkSampleRate;
 
 PowerOfTwoTable PitchToFrequency::mPowerTable(64);
 
