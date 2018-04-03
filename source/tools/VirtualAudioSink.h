@@ -193,6 +193,25 @@ private:
         setSchedFifoUsed(false);
         if (callback != NULL) {
             if (mUseRealThread) {
+#ifdef SYNTHMARK_USE_CUSTOM_CPU_MANAGER
+                double initial_bw = 0.94;
+
+                int err = static_cast<CustomHostCpuManager *>(HostCpuManager::getInstance())->updateDeadlineParams(
+                            mNanosPerBurst * initial_bw,
+                            mNanosPerBurst,
+                            mNanosPerBurst);
+                if (err == 0) {
+                    printf("requestDLBandwidth(%lf)\n", initial_bw);
+                    fflush(stdout);
+                } else {
+                    printf("Error setting SCHED_DEADLINE\n");
+                    exit(-1);
+                }
+                if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
+                    printf("Error setting affinity for SCHED_DEADLINE task\n");
+                    exit(-1);
+                }
+#else
                 int err = mThread->promote(mThreadPriority);
                 if (err == 0) {
                     setSchedFifoUsed(true);
@@ -205,6 +224,7 @@ private:
                         setActualCpu(getRequestedCpu());
                     }
                 }
+#endif
             }
 
             // Write in a loop until the callback says we are done.
