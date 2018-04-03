@@ -43,7 +43,7 @@ public:
     : TestHarnessBase(audioSink, result, logTool)
     {
         mTestName = "LatencyMark";
-        setNumVoices(SYNTHMARK_NUM_VOICES_LATENCY);
+        setNumVoices(kSynthmarkNumVoicesLatency);
     }
 
     virtual ~LatencyMarkHarness() {

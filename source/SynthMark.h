@@ -18,10 +18,7 @@
 #ifndef SYNTHMARK_SYNTHMARK_H
 #define SYNTHMARK_SYNTHMARK_H
 
-#ifndef SYNTHMARK_TRACE
-#define SYNTHMARK_TRACE  1
-#endif
-
+// We use #define here so we can build strings easier.
 #define SYNTHMARK_MAJOR_VERSION        1
 // #define SYNTHMARK_MINOR_VERSION        5
 // #define SYNTHMARK_MINOR_VERSION        6   /* Run under OpenSL thread for SCHED_FIFO. */
@@ -32,41 +29,15 @@
 // #define SYNTHMARK_MINOR_VERSION        11  /* Added UtilizationMark, print Jitter after Latency */
 #define SYNTHMARK_MINOR_VERSION        12  /* Added CPU Governor hints */
 
-#ifndef SYNTHMARK_MAX_VOICES
 // This may be increased without invalidating the benchmark.
-#define SYNTHMARK_MAX_VOICES           512
-#endif
+constexpr int kSynthmarkMaxVoices   = 512;
 
-#ifndef SYNTHMARK_NUM_VOICES_LATENCY
-#define SYNTHMARK_NUM_VOICES_LATENCY   10
-#endif
-
-#ifndef SYNTHMARK_NUM_VOICES_JITTER
-#define SYNTHMARK_NUM_VOICES_JITTER    4
-#endif
+constexpr int kSynthmarkNumVoicesLatency  = 10;
 
 // The number of frames that are synthesized at one time.
-#ifndef SYNTHMARK_FRAMES_PER_RENDER
-#define SYNTHMARK_FRAMES_PER_RENDER    8
-#endif
+constexpr int kSynthmarkFramesPerRender  =  8;
 
-// The number of frames that are consumed by DMA or a mixer at one time.
-#ifndef SYNTHMARK_FRAMES_PER_BURST
-#define SYNTHMARK_FRAMES_PER_BURST     64
-#endif
-
-#ifndef SYNTHMARK_SAMPLE_RATE
-#define SYNTHMARK_SAMPLE_RATE          48000
-#endif
-
-#ifndef SYNTHMARK_TARGET_CPU_LOAD
-// 0.5 = 50% target CPU utilization
-#define SYNTHMARK_TARGET_CPU_LOAD      0.5
-#endif
-
-#ifndef SYNTHMARK_NUM_SECONDS
-#define SYNTHMARK_NUM_SECONDS          10 // 10 seconds
-#endif
+constexpr int kSynthmarkSampleRate = 48000;
 
 // These should not be changed.
 constexpr int64_t SYNTHMARK_MILLIS_PER_SECOND      = 1000;
@@ -76,12 +47,5 @@ constexpr int64_t SYNTHMARK_NANOS_PER_SECOND       = 1000000000;
 
 typedef float synth_float_t;
 
-/**
- * A fractional amplitude corresponding to exactly -96 dB.
- * amplitude = pow(10.0, db/20.0)
- */
-#define SYNTHMARK_DB96    (1.0 / 63095.73444801943)
-/** A fraction that is approximately -90.3 dB. Defined as 1 bit of an S16. */
-#define SYNTHMARK_DB90    (1.0 / (1 << 15))
 
 #endif // SYNTHMARK_SYNTHMARK_H

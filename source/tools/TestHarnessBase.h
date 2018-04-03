@@ -48,7 +48,7 @@ public:
     , mCpuAnalyzer()
     , mLogTool(nullptr)
     , mResult(result)
-    , mSampleRate(SYNTHMARK_SAMPLE_RATE)
+    , mSampleRate(kSynthmarkSampleRate)
     , mSamplesPerFrame(2)
     , mNumVoices(8)
     , mFrameCounter(0)
@@ -92,7 +92,7 @@ public:
     // Run the benchmark.
     virtual int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) {
         int32_t err = open(sampleRate, SAMPLES_PER_FRAME,
-                           SYNTHMARK_FRAMES_PER_RENDER, framesPerBurst);
+                           kSynthmarkFramesPerRender, framesPerBurst);
         if (err) {
             return err;
         }
@@ -118,9 +118,9 @@ public:
             mLogTool->log("ERROR in open, framesPerRender too low = %d < 1\n", framesPerRender);
             return -1;
         }
-        if (framesPerRender > SYNTHMARK_FRAMES_PER_RENDER) {
+        if (framesPerRender > kSynthmarkFramesPerRender) {
             mLogTool->log("ERROR in open, framesPerRender = %d > %d\n",
-                framesPerRender, SYNTHMARK_FRAMES_PER_RENDER);
+                framesPerRender, kSynthmarkFramesPerRender);
             return -1;
         }
         if (framesPerBurst < 8) {
@@ -131,7 +131,7 @@ public:
         mSamplesPerFrame = samplesPerFrame;
         mFramesPerBurst = framesPerBurst;
 
-        mSynth.setup(sampleRate, SYNTHMARK_MAX_VOICES);
+        mSynth.setup(sampleRate, kSynthmarkMaxVoices);
         return mAudioSink->open(sampleRate, samplesPerFrame, framesPerBurst);
     }
 
@@ -162,7 +162,7 @@ public:
                     }
                     int32_t currentNumVoices = getCurrentNumVoices();
                     HostCpuManager::getInstance()->setApplicationLoad(currentNumVoices,
-                                                                      SYNTHMARK_MAX_VOICES);
+                                                                      kSynthmarkMaxVoices);
                     result = mSynth.notesOn(currentNumVoices);
                     if (result < 0) {
                         mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);

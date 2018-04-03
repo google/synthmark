@@ -27,44 +27,44 @@
 #include "tools/VoiceMarkHarness.h"
 #include "synth/IncludeMeOnce.h"
 
-constexpr char DEFAULT_TEST_CODE        = 'v';
-constexpr int DEFAULT_SECONDS           = 10;
-constexpr int DEFAULT_FRAMES_PER_BURST  = SYNTHMARK_FRAMES_PER_BURST;
-constexpr int DEFAULT_NUM_VOICES        = 8;
-constexpr int DEFAULT_NOTE_ON_DELAY     = 0;
-constexpr int DEFAULT_PERCENT_CPU       = (int)(100 * SYNTHMARK_TARGET_CPU_LOAD);
+constexpr char kDefaultTestCode         = 'v';
+constexpr int  kDefaultSeconds          = 10;
+constexpr int  kDefaultFramesPerBurst   = 64;
+constexpr int  kDefaultNumVoices        = 8;
+constexpr int  kDefaultNoteOnDelay      = 0;
+constexpr int  kDefaultPercentCpu       = 50;
 
 void usage(const char *name) {
     printf("SynthMark version %d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
            " -s{seconds} -b{burstSize} -c{cpuAffinity}\n", name);
     printf("    -t{test}, v=voice, l=latency, j=jitter, u=utilization, default is %c\n",
-           DEFAULT_TEST_CODE);
-    printf("    -n{numVoices} to render, default = %d\n", DEFAULT_NUM_VOICES);
+           kDefaultTestCode);
+    printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
     printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
     printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
-           DEFAULT_NOTE_ON_DELAY);
-    printf("    -p{percentCPU} target load, default = %d\n", DEFAULT_PERCENT_CPU);
+           kDefaultNoteOnDelay);
+    printf("    -p{percentCPU} target load, default = %d\n", kDefaultPercentCpu);
     printf("    -r{sampleRate} should be typical, 44100, 48000, etc. default is %d\n",
-           SYNTHMARK_SAMPLE_RATE);
+           kSynthmarkSampleRate);
     printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
-           DEFAULT_SECONDS);
+           kDefaultSeconds);
     printf("    -b{burstSize} frames read by virtual hardware at one time , default = %d\n",
-           DEFAULT_FRAMES_PER_BURST);
+           kDefaultFramesPerBurst);
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
 }
 
 int main(int argc, char **argv)
 {
-    int32_t percentCpu = DEFAULT_PERCENT_CPU;
-    int32_t sampleRate = SYNTHMARK_SAMPLE_RATE;
-    int32_t framesPerBurst = DEFAULT_FRAMES_PER_BURST;
-    int32_t numSeconds = DEFAULT_SECONDS;
-    int32_t numVoices = DEFAULT_NUM_VOICES;
+    int32_t percentCpu = kDefaultPercentCpu;
+    int32_t sampleRate = kSynthmarkSampleRate;
+    int32_t framesPerBurst = kDefaultFramesPerBurst;
+    int32_t numSeconds = kDefaultSeconds;
+    int32_t numVoices = kDefaultNumVoices;
     int32_t numVoicesHigh = 0;
-    int32_t numSecondsDelayNoteOn = DEFAULT_NOTE_ON_DELAY;
+    int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
-    char testCode = DEFAULT_TEST_CODE;
+    char testCode = kDefaultTestCode;
 
     TestHarnessBase *harness = NULL;
 
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
     }
     if ((numVoices < 1 && numVoicesHigh <= 0)
         || numVoices < 0
-        || numVoices > SYNTHMARK_MAX_VOICES) {
+        || numVoices > kSynthmarkMaxVoices) {
         printf("Invalid num voices = %d\n", numVoices);
         usage(argv[0]);
         return 1;

@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-#include <cstdint>
-#include <math.h>
-
 #ifndef SYNTHMARK_SYNTHTOOLS_H
 #define SYNTHMARK_SYNTHTOOLS_H
 
+#include <cstdint>
+#include <math.h>
+
+/**
+ * A fractional amplitude corresponding to exactly -96 dB.
+ * amplitude = pow(10.0, db/20.0)
+ */
+constexpr double kAmplitudeDb96 = 1.0 / 63095.73444801943;
+
+/** A fraction that is approximately -90.3 dB. Defined as 1 bit of an S16. */
+constexpr double kAmplitudeDb90 = 1.0 / (1 << 15);
 
 class SynthTools
 {
@@ -75,7 +83,7 @@ public:
     static double convertTimeToExponentialScaler(synth_float_t duration, synth_float_t sampleRate) {
         // Calculate scaler so that scaler^frames = target/source
         double numFrames = duration * sampleRate;
-        return pow(SYNTHMARK_DB90, (1.0 / numFrames));
+        return pow(kAmplitudeDb90, (1.0 / numFrames));
     }
 
     /**
@@ -152,6 +160,5 @@ public:
     }
 
 };
-
 
 #endif // SYNTHMARK_SYNTHTOOLS_H

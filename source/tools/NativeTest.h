@@ -141,7 +141,7 @@ public:
         ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
         SAMPLES_PER_FRAME, 1, 8);
         ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        SYNTHMARK_FRAMES_PER_RENDER, 1, 8);
+        kSynthmarkFramesPerRender, 1, 8);
 
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
         ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
@@ -236,14 +236,14 @@ public:
         ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
         SAMPLES_PER_FRAME, 1, 8);
         ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        SYNTHMARK_FRAMES_PER_RENDER, 1, 8);
+        kSynthmarkFramesPerRender, 1, 8);
 
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
                 ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
                                                  &vFramesPerBurst, 4);
 
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
-        SYNTHMARK_NUM_VOICES_LATENCY, 1, 300);
+                                    kSynthmarkNumVoicesLatency, 1, 300);
 
         ParamInteger paramNumVoicesHigh(PARAMS_NUMB_VOICES_HIGH, "Number of Voices High", 0, 0,
         300);
@@ -334,16 +334,16 @@ public:
         ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", &vSamplingRates, 5);
 
         ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
-        SAMPLES_PER_FRAME, 1, 8);
+                                          SAMPLES_PER_FRAME, 1, 8);
         ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        SYNTHMARK_FRAMES_PER_RENDER, 1, 8);
+                                          kSynthmarkFramesPerRender, 1, 8);
 
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
         ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
                                          &vFramesPerBurst, 4);
 
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
-        SYNTHMARK_NUM_VOICES_JITTER, 1, 300);
+                                    8, 1, 300);
 
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
 

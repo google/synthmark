@@ -79,7 +79,7 @@ public:
     }
 
     void generate(int32_t numFrames) {
-        assert(numFrames <= SYNTHMARK_FRAMES_PER_RENDER);
+        assert(numFrames <= kSynthmarkFramesPerRender);
 
         // LFO #1 - vibrato
         mLfo1.generate(mVibratoRate, numFrames);
@@ -129,8 +129,8 @@ private:
     synth_float_t mFilterCutoff;    // in Hertz
 
     // Buffers for storing signals that are being passed between units.
-    synth_float_t mBuffer1[SYNTHMARK_FRAMES_PER_RENDER];
-    synth_float_t mBuffer2[SYNTHMARK_FRAMES_PER_RENDER];
+    synth_float_t mBuffer1[kSynthmarkFramesPerRender];
+    synth_float_t mBuffer2[kSynthmarkFramesPerRender];
 };
 
 #endif // SYNTHMARK_SIMPLE_VOICE_H

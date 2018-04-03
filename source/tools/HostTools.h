@@ -30,8 +30,8 @@
 #include <mach/mach_time.h>
 #endif
 
-constexpr int64_t NANOS_PER_MICROSECOND  = 1000;
-constexpr int64_t NANOS_PER_SECOND       = 1000000 * NANOS_PER_MICROSECOND;
+constexpr int64_t kNanosPerMicrosecond  = 1000;
+constexpr int64_t kNanosPerSecond       = 1000000 * kNanosPerMicrosecond;
 
 constexpr int kMaxCpuCount = 64;
 
@@ -58,7 +58,7 @@ public:
         if (result < 0) {
             return result;
         }
-        return (res.tv_sec * NANOS_PER_SECOND) + res.tv_nsec;
+        return (res.tv_sec * kNanosPerSecond) + res.tv_nsec;
     }
 #endif
 
@@ -81,8 +81,8 @@ public:
         int64_t nanosToSleep = wakeupTime - currentTime;
         while (nanosToSleep > 0) {
             int32_t microsToSleep = (int32_t)
-                    ((nanosToSleep + NANOS_PER_MICROSECOND - 1)
-                     / NANOS_PER_MICROSECOND);
+                    ((nanosToSleep + kNanosPerMicrosecond - 1)
+                     / kNanosPerMicrosecond);
             if (microsToSleep < 1) {
                 microsToSleep = 1;
             } else if (microsToSleep > kMaxMicros) {
@@ -199,7 +199,6 @@ public:
      * Sleep until the specified time and tune the CPU for optimal performance.
      *
      * @param wakeupTime MONOTONIC time to wake up or zero for no sleep
-     * @return the time we actually woke up
      */
     virtual void sleepAndTuneCPU(int64_t wakeupTime) = 0;
 
@@ -321,9 +320,8 @@ private:
     /**
      * Calculate the normalized CPU runtime per work unit.
      *
-     * @param startTime
-     * @param endTime
-     * @param audioTime
+     * @param cpuIndex
+     * @param callbackComputingTime
      */
     void calculateNormalizedRuntime(int cpuIndex, int64_t callbackComputingTime) {
         if (getCurrentWorkUnits() <= 0) {

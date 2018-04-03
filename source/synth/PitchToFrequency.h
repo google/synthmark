@@ -27,10 +27,10 @@
 #include "LookupTable.h"
 #include "tools/SynthTools.h"
 
-#define SEMITONES_PER_OCTAVE  12
+constexpr int kSemitonesPerOctave = 12;
 // Pitches are in semitones based on the MIDI standard.
-#define MIDDLE_C_PITCH  60
-#define MIDDLE_C_FREQUENCY  261.625549
+constexpr int kPitchMiddleC = 60;
+constexpr double kFrequencyMiddleC  = 261.625549;
 
 class PowerOfTwoTable : public LookupTable {
 public:
@@ -56,19 +56,19 @@ public:
     }
 
     static double convertPitchToFrequency(double pitch) {
-        double exponent = (pitch - MIDDLE_C_PITCH) * (1.0 / SEMITONES_PER_OCTAVE);
-        return MIDDLE_C_FREQUENCY * pow(2.0, exponent);
+        double exponent = (pitch - kPitchMiddleC) * (1.0 / kSemitonesPerOctave);
+        return kFrequencyMiddleC * pow(2.0, exponent);
     }
 
     synth_float_t lookupPitchToFrequency(synth_float_t pitch) {
         // Only calculate if input changed since last time.
         if (pitch != lastInput) {
-            synth_float_t octavePitch = (pitch - MIDDLE_C_PITCH) * (1.0 / SEMITONES_PER_OCTAVE);
+            synth_float_t octavePitch = (pitch - kPitchMiddleC) * (1.0 / kSemitonesPerOctave);
             int32_t octaveIndex = (int) floor(octavePitch);
             synth_float_t fractionalOctave = octavePitch - octaveIndex;
 
             // Do table lookup.
-            synth_float_t value = MIDDLE_C_FREQUENCY * mPowerTable.lookup(fractionalOctave);
+            synth_float_t value = kFrequencyMiddleC * mPowerTable.lookup(fractionalOctave);
 
             // Adjust for octave by multiplying by a power of 2. Allow for +/- 16 octaves;
             const int32_t octaveOffset = 16;
@@ -95,8 +95,8 @@ public:
 private:
     static PowerOfTwoTable mPowerTable;
 
-    synth_float_t lastInput = MIDDLE_C_PITCH;
-    synth_float_t lastOutput = MIDDLE_C_FREQUENCY;
+    synth_float_t lastInput = kPitchMiddleC;
+    synth_float_t lastOutput = kFrequencyMiddleC;
 
 };
 
