@@ -27,7 +27,8 @@
 // #define SYNTHMARK_MINOR_VERSION        9   /* Fixed iOS version */
 // #define SYNTHMARK_MINOR_VERSION        10  /* Added CPU migration histogram */
 // #define SYNTHMARK_MINOR_VERSION        11  /* Added UtilizationMark, print Jitter after Latency */
-#define SYNTHMARK_MINOR_VERSION        12  /* Added CPU Governor hints */
+// #define SYNTHMARK_MINOR_VERSION        12  /* Added CPU Governor hints */
+#define SYNTHMARK_MINOR_VERSION        13  /* Default burst size changed from 64 to 96 frames */
 
 // This may be increased without invalidating the benchmark.
 constexpr int kSynthmarkMaxVoices   = 512;
