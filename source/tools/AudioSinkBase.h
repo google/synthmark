@@ -17,10 +17,12 @@
 #ifndef SYNTHMARK_AUDIO_SINK_BASE_H
 #define SYNTHMARK_AUDIO_SINK_BASE_H
 
+#include <cmath>
 #include <cstdint>
-#include <math.h>
-#include "SynthMark.h"
+
 #include "IAudioSinkCallback.h"
+#include "SynthMark.h"
+
 
 #define SYNTHMARK_THREAD_PRIORITY_DEFAULT   2 // 2nd lowest priority, recommended by timmurray@
 #define SYNTHMARK_CPU_UNSPECIFIED           -1

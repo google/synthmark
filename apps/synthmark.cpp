@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "SynthMark.h"
+#include "synth/IncludeMeOnce.h"
 #include "synth/Synthesizer.h"
 #include "tools/JitterMarkHarness.h"
 #include "tools/LatencyMarkHarness.h"
@@ -25,7 +27,7 @@
 #include "tools/UtilizationMarkHarness.h"
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
-#include "synth/IncludeMeOnce.h"
+
 
 constexpr char kDefaultTestCode         = 'v';
 constexpr int  kDefaultSeconds          = 10;

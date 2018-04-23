@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <string>
 
+
 // TODO Use synthmark namespace and more C++ style naming conventions.
 enum : int32_t {
     SYNTHMARK_RESULT_SUCCESS = 0,

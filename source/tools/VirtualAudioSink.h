@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#include <cstdint>
-#include <unistd.h>
-#include <time.h>
-#include "SynthMark.h"
-#include "HostTools.h"
-#include "LogTool.h"
-#include "SynthMarkResult.h"
-#include "AudioSinkBase.h"
-
 #ifndef SYNTHMARK_VIRTUAL_AUDIO_SINK_H
 #define SYNTHMARK_VIRTUAL_AUDIO_SINK_H
+
+#include <cstdint>
+#include <ctime>
+#include <unistd.h>
+
+#include "AudioSinkBase.h"
+#include "HostTools.h"
+#include "LogTool.h"
+#include "SynthMark.h"
+#include "SynthMarkResult.h"
+
 
 constexpr int kMaxBufferCapacityInBursts = 128;
 

@@ -17,15 +17,16 @@
 #ifndef SYNTHMARK_PARAMS_H
 #define SYNTHMARK_PARAMS_H
 
+#include <cstdlib>
+#include <sstream>
+#include <string>
+#include <vector>
+
+
 #define PARAM_MIN(a,b) ((a) < (b) ? (a) : (b))
 #define PARAM_MAX(a,b) ((a) > (b) ? (a) : (b))
 
 #define END_LINE "\n"
-
-#include <stdlib.h>
-#include <string>
-#include <sstream>
-#include <vector>
 
 template <class T>
 class ParamListItem {

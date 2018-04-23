@@ -17,18 +17,19 @@
 #ifndef SYNTHMARK_TIMING_ANALYZER_H
 #define SYNTHMARK_TIMING_ANALYZER_H
 
-#include <stdint.h>
-#include <math.h>
-#include <time.h>
-#include <string.h>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <ctime>
 
-#include "SynthMark.h"
-#include "HostTools.h"
 #include "BinCounter.h"
+#include "HostTools.h"
+#include "SynthMark.h"
 
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
 #endif
+
 
 class TimingAnalyzer
 {

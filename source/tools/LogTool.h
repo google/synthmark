@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+#ifndef SYNTHMARK_LOGTOOL_H
+#define SYNTHMARK_LOGTOOL_H
+
 #include <cstdarg>
 #include <cstdio>
 #include <iostream>
 
-#ifndef SYNTHMARK_LOGTOOL_H
-#define SYNTHMARK_LOGTOOL_H
 
 #define LOGTOOL_BUFFER_SIZE (10 * 1024) //max single log that can be added at once
 #define LOGTOLL_PREFIX_MAX 10

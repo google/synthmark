@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
+#ifndef SYNTHMARK_JITTERMARK_HARNESS_H
+#define SYNTHMARK_JITTERMARK_HARNESS_H
+
+#include <cmath>
 #include <cstdint>
 #include <iomanip>
-#include <math.h>
+
 #include "AudioSinkBase.h"
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
 #include "tools/CpuAnalyzer.h"
-#include "tools/TimingAnalyzer.h"
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
-
-#ifndef SYNTHMARK_JITTERMARK_HARNESS_H
-#define SYNTHMARK_JITTERMARK_HARNESS_H
+#include "tools/TimingAnalyzer.h"
 
 
 /**

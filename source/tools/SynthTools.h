@@ -17,8 +17,9 @@
 #ifndef SYNTHMARK_SYNTHTOOLS_H
 #define SYNTHMARK_SYNTHTOOLS_H
 
+#include <cmath>
 #include <cstdint>
-#include <math.h>
+
 
 /**
  * A fractional amplitude corresponding to exactly -96 dB.
