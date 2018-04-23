@@ -99,7 +99,7 @@ public:
         int32_t result = TestHarnessBase::runTest(sampleRate, framesPerBurst, numSeconds);
         stopMonitorCallback();
         return result;
-    };
+    }
 
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;
