@@ -268,7 +268,7 @@ public:
             const int32_t *deliveryLast = deliveryBins->getLastMarkers();
             resultMessage << " bin#,  msec,"
                           << "   wakeup#,  wlast,"
-                          << "   render#,  rlast,";
+                          << "   render#,  rlast";
             if (showDeliveryTime) {
                 resultMessage << " delivery#,  dlast";
             }
