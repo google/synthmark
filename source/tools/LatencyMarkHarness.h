@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-#include <cstdint>
-#include <sstream>
-#include <math.h>
-
-#include "SynthMark.h"
-#include "synth/Synthesizer.h"
-#include "tools/TimingAnalyzer.h"
-#include "AudioSinkBase.h"
-#include "tools/LogTool.h"
-#include "tools/TestHarnessBase.h"
-
 #ifndef SYNTHMARK_LATENCYMARK_HARNESS_H
 #define SYNTHMARK_LATENCYMARK_HARNESS_H
+
+#include <cmath>
+#include <cstdint>
+#include <sstream>
+
+#include "AudioSinkBase.h"
+#include "SynthMark.h"
+#include "synth/Synthesizer.h"
+#include "tools/LogTool.h"
+#include "tools/TestHarnessBase.h"
+#include "tools/TimingAnalyzer.h"
+
 
 #define NOTES_PER_STEP   10
 
@@ -99,7 +100,7 @@ public:
         int32_t result = TestHarnessBase::runTest(sampleRate, framesPerBurst, numSeconds);
         stopMonitorCallback();
         return result;
-    };
+    }
 
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;

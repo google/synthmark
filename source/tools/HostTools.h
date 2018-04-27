@@ -17,18 +17,19 @@
 #ifndef ANDROID_HOSTTOOLS_H
 #define ANDROID_HOSTTOOLS_H
 
+#include <cassert>
 #include <cstdint>
-#include <memory.h>
-#include <unistd.h>
-#include <time.h>
-#include <sched.h>
-#include <pthread.h>
-#include <assert.h>
 #include <cstdio>
+#include <ctime>
+#include <memory.h>
+#include <pthread.h>
+#include <sched.h>
+#include <unistd.h>
 
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
 #endif
+
 
 constexpr int64_t kNanosPerMicrosecond  = 1000;
 constexpr int64_t kNanosPerSecond       = 1000000 * kNanosPerMicrosecond;

@@ -17,15 +17,17 @@
 #ifndef SYNTHMARK_UTILIZATION_MARK_HARNESS_H
 #define SYNTHMARK_UTILIZATION_MARK_HARNESS_H
 
+#include <cmath>
 #include <cstdint>
 #include <sstream>
-#include <math.h>
+
+#include "AudioSinkBase.h"
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
-#include "tools/TimingAnalyzer.h"
-#include "AudioSinkBase.h"
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
+#include "tools/TimingAnalyzer.h"
+
 
 /**
  * Play a specified number of voices on a Synthesizer and
@@ -86,4 +88,5 @@ public:
 private:
     double  mFractionOfCpu = 0.0;
 };
+
 #endif //SYNTHMARK_UTILIZATION_MARK_HARNESS_H

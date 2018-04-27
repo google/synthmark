@@ -19,6 +19,7 @@
 
 #include <cstdint>
 
+
 /**
  * Interface for a callback object that renders audio into a buffer.
  * This can be passed to an AudioSinkBase or its subclasses.

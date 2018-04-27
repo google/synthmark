@@ -21,15 +21,16 @@
 
 #include <string>
 #include <sstream>
-#include "LogTool.h"
+
 #include "../SynthMark.h"
-#include "TimingAnalyzer.h"
 #include "../synth/Synthesizer.h"
+#include "JitterMarkHarness.h"
+#include "LatencyMarkHarness.h"
+#include "LogTool.h"
+#include "Params.h"
+#include "TimingAnalyzer.h"
 #include "VirtualAudioSink.h"
 #include "VoiceMarkHarness.h"
-#include "LatencyMarkHarness.h"
-#include "JitterMarkHarness.h"
-#include "Params.h"
 
 
 #define NATIVETEST_SUCCESS 0

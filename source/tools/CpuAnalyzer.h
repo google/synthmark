@@ -17,16 +17,17 @@
 #ifndef SYNTHMARK_CPU_ANALYZER_H
 #define SYNTHMARK_CPU_ANALYZER_H
 
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <ctime>
 #include <iomanip>
-#include <math.h>
 #include <sstream>
-#include <string.h>
-#include <stdint.h>
-#include <time.h>
 
-#include "SynthMark.h"
-#include "HostTools.h"
 #include "BinCounter.h"
+#include "HostTools.h"
+#include "SynthMark.h"
+
 
 constexpr int MAX_CPUS  = 32;
 

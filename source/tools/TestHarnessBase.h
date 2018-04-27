@@ -17,8 +17,8 @@
 #ifndef SYNTHMARK_SYNTHMARK_HARNESS_H
 #define SYNTHMARK_SYNTHMARK_HARNESS_H
 
+#include <cmath>
 #include <cstdint>
-#include <math.h>
 
 #include "AudioSinkBase.h"
 #include "BinCounter.h"
@@ -30,6 +30,7 @@
 #include "tools/CpuAnalyzer.h"
 #include "tools/TimingAnalyzer.h"
 #include "tools/LogTool.h"
+
 
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
@@ -353,6 +354,5 @@ protected:
 private:
     int32_t          mNumVoices = 0;
 };
-
 
 #endif // SYNTHMARK_SYNTHMARK_HARNESS_H

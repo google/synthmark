@@ -17,7 +17,8 @@
 #ifndef ANDROID_BINCOUNTER_H
 #define ANDROID_BINCOUNTER_H
 
-#include <stdint.h>
+#include <cstdint>
+
 
 class BinCounter
 {
