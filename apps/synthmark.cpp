@@ -44,6 +44,9 @@ void usage(const char *name) {
            kDefaultTestCode);
     printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
     printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
+    printf("    -m{voicesMode} algorithm to choose the number of voices in the range\n"
+           "      [-n, -N]. This value can be 'l' for a linear increment, 'r' for a\n"
+           "      random choice, or 's' to switch between -n and -N. default = s\n");
     printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
            kDefaultNoteOnDelay);
     printf("    -p{percentCPU} target load, default = %d\n", kDefaultPercentCpu);
@@ -51,7 +54,7 @@ void usage(const char *name) {
            kSynthmarkSampleRate);
     printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
            kDefaultSeconds);
-    printf("    -b{burstSize} frames read by virtual hardware at one time , default = %d\n",
+    printf("    -b{burstSize} frames read by virtual hardware at one time, default = %d\n",
            kDefaultFramesPerBurst);
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
 }
@@ -66,6 +69,7 @@ int main(int argc, char **argv)
     int32_t numVoicesHigh = 0;
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
+    VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
 
     TestHarnessBase *harness = NULL;
@@ -97,6 +101,20 @@ int main(int argc, char **argv)
                     break;
                 case 'r':
                     sampleRate = atoi(&arg[2]);
+                    break;
+                case 'm':
+                    switch (arg[2]) {
+                        case 'r':
+                            voicesMode = VOICES_RANDOM;
+                            break;
+                        case 'l':
+                            voicesMode = VOICES_LINEAR_LOOP;
+                            break;
+                        case 's':
+                        default:
+                            voicesMode = VOICES_SWITCH;
+                            break;
+                    }
                     break;
                 case 's':
                     numSeconds = atoi(&arg[2]);
@@ -144,6 +162,11 @@ int main(int argc, char **argv)
         usage(argv[0]);
         return 1;
     }
+    if (voicesMode != VOICES_UNDEFINED && numVoicesHigh == 0) {
+        printf("Random voices only supported for LatencyMark\n");
+        usage(argv[0]);
+        return 1;
+    }
     if (numSeconds < 1) {
         printf("Invalid duration in seconds = %d\n", numSeconds);
         usage(argv[0]);
@@ -175,6 +198,7 @@ int main(int argc, char **argv)
             {
                 LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result);
                 latencyHarness->setNumVoicesHigh(numVoicesHigh);
+                latencyHarness->setVoicesMode(voicesMode);
                 harness = latencyHarness;
             }
             break;
@@ -201,6 +225,7 @@ int main(int argc, char **argv)
     printf("  test name      = %s\n", harness->getName());
     printf("  numVoices      = %6d\n", numVoices);
     printf("  numVoicesHigh  = %6d\n", numVoicesHigh);
+    printf("  voicesMode     = %6d\n", voicesMode);
     printf("  noteOnDelay    = %6d\n", numSecondsDelayNoteOn);
     printf("  targetCpu%c     = %6d\n", '%', percentCpu);
     printf("  framesPerBurst = %6d\n", framesPerBurst);

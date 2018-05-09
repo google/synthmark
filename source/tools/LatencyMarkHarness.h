@@ -19,6 +19,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <sstream>
 
 #include "AudioSinkBase.h"
@@ -30,6 +31,13 @@
 
 
 #define NOTES_PER_STEP   10
+
+enum VoicesMode {
+    VOICES_UNDEFINED,
+    VOICES_SWITCH,
+    VOICES_RANDOM,
+    VOICES_LINEAR_LOOP,
+};
 
 /**
  * Determine buffer latency required to avoid glitches.
@@ -45,6 +53,11 @@ public:
     {
         mTestName = "LatencyMark";
         setNumVoices(kSynthmarkNumVoicesLatency);
+
+        // Constant seed to obtain a fixed pattern of pseudo-random voices
+        // for experiment repeatability and reproducibility
+        //srand(time(NULL)); // "Random" seed
+        srand(0); // Fixed seed
     }
 
     virtual ~LatencyMarkHarness() {
@@ -154,15 +167,47 @@ public:
         mNumVoicesHigh = numVoicesHigh;
     }
 
+    void setVoicesMode(VoicesMode vm) {
+        mVoicesMode = vm;
+    }
+
     int32_t getNumVoicesHigh() {
         return mNumVoicesHigh;
     }
 
     int32_t getCurrentNumVoices() override {
-        // Toggle back and forth between high and low
         if (mNumVoicesHigh > 0) {
-            return ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2)) ?
-                   TestHarnessBase::getNumVoices() : mNumVoicesHigh;
+            static bool toggle = true;
+            // The same number of voices is kept every (NOTES_PER_STEP / 2).
+            bool needUpdate = ((getNoteCounter() % (NOTES_PER_STEP / 2)) == 0);
+            static int32_t lastVoices;
+
+            if (needUpdate) {
+                switch (mVoicesMode) {
+                    case VOICES_LINEAR_LOOP:
+                        // The number of voices is linearly incremented in the
+                        // range [-n, -N]. When it reaches -N, it restarts back
+                        // from -n.
+                        lastVoices += NOTES_PER_STEP / 2;
+                        if (lastVoices > mNumVoicesHigh ||
+                                lastVoices < TestHarnessBase::getNumVoices())
+                            lastVoices = TestHarnessBase::getNumVoices();
+                        break;
+                    case VOICES_RANDOM:
+                        // Return a number of voices in the range [-n, -N].
+                        lastVoices = (rand() % (mNumVoicesHigh - TestHarnessBase::getNumVoices() + 1))
+                                + TestHarnessBase::getNumVoices();
+                        break;
+                    case VOICES_SWITCH:
+                    default:
+                        // Toggle back and forth between high and low
+                        toggle = !toggle;
+                        lastVoices = toggle ? TestHarnessBase::getNumVoices()
+                                            : mNumVoicesHigh;
+                        break;
+                }
+            }
+            return lastVoices;
         } else {
             return TestHarnessBase::getNumVoices();
         }
@@ -172,6 +217,7 @@ private:
 
     int32_t           mPreviousUnderrunCount = 0;
     int32_t           mNumVoicesHigh = 0;
+    VoicesMode        mVoicesMode = VOICES_SWITCH;
 
     HostThread       *mMonitorThread = nullptr;
     bool              mMonitorEnabled = true; // atomic is not sufficiently portable
