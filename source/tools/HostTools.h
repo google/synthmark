@@ -287,7 +287,6 @@ public:
             // Use previously measured statistics.
             double normalizedWorkUnitUtilization = cpuTiming.getNormalizedWorkUnitUtilization();
 
-            int32_t currentClockSpeedMHz =  getCpuSpeedMHz(cpuIndex);
             int32_t maxClockSpeedMHz     = getMaxCpuSpeedMHz(cpuIndex); // FIXME get from device
             const double targetUtilization = 0.8; // arbitrary
             double normalizedCurrentUtilization = currentWorkUnits * normalizedWorkUnitUtilization;

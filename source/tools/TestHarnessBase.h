@@ -51,11 +51,10 @@ public:
     , mResult(result)
     , mSampleRate(kSynthmarkSampleRate)
     , mSamplesPerFrame(2)
-    , mNumVoices(8)
     , mFrameCounter(0)
     , mDelayNotesOnUntilFrame(0)
     , mNoteCounter(0)
-
+    , mNumVoices(8)
     {
         mAudioSink = audioSink;
 
