@@ -28,7 +28,6 @@
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
 
-
 constexpr char kDefaultTestCode         = 'v';
 constexpr int  kDefaultSeconds          = 10;
 constexpr int  kDefaultFramesPerBurst   = 96; // 2 msec at 48000 Hz
@@ -59,6 +58,8 @@ void usage(const char *name) {
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
 }
 
+#define TEXT_ERROR "ERROR: "
+
 int main(int argc, char **argv)
 {
     int32_t percentCpu = kDefaultPercentCpu;
@@ -77,7 +78,7 @@ int main(int argc, char **argv)
     SynthMarkResult result;
     VirtualAudioSink audioSink;
 
-    printf("--- SynthMark V%d.%d ---\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
+    printf("# SynthMark V%d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
 
     // Parse command line arguments.
     for (int iarg = 1; iarg < argc; iarg++) {
@@ -130,54 +131,54 @@ int main(int argc, char **argv)
                     usage(argv[0]);
                     return 0;
                 default:
-                    printf("Unrecognized switch: %s\n", arg);
+                    printf(TEXT_ERROR "Unrecognized switch: %s\n", arg);
                     usage(argv[0]);
                     return 1;
             }
         } else {
-            printf("Unrecognized argument: %s\n", arg);
+            printf(TEXT_ERROR "Unrecognized argument: %s\n", arg);
             usage(argv[0]);
             return 1;
         }
     }
     if (percentCpu < 1 || percentCpu > 100) {
-        printf("Invalid percent CPU = %d\n", percentCpu);
+        printf(TEXT_ERROR "Invalid percent CPU = %d\n", percentCpu);
         usage(argv[0]);
         return 1;
     }
     if ((numVoices < 1 && numVoicesHigh <= 0)
         || numVoices < 0
         || numVoices > kSynthmarkMaxVoices) {
-        printf("Invalid num voices = %d\n", numVoices);
+        printf(TEXT_ERROR "Invalid num voices = %d\n", numVoices);
         usage(argv[0]);
         return 1;
     }
     if (numVoicesHigh != 0 && numVoicesHigh < numVoices) {
-        printf("Invalid num voices high = %d\n", numVoicesHigh);
+        printf(TEXT_ERROR "Invalid num voices high = %d\n", numVoicesHigh);
         usage(argv[0]);
         return 1;
     }
     if (numVoicesHigh != 0 && testCode != 'l') {
-        printf("Num voices high only supported for LatencyMark\n");
+        printf(TEXT_ERROR "Num voices high only supported for LatencyMark\n");
         usage(argv[0]);
         return 1;
     }
     if (voicesMode != VOICES_UNDEFINED && numVoicesHigh == 0) {
-        printf("Random voices only supported for LatencyMark\n");
+        printf(TEXT_ERROR "Random voices only supported for LatencyMark\n");
         usage(argv[0]);
         return 1;
     }
     if (numSeconds < 1) {
-        printf("Invalid duration in seconds = %d\n", numSeconds);
+        printf(TEXT_ERROR "Invalid duration in seconds = %d\n", numSeconds);
         usage(argv[0]);
         return 1;
     }
     if (numSecondsDelayNoteOn < 0 || numSecondsDelayNoteOn > numSeconds){
-        printf("Invalid delay for note on = %d\n", numSecondsDelayNoteOn);
+        printf(TEXT_ERROR "Invalid delay for note on = %d\n", numSecondsDelayNoteOn);
         return 1;
     }
     if (framesPerBurst < 4) {
-        printf("Block size too small = %d\n", framesPerBurst);
+        printf(TEXT_ERROR "Block size too small = %d\n", framesPerBurst);
         usage(argv[0]);
         return 1;
     }
@@ -213,7 +214,7 @@ int main(int argc, char **argv)
         }
             break;
         default:
-            printf("ERROR - unrecognized testCode = %c\n", testCode);
+            printf(TEXT_ERROR "unrecognized testCode = %c\n", testCode);
             usage(argv[0]);
             return 1;
             break;
@@ -222,26 +223,26 @@ int main(int argc, char **argv)
     harness->setDelayNotesOn(numSecondsDelayNoteOn);
 
     // Print specified parameters.
-    printf("  test name      = %s\n", harness->getName());
-    printf("  numVoices      = %6d\n", numVoices);
-    printf("  numVoicesHigh  = %6d\n", numVoicesHigh);
-    printf("  voicesMode     = %6d\n", voicesMode);
-    printf("  noteOnDelay    = %6d\n", numSecondsDelayNoteOn);
-    printf("  targetCpu%c     = %6d\n", '%', percentCpu);
-    printf("  framesPerBurst = %6d\n", framesPerBurst);
-    printf("  msecPerBurst   = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
-    printf("  cpuAffinity    = %6d\n", cpuAffinity);
-    printf("--- wait at least %d seconds for benchmark to complete ---\n", numSeconds);
+    printf("  test.mame          = %s\n", harness->getName());
+    printf("  num.voices         = %6d\n", numVoices);
+    printf("  num.voices.high    = %6d\n", numVoicesHigh);
+    printf("  voices.mode        = %6d\n", voicesMode);
+    printf("  note.on.delay      = %6d\n", numSecondsDelayNoteOn);
+    printf("  target.cpu.percent = %6d\n", '%', percentCpu);
+    printf("  frames.per.burst   = %6d\n", framesPerBurst);
+    printf("  msec.per.burst     = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
+    printf("  cpu.affinity       = %6d\n", cpuAffinity);
+    printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 
     // Run the benchmark.
     harness->runTest(sampleRate, framesPerBurst, numSeconds);
 
     // Print the test results.
-    printf("RESULTS BEGIN\n");
+    printf(TEXT_RESULTS_BEGIN "\n");
     std::cout << result.getResultMessage();
-    printf("RESULTS END\n");
-    printf("Benchmark complete.\n");
+    printf(TEXT_RESULTS_END "\n");
+    printf("# Benchmark complete.\n");
 
     return result.getResultCode();
 }
