@@ -1,0 +1,6 @@
+language: cpp
+
+script:
+  - make -f linux/Makefile
+
+install: true 
