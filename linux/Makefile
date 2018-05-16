@@ -8,6 +8,8 @@ CFLAGS = -g -Wall -Werror -Isource -std=c++11 -Ofast
 
 VPATH = apps:source:source/tools
 
+OBJECTS := $(patsubst %.cpp,%.o,$(shell find $(SOURCEDIR) -name '*.cpp'))
+
 .PHONY: default all clean
 
 default: $(TARGET)
