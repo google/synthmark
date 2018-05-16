@@ -228,7 +228,7 @@ int main(int argc, char **argv)
     printf("  num.voices.high    = %6d\n", numVoicesHigh);
     printf("  voices.mode        = %6d\n", voicesMode);
     printf("  note.on.delay      = %6d\n", numSecondsDelayNoteOn);
-    printf("  target.cpu.percent = %6d\n", '%', percentCpu);
+    printf("  target.cpu.percent = %6d\n", percentCpu);
     printf("  frames.per.burst   = %6d\n", framesPerBurst);
     printf("  msec.per.burst     = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
     printf("  cpu.affinity       = %6d\n", cpuAffinity);
