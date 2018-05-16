@@ -28,7 +28,6 @@
 #include "HostTools.h"
 #include "SynthMark.h"
 
-
 constexpr int MAX_CPUS  = 32;
 
 /**
@@ -55,15 +54,15 @@ public:
     std::string dump() {
         std::stringstream result;
         result << std::endl << "CPU Core Migration" << std::endl;
-        result << "  #migrations = " << mMigrationCount << " / " << mTotalCount;
-        int migrationPerMil = 1000 * mMigrationCount / mTotalCount;
-        result << ", migrationPerMil = " << migrationPerMil << std::endl;
+        result << "migration.count = " << mMigrationCount << std::endl;
+        result << "migration.measurements = " << mTotalCount << std::endl;
 
         // Report bins with non-zero counts.
         int32_t numBins = mCpuBins.getNumBins();
         const int32_t *cpuCounts = mCpuBins.getBins();
         const int32_t *cpuLast = mCpuBins.getLastMarkers();
-        result << " cpu#,    count,     last," << std::endl;
+        result << TEXT_CSV_BEGIN << std::endl;
+        result << " cpu#,    count,     last" << std::endl;
         for (int i = 0; i < numBins; i++) {
             if (cpuCounts[i] > 0) {
                 result << "  " << std::setw(3) << i
@@ -72,6 +71,7 @@ public:
                 << std::endl;
             }
         }
+        result << TEXT_CSV_END << std::endl;
         return result.str();
     }
 

@@ -154,9 +154,12 @@ public:
 
         std::stringstream resultMessage;
         resultMessage << dumpJitter();
-        resultMessage << "Latency is " << sizeFrames << " frames = " << latencyMsec << " msec at burst size " <<
-                mFramesPerBurst << " frames"
-                << std::endl;
+        resultMessage << "frames.per.burst     = " << mFramesPerBurst << std::endl;
+        resultMessage << "audio.latency.bursts = " << (sizeFrames / mFramesPerBurst) << std::endl;
+        resultMessage << "audio.latency.frames = " << sizeFrames << std::endl;
+        resultMessage << "audio.latency.msec   = " << latencyMsec << std::endl;
+
+        resultMessage << mCpuAnalyzer.dump();
 
         mResult->setResultMessage(resultMessage.str());
         mResult->setResultCode(SYNTHMARK_RESULT_SUCCESS);

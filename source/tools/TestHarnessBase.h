@@ -31,7 +31,6 @@
 #include "tools/TimingAnalyzer.h"
 #include "tools/LogTool.h"
 
-
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
 
@@ -260,6 +259,7 @@ public:
         BinCounter *renderBins = mTimer.getRenderBins();
         BinCounter *deliveryBins = mTimer.getDeliveryBins();
         if (wakeupBins != NULL && renderBins != NULL && deliveryBins != NULL) {
+            resultMessage << TEXT_CSV_BEGIN << std::endl;
             int32_t numBins = deliveryBins->getNumBins();
             const int32_t *wakeupCounts = wakeupBins->getBins();
             const int32_t *wakeupLast = wakeupBins->getLastMarkers();
@@ -293,6 +293,7 @@ public:
                     resultMessage << std::endl;
                 }
             }
+            resultMessage << TEXT_CSV_END << std::endl;
         } else {
             resultMessage << "ERROR NULL BinCounter!\n";
         }

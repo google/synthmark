@@ -28,7 +28,8 @@
 // #define SYNTHMARK_MINOR_VERSION        10  /* Added CPU migration histogram */
 // #define SYNTHMARK_MINOR_VERSION        11  /* Added UtilizationMark, print Jitter after Latency */
 // #define SYNTHMARK_MINOR_VERSION        12  /* Added CPU Governor hints */
-#define SYNTHMARK_MINOR_VERSION        13  /* Default burst size changed from 64 to 96 frames */
+// #define SYNTHMARK_MINOR_VERSION        13  /* Default burst size changed from 64 to 96 frames */
+#define SYNTHMARK_MINOR_VERSION        14  /* Use more consistent report format */
 
 // This may be increased without invalidating the benchmark.
 constexpr int kSynthmarkMaxVoices   = 512;
@@ -48,5 +49,9 @@ constexpr int64_t SYNTHMARK_NANOS_PER_SECOND       = 1000000000;
 
 typedef float synth_float_t;
 
+#define TEXT_CSV_BEGIN      "CSV_BEGIN"
+#define TEXT_CSV_END        "CSV_END"
+#define TEXT_RESULTS_BEGIN  "RESULTS_BEGIN"
+#define TEXT_RESULTS_END    "RESULTS_END"
 
 #endif // SYNTHMARK_SYNTHMARK_H
