@@ -82,7 +82,7 @@ public:
         resultMessage << mCpuAnalyzer.dump();
 
         mResult->setMeasurement(measurement);
-        mResult->setResultMessage(resultMessage.str());
+        mResult->appendMessage(resultMessage.str());
     }
 
 private:

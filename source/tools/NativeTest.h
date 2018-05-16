@@ -204,7 +204,7 @@ public:
                      framesPerRender,
                      framesPerBurst);
 
-        harness.setDelayNotesOn(noteOnDelay);
+        harness.setDelayNoteOnSeconds(noteOnDelay);
         harness.setTargetCpuLoad(targetCpuLoad);
         harness.measure(numSeconds);
         harness.close();
@@ -303,7 +303,7 @@ public:
                      framesPerRender,
                      framesPerBurst);
 
-        harness.setDelayNotesOn(noteOnDelay);
+        harness.setDelayNoteOnSeconds(noteOnDelay);
         harness.setNumVoices(numVoices);
         harness.setNumVoicesHigh(numVoicesHigh);
         harness.measure(numSeconds);
@@ -398,7 +398,7 @@ public:
                      framesPerRender,
                      framesPerBurst);
 
-        harness.setDelayNotesOn(noteOnDelay);
+        harness.setDelayNoteOnSeconds(noteOnDelay);
         harness.setNumVoices(numVoices);
         harness.measure(numSeconds);
         harness.close();

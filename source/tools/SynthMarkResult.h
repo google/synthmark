@@ -35,13 +35,13 @@ enum : int32_t {
 };
 
 /**
- * Class for holding the results of SynthMark test
+ * Class for holding the results of a SynthMark test
  *
  * Information stored includes:
  *
  * SynthMark version
- * Device information (including operating system, build and ABI)
- * Test configuration (e.g. Android Sustained performance mode)
+ * Numeric result of test
+ * Text report that may include CSV values.
  *
  */
 class SynthMarkResult {
@@ -52,39 +52,39 @@ public:
     {
     }
 
-    std::string getTestName(){
+    std::string getTestName() {
         return mTestName;
     }
 
-    void setTestName(std::string testName){
+    void setTestName(std::string testName) {
         mTestName = testName;
     }
 
-    std::string getResultMessage(){
+    std::string getResultMessage() {
         return mResultMessage;
     }
 
-    void setResultMessage(std::string message){
-        mResultMessage = message;
+    void appendMessage(std::string message) {
+        mResultMessage.append(message);
     }
 
-    int32_t getResultCode(){
+    int32_t getResultCode() {
         return mResultCode;
     }
 
-    void setResultCode(int32_t resultCode){
+    void setResultCode(int32_t resultCode) {
         mResultCode = resultCode;
     }
 
-    bool isSuccessful(){
+    bool isSuccessful() {
         return (mResultCode == SYNTHMARK_RESULT_SUCCESS);
     }
 
-    double getMeasurement(){
+    double getMeasurement() {
         return mMeasurement;
     };
 
-    void setMeasurement(double measurement){
+    void setMeasurement(double measurement) {
         mMeasurement = measurement;
     }
 
