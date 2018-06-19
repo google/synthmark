@@ -35,6 +35,12 @@ constexpr double kMaxUtilization = 0.9; // Maximum load that we will push the CP
  * 2) Run VoiceMark on each CPU to determine big vs little CPUs
  * 3) Run LatencyMark with a light load, a heavy load, then an alternating load.
  * 4) Print report with analysis.
+ *
+ * The current code:
+ *     assumes that the CPU numbering depends on their capacity,
+ *     assumes that both lowCpu and highCpu are online,
+ *     assume the existence of only two architectures, homogeneous or BIG.little.
+ * TODO handle more architectures.
  */
 class AutomatedTestSuite : public ITestHarness {
 
@@ -97,6 +103,8 @@ private:
         harness->setInitialVoiceCount(mNumVoices);
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
 
+        // TODO This is hack way to choose CPUs for BIG.little architectures.
+        // TODO Test each CPU or come up with something better.
         int lowCpu = (1 * numCPUs) / 4;
         mAudioSink->setRequestedCpu(lowCpu);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
@@ -104,7 +112,6 @@ private:
 
         double voiceMarkMaxLow = result1.getMeasurement();
         double voiceMarkMaxHigh = voiceMarkMaxLow;
-
 
         int highCpu = (3 * numCPUs) / 4;
         // If there are more than 2 CPUs than measure one each from top and bottom half in
@@ -198,6 +205,7 @@ private:
                            int cpu,
                            int32_t numVoicesMax) {
         std::stringstream message;
+
         int32_t voiceMarkLow = 1 * numVoicesMax / 4;
         int32_t voiceMarkHigh = 3 * numVoicesMax / 4;
 
@@ -246,10 +254,10 @@ private:
     int32_t          mNumVoices = 8;
     int32_t          mDelayNotesOn = 0;
 
-    int              mBigCpu = 0;  // A CPU index in low half of CPUs available.
+    int              mBigCpu = 0;  // A CPU index in fast half of CPUs available.
     double           mVoiceMarkMaxBig = 0.0;
 
-    int              mLittleCpu = 0; // A CPU index in high half of CPUs available.
+    int              mLittleCpu = 0; // A CPU index in slow half of CPUs available.
     double           mVoiceMarkMaxLittle = 0.0;
 
     bool             mHaveBigLittle = false;

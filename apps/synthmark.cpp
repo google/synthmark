@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
 
-    ITestHarness *harness = NULL;
+    ITestHarness *harness = nullptr;
 
     SynthMarkResult result;
     VirtualAudioSink audioSink;
