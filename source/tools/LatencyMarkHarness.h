@@ -118,7 +118,9 @@ public:
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;
         mAudioSink->setBufferSizeInFrames(mFramesPerBurst);
-        mLogTool->log("---- Measure latency ---- #voices = %d\n", getNumVoices());
+        mLogTool->log("---- Measure latency ---- #voices = %d / %d\n",
+                      getNumVoices(),
+                      getNumVoicesHigh());
 
         setupJitterRecording();
     }
@@ -161,7 +163,7 @@ public:
 
         resultMessage << mCpuAnalyzer.dump();
 
-        mResult->setResultMessage(resultMessage.str());
+        mResult->appendMessage(resultMessage.str());
         mResult->setResultCode(SYNTHMARK_RESULT_SUCCESS);
         mResult->setMeasurement((double) sizeFrames);
     }

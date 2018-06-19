@@ -63,12 +63,12 @@ public:
         setNumVoices(mInitialVoiceCount);
         mSumVoicesOn = 0;
         mSumVoicesCount = 0;
-
+        mBeatCount = 0;
         mStable = false;
     }
 
     virtual int32_t onBeforeNoteOn() override {
-        if (mNoteOnCount >= kMinimumNoteOnCount) {
+        if (mBeatCount >= kMinimumNoteOnCount) {
             // Estimate how many voices it would take to use a fraction of the CPU.
             double cpuLoad = mTimer.getDutyCycle();
             int32_t oldNumVoices = getNumVoices();
@@ -94,12 +94,13 @@ public:
                     accepted = true;
                 }
             }
-            mLogTool->log("%3d voices used %5.3f of CPU, %s\n", oldNumVoices, cpuLoad,
+            mLogTool->log("%d: %3d voices used %5.3f of CPU, %s\n",
+                          mBeatCount, oldNumVoices, cpuLoad,
                           accepted ? "" : " - not used");
             setNumVoices(newNumVoices);
         }
         mTimer.reset();
-        mNoteOnCount++;
+        mBeatCount++;
         return 0;
     }
 
@@ -118,8 +119,8 @@ public:
 
         } else {
 
-            double measurement = mSumVoicesOn / mSumVoicesCount;
-            resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
+            measurement = mSumVoicesOn / mSumVoicesCount;
+            resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << std::endl;
             resultMessage << mTestName << "_"
                 << ((int)(mFractionOfCpu * 100)) << " = " << measurement;
             resultMessage << ", normalized to 100% = "
@@ -131,7 +132,7 @@ public:
         resultMessage << mCpuAnalyzer.dump();
 
         mResult->setMeasurement(measurement);
-        mResult->setResultMessage(resultMessage.str());
+        mResult->appendMessage(resultMessage.str());
     }
 
     /**
@@ -149,12 +150,14 @@ public:
 
 
 private:
-    double  mSumVoicesOn = 0;
-    int32_t mSumVoicesCount = 0;
     double  mFractionOfCpu = 0.0;
-    bool    mStable = false;
-    int32_t mNoteOnCount = 0;
     int32_t mInitialVoiceCount = 10;
+
+    // These need to be reset before each measurement.
+    double  mSumVoicesOn = 0;     // sum of fractional number of voices on
+    int32_t mSumVoicesCount = 0;  // number of measurements for taking an average
+    int32_t mBeatCount = 0;
+    bool    mStable = false;
 };
 
 #endif // SYNTHMARK_VOICEMARK_HARNESS_H

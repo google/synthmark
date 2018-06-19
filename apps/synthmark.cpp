@@ -17,11 +17,13 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <tools/AutomatedTestSuite.h>
 
 #include "SynthMark.h"
 #include "synth/IncludeMeOnce.h"
 #include "synth/Synthesizer.h"
 #include "tools/JitterMarkHarness.h"
+#include "tools/ITestHarness.h"
 #include "tools/LatencyMarkHarness.h"
 #include "tools/TimingAnalyzer.h"
 #include "tools/UtilizationMarkHarness.h"
@@ -73,7 +75,7 @@ int main(int argc, char **argv)
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
 
-    TestHarnessBase *harness = NULL;
+    ITestHarness *harness = nullptr;
 
     SynthMarkResult result;
     VirtualAudioSink audioSink;
@@ -207,11 +209,17 @@ int main(int argc, char **argv)
             harness = new JitterMarkHarness(&audioSink, &result);
             break;
         case 'u':
-        {
-            UtilizationMarkHarness *utilizationHarness = new UtilizationMarkHarness(&audioSink, &result);
-            utilizationHarness->setNumVoices(numVoices);
-            harness = utilizationHarness;
-        }
+            {
+                UtilizationMarkHarness *utilizationHarness = new UtilizationMarkHarness(&audioSink, &result);
+                utilizationHarness->setNumVoices(numVoices);
+                harness = utilizationHarness;
+            }
+            break;
+        case 'a':
+            {
+                AutomatedTestSuite *testSuite = new AutomatedTestSuite(&audioSink, &result);
+                harness = testSuite;
+            }
             break;
         default:
             printf(TEXT_ERROR "unrecognized testCode = %c\n", testCode);
@@ -220,10 +228,10 @@ int main(int argc, char **argv)
             break;
     }
     harness->setNumVoices(numVoices);
-    harness->setDelayNotesOn(numSecondsDelayNoteOn);
+    harness->setDelayNoteOnSeconds(numSecondsDelayNoteOn);
 
     // Print specified parameters.
-    printf("  test.mame          = %s\n", harness->getName());
+    printf("  test.name          = %s\n", harness->getName());
     printf("  num.voices         = %6d\n", numVoices);
     printf("  num.voices.high    = %6d\n", numVoicesHigh);
     printf("  voices.mode        = %6d\n", voicesMode);
@@ -232,6 +240,7 @@ int main(int argc, char **argv)
     printf("  frames.per.burst   = %6d\n", framesPerBurst);
     printf("  msec.per.burst     = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
     printf("  cpu.affinity       = %6d\n", cpuAffinity);
+    printf("  cpu.count          = %6d\n", HostTools::getCpuCount());
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 

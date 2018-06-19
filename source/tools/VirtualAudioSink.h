@@ -56,6 +56,10 @@ public:
         HostCpuManager::getInstance()->setNanosPerBurst(nanosPerBurst);
 
         mBurstBuffer = new float[samplesPerFrame * framesPerBurst];
+
+        mNextHardwareReadTimeNanos = 0;
+        mFramesConsumed = 0;
+        mStartTimeNanos = 0;
         return 0;
     }
 
@@ -166,6 +170,8 @@ public:
         delete[] mBurstBuffer;
         return 0;
     }
+
+private:
 
     /**
      * Call the callback in a loop until it is finished or an error occurs.

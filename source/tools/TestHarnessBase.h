@@ -28,8 +28,9 @@
 #include "SynthMarkResult.h"
 #include "synth/Synthesizer.h"
 #include "tools/CpuAnalyzer.h"
-#include "tools/TimingAnalyzer.h"
 #include "tools/LogTool.h"
+#include "tools/ITestHarness.h"
+#include "tools/TimingAnalyzer.h"
 
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
@@ -37,13 +38,13 @@ constexpr int JITTER_MAX_MSEC       = 100;
 /**
  * Base class for running a test.
  */
-class TestHarnessBase : public IAudioSinkCallback {
+class TestHarnessBase : public ITestHarness, IAudioSinkCallback {
 public:
     TestHarnessBase(AudioSinkBase *audioSink,
                     SynthMarkResult *result,
                     LogTool *logTool = nullptr)
     : mSynth()
-    , mAudioSink(nullptr)
+    , mAudioSink(audioSink)
     , mTimer()
     , mCpuAnalyzer()
     , mLogTool(nullptr)
@@ -55,8 +56,6 @@ public:
     , mNoteCounter(0)
     , mNumVoices(8)
     {
-        mAudioSink = audioSink;
-
         if (!logTool) {
             mLogTool = new LogTool(this);
         } else {
@@ -89,7 +88,7 @@ public:
     virtual void onEndMeasurement() = 0;
 
     // Run the benchmark.
-    virtual int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) {
+    int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
         int32_t err = open(sampleRate, SAMPLES_PER_FRAME,
                            kSynthmarkFramesPerRender, framesPerBurst);
         if (err) {
@@ -99,40 +98,6 @@ public:
         close();
         return err;
     };
-
-    int32_t open(int32_t sampleRate,
-            int32_t samplesPerFrame,
-            int32_t framesPerRender,
-            int32_t framesPerBurst
-            ) {
-        if (sampleRate < 8000) {
-            mLogTool->log("ERROR in open, sampleRate too low = %d < 8000\n", sampleRate);
-            return -1;
-        }
-        if (samplesPerFrame != 2) {
-            mLogTool->log("ERROR in open, samplesPerFrame = %d != 2\n", samplesPerFrame);
-            return -1;
-        }
-        if (framesPerRender < 1) {
-            mLogTool->log("ERROR in open, framesPerRender too low = %d < 1\n", framesPerRender);
-            return -1;
-        }
-        if (framesPerRender > kSynthmarkFramesPerRender) {
-            mLogTool->log("ERROR in open, framesPerRender = %d > %d\n",
-                framesPerRender, kSynthmarkFramesPerRender);
-            return -1;
-        }
-        if (framesPerBurst < 8) {
-            mLogTool->log("ERROR in open, framesPerBurst = %d < 8\n", framesPerRender);
-            return -1;
-        }
-        mSampleRate = sampleRate;
-        mSamplesPerFrame = samplesPerFrame;
-        mFramesPerBurst = framesPerBurst;
-
-        mSynth.setup(sampleRate, kSynthmarkMaxVoices);
-        return mAudioSink->open(sampleRate, samplesPerFrame, framesPerBurst);
-    }
 
     // This is called by the AudioSink in a loop.
     virtual IAudioSinkCallback::Result renderAudio(float *buffer,
@@ -299,11 +264,8 @@ public:
         return resultMessage.str();
     }
 
-    int32_t close() {
-        return mAudioSink->close();
-    }
 
-    void setNumVoices(int32_t numVoices) {
+    void setNumVoices(int32_t numVoices) override {
         mNumVoices = numVoices;
     }
 
@@ -319,12 +281,52 @@ public:
         return mNoteCounter;
     }
 
-    void setDelayNotesOn(int32_t delayInSeconds){
+    void setDelayNoteOnSeconds(int32_t delayInSeconds) override {
         mDelayNotesOnUntilFrame = (int32_t)(delayInSeconds * mSampleRate);
     }
 
-    const char *getName() {
+    const char *getName() override {
         return mTestName.c_str();
+    }
+
+protected:
+
+    int32_t open(int32_t sampleRate,
+                 int32_t samplesPerFrame,
+                 int32_t framesPerRender,
+                 int32_t framesPerBurst
+    ) {
+        if (sampleRate < 8000) {
+            mLogTool->log("ERROR in open, sampleRate too low = %d < 8000\n", sampleRate);
+            return -1;
+        }
+        if (samplesPerFrame != 2) {
+            mLogTool->log("ERROR in open, samplesPerFrame = %d != 2\n", samplesPerFrame);
+            return -1;
+        }
+        if (framesPerRender < 1) {
+            mLogTool->log("ERROR in open, framesPerRender too low = %d < 1\n", framesPerRender);
+            return -1;
+        }
+        if (framesPerRender > kSynthmarkFramesPerRender) {
+            mLogTool->log("ERROR in open, framesPerRender = %d > %d\n",
+                          framesPerRender, kSynthmarkFramesPerRender);
+            return -1;
+        }
+        if (framesPerBurst < 8) {
+            mLogTool->log("ERROR in open, framesPerBurst = %d < 8\n", framesPerRender);
+            return -1;
+        }
+        mSampleRate = sampleRate;
+        mSamplesPerFrame = samplesPerFrame;
+        mFramesPerBurst = framesPerBurst;
+
+        mSynth.setup(sampleRate, kSynthmarkMaxVoices);
+        return mAudioSink->open(sampleRate, samplesPerFrame, framesPerBurst);
+    }
+
+    int32_t close() {
+        return mAudioSink->close();
     }
 
 protected:

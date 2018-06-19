@@ -24,6 +24,7 @@
 #include <memory.h>
 #include <pthread.h>
 #include <sched.h>
+#include <sys/sysinfo.h>
 #include <unistd.h>
 
 #if defined(__APPLE__)
@@ -97,6 +98,13 @@ public:
         return currentTime;
     }
 
+    static int getCpuCount() {
+#if defined(__APPLE__)
+        return -1;
+#else
+        return get_nprocs();
+#endif
+    }
 };
 
 typedef void * host_thread_proc_t(void *arg);
@@ -162,6 +170,7 @@ public:
         return sched_setaffinity((pid_t) 0, sizeof(cpu_set_t), &cpu_set);
 #endif
     }
+
 
     static int getCpu() {
 #if defined(__APPLE__)
