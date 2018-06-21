@@ -31,10 +31,11 @@ public:
     OpenSLAudioSink() {};
     virtual ~OpenSLAudioSink() {};
     void playerCallback(SLAndroidSimpleBufferQueueItf bq);
-    int32_t open(int32_t sampleRate, int32_t samplesPerFrame,
-                         int32_t framesPerBurst) override;
+    int32_t open(int32_t sampleRate,
+                 int32_t samplesPerFrame,
+                 int32_t framesPerBurst) override;
     int32_t start() override;
-    int32_t write(const float *buffer, int32_t numFrames) override;
+//    int32_t write(const float *buffer, int32_t numFrames) override;
     int32_t stop() override;
     int32_t close() override;
     int32_t getBufferSizeInFrames() override;
@@ -69,7 +70,7 @@ private:
     int32_t mUnderrunCount = 0;
     std::mutex mCallbackMutex;
     std::condition_variable mCallbackConditionVariable;
-    IAudioSinkCallback::audio_sink_callback_result_t mCallbackResult;
+    IAudioSinkCallback::Result mCallbackResult;
 
     // engine interfaces
     SLObjectItf engineObject = NULL;

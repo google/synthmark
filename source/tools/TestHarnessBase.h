@@ -289,13 +289,10 @@ public:
         return mTestName.c_str();
     }
 
-protected:
-
-    int32_t open(int32_t sampleRate,
+    virtual int32_t open(int32_t sampleRate,
                  int32_t samplesPerFrame,
                  int32_t framesPerRender,
-                 int32_t framesPerBurst
-    ) {
+                 int32_t framesPerBurst) {
         if (sampleRate < 8000) {
             mLogTool->log("ERROR in open, sampleRate too low = %d < 8000\n", sampleRate);
             return -1;

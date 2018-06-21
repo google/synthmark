@@ -169,9 +169,9 @@ int32_t OpenSLAudioSink::open(int32_t sampleRate, int32_t samplesPerFrame,
  *
  * @see setCallback(IAudioSinkCallback *callback)
  */
-int32_t OpenSLAudioSink::write(const float *buffer __unused, int32_t numFrames __unused){
-    return 0;
-}
+//int32_t OpenSLAudioSink::write(const float *buffer __unused, int32_t numFrames __unused){
+//    return 0;
+//}
 
 int32_t OpenSLAudioSink::start() {
     return 0;
@@ -202,7 +202,7 @@ void OpenSLAudioSink::playerCallback(SLAndroidSimpleBufferQueueItf bq){
 
     mCallbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
 
-    if (mCallbackResult != IAudioSinkCallback::CALLBACK_CONTINUE){
+    if (mCallbackResult != IAudioSinkCallback::Result::Continue){
         // notify the waiting thread that the callbacks have finished
         mCallbackConditionVariable.notify_all();
     } else {
@@ -229,7 +229,7 @@ int32_t OpenSLAudioSink::getUnderrunCount(){
 int32_t OpenSLAudioSink::runCallbackLoop(){
 
     std::unique_lock<std::mutex> lck(mCallbackMutex);
-    mCallbackResult = IAudioSinkCallback::CALLBACK_CONTINUE;
+    mCallbackResult = IAudioSinkCallback::Result::Continue;
 
     // set the player's state to playing
     slResult = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
@@ -249,7 +249,7 @@ int32_t OpenSLAudioSink::runCallbackLoop(){
     }
 
     // Wait until the callbacks have finished
-    while (mCallbackResult == IAudioSinkCallback::CALLBACK_CONTINUE){
+    while (mCallbackResult == IAudioSinkCallback::Result::Continue){
         mCallbackConditionVariable.wait(lck);
     }
 

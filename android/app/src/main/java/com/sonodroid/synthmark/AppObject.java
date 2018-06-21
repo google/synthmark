@@ -280,7 +280,7 @@ public class AppObject extends Application {
                 if (mNativeTest != 0) {
                     int progress = testProgress(mNativeTest);
                     int status = testStatus(mNativeTest);
-                    String message = String.format("%d",progress);
+                    String message = String.format("Progress: %d, status %d", progress, status);
 
                     postNotificationTestShortUpdate(mTestId, message);
 

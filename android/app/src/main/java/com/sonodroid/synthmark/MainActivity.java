@@ -53,8 +53,6 @@ public class MainActivity extends BaseActivity {
     private Button mButtonTest;
     private Button mButtonSettings;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,7 +106,6 @@ public class MainActivity extends BaseActivity {
             String name = getApp().getTestName(i);
             spinnerList.add(name);
         }
-
 
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, spinnerList);
