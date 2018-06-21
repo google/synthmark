@@ -20,7 +20,7 @@ add_compile_options(${GCC_COVERAGE_COMPILE_FLAGS})
 # You can define multiple libraries, and CMake builds it for you.
 # Gradle automatically packages shared libraries with your APK.
 
-file(GLOB MYFILES ../../source/*.*)
+file(GLOB MYFILES ${SYNTHSOURCE}/*.cpp)
 
 add_library( # Sets the name of the library.
              native-lib

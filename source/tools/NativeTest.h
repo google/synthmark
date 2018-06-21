@@ -32,7 +32,6 @@
 #include "VirtualAudioSink.h"
 #include "VoiceMarkHarness.h"
 
-
 #define NATIVETEST_SUCCESS 0
 #define NATIVETEST_ERROR -1
 
@@ -53,11 +52,13 @@
 #define DEFAULT_CORE_AFFINITIES_LABELS {"UNSPECIFIED", "0", "1", "2", "3", "4", "5", "6", "7"}
 
 typedef enum {
-    NATIVETEST_ID_MIN           = 0,
-    NATIVETEST_ID_VOICEMARK     = 0,
-    NATIVETEST_ID_LATENCYMARK   = 1,
-    NATIVETEST_ID_JITTERMARK    = 2,
-    NATIVETEST_ID_MAX           = 2,
+    NATIVETEST_ID_MIN             = 0,
+    NATIVETEST_ID_VOICEMARK       = 0,
+    NATIVETEST_ID_LATENCYMARK     = 1,
+    NATIVETEST_ID_JITTERMARK      = 2,
+//    NATIVETEST_ID_UTILIZATIONMARK = 3,
+//    NATIVETEST_ID_AUTOMARK        = 4,
+    NATIVETEST_ID_MAX             = 2,
 } native_test_t;
 
 
@@ -532,7 +533,6 @@ public:
         }
         return count;
     }
-
 
 private:
     NativeTestUnit * getNativeTestUnit(int testId) {
