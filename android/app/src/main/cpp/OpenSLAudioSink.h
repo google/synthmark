@@ -35,7 +35,7 @@ public:
                  int32_t samplesPerFrame,
                  int32_t framesPerBurst) override;
     int32_t start() override;
-//    int32_t write(const float *buffer, int32_t numFrames) override;
+
     int32_t stop() override;
     int32_t close() override;
     int32_t getBufferSizeInFrames() override;

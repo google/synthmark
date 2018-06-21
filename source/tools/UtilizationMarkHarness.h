@@ -58,12 +58,14 @@ public:
                                        (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                                / mAudioSink->getSampleRate();
         mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
+        mBeatCount = 0;
     }
 
     virtual int32_t onBeforeNoteOn() override {
         mFractionOfCpu = mTimer.getDutyCycle();
-        mLogTool->log("%3d voices used %5.3f of CPU\n", getNumVoices(), mFractionOfCpu);
+        mLogTool->log("2d: %3d voices used %5.3f of CPU\n", mBeatCount, getNumVoices(), mFractionOfCpu);
         mTimer.reset();
+        mBeatCount++;
         return 0;
     }
 
@@ -87,6 +89,7 @@ public:
 
 private:
     double  mFractionOfCpu = 0.0;
+    int32_t mBeatCount = 0;
 };
 
 #endif //SYNTHMARK_UTILIZATION_MARK_HARNESS_H

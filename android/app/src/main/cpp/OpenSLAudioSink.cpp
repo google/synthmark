@@ -164,15 +164,6 @@ int32_t OpenSLAudioSink::open(int32_t sampleRate, int32_t samplesPerFrame,
     return 0;
 }
 
-/**
- * This function does nothing in OpenSL. Audio data is written to the audio sink via a callback.
- *
- * @see setCallback(IAudioSinkCallback *callback)
- */
-//int32_t OpenSLAudioSink::write(const float *buffer __unused, int32_t numFrames __unused){
-//    return 0;
-//}
-
 int32_t OpenSLAudioSink::start() {
     return 0;
 }
