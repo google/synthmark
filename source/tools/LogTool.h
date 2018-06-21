@@ -23,7 +23,7 @@
 
 
 #define LOGTOOL_BUFFER_SIZE (10 * 1024) //max single log that can be added at once
-#define LOGTOLL_PREFIX_MAX 10
+#define LOGTOOL_PREFIX_MAX 10
 class LogTool
 {
 public:
@@ -31,7 +31,7 @@ public:
         : mEnabled(true)
         , mOwner(owner)
         , mOStream(os)
-        , mVar1(0.0f)
+        , mVar1(0)
     {
         setPrefix("[Log] ");
     }
@@ -57,9 +57,12 @@ public:
         return r;
     }
 
-    void * getOwner() { return mOwner; }
+    void * getOwner() {
+        return mOwner;
+    }
+
     void setPrefix(const char* prefix) {
-        strncpy(mPrefix, prefix, LOGTOLL_PREFIX_MAX);
+        strncpy(mPrefix, prefix, LOGTOOL_PREFIX_MAX);
     }
 
     void setStream(std::ostream * os) {
@@ -87,7 +90,7 @@ private:
     void * mOwner;
     std::ostream *mOStream;
     char mBuffer[LOGTOOL_BUFFER_SIZE + 1];
-    char mPrefix[LOGTOLL_PREFIX_MAX + 1];
+    char mPrefix[LOGTOOL_PREFIX_MAX + 1];
     int mVar1;    //user assigned variable.
 };
 

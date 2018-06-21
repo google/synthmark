@@ -280,7 +280,7 @@ public class AppObject extends Application {
                 if (mNativeTest != 0) {
                     int progress = testProgress(mNativeTest);
                     int status = testStatus(mNativeTest);
-                    String message = String.format("Progress: %d, status %d", progress, status);
+                    String message = String.format("%d", progress);
 
                     postNotificationTestShortUpdate(mTestId, message);
 
@@ -309,9 +309,6 @@ public class AppObject extends Application {
             postNotificationTestShortUpdate(mTestId, "Done");
         }
     }
-
-
-
 
     private abstract class TestTask extends AsyncTask<String, String, String> {
         int mTestId;
