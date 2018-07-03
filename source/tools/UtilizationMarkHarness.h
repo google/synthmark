@@ -63,7 +63,7 @@ public:
 
     virtual int32_t onBeforeNoteOn() override {
         mFractionOfCpu = mTimer.getDutyCycle();
-        mLogTool->log("2d: %3d voices used %5.3f of CPU\n", mBeatCount, getNumVoices(), mFractionOfCpu);
+        mLogTool->log("%2d: %3d voices used %5.3f of CPU\n", mBeatCount, getNumVoices(), mFractionOfCpu);
         mTimer.reset();
         mBeatCount++;
         return 0;
