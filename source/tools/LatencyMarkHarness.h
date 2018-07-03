@@ -86,9 +86,11 @@ public:
 
     //
     void monitorCallback() {
+        static const int kMonitorPeriodMicros = 80000;
         int32_t previousBufferSize = mAudioSink->getBufferSizeInFrames();
         while (mMonitorEnabled) {
-            HostTools::sleepForNanoseconds(200000 * SYNTHMARK_NANOS_PER_MICROSECOND);
+            HostTools::sleepForNanoseconds(kMonitorPeriodMicros * SYNTHMARK_NANOS_PER_MICROSECOND);
+
             int32_t currentBufferSize = mAudioSink->getBufferSizeInFrames();
             if (currentBufferSize != previousBufferSize) {
                 printf("Audio glitch at %.2fs, "
@@ -125,12 +127,18 @@ public:
         setupJitterRecording();
     }
 
+    void restart() {
+        // Reset clock so we get a full run without glitches.
+        mFrameCounter = 0;
+        mNoteCounter = 0;
+    }
+
     virtual int32_t onBeforeNoteOn() override {
         if (mTimer.getActiveTime() > 0) {
             int32_t underruns = mAudioSink->getUnderrunCount();
             if (underruns > mPreviousUnderrunCount) {
                 mPreviousUnderrunCount = underruns;
-                // Increase latency to void glitches.
+                // Increase latency to avoid glitches.
                 int32_t sizeInFrames = mAudioSink->getBufferSizeInFrames();
                 int32_t desiredSizeInFrames = sizeInFrames + mFramesPerBurst;
                 int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
@@ -138,10 +146,15 @@ public:
                     mLogTool->log("ERROR - at maximum buffer size and still glitching\n");
                     return SYNTHMARK_RESULT_UNRECOVERABLE_ERROR;
                 }
-
-                // Reset clock so we get a full run without glitches.
+                // Record when the glitch occurred.
                 mGlitchTime = ((float)mFrameCounter / mSampleRate);
-                mFrameCounter = 0;
+
+                if (isVerbose()) {
+                    printf("%s() detected glitch at %5.2f\n", __func__, mGlitchTime);
+                    fflush(stdout);
+                }
+
+                restart();
             }
         }
         return SYNTHMARK_RESULT_SUCCESS;
@@ -182,7 +195,6 @@ public:
 
     int32_t getCurrentNumVoices() override {
         if (mNumVoicesHigh > 0) {
-            static bool toggle = true;
             // The same number of voices is kept every (NOTES_PER_STEP / 2).
             bool needUpdate = ((getNoteCounter() % (NOTES_PER_STEP / 2)) == 0);
             static int32_t lastVoices;
@@ -205,12 +217,17 @@ public:
                         break;
                     case VOICES_SWITCH:
                     default:
-                        // Toggle back and forth between high and low
-                        toggle = !toggle;
-                        lastVoices = toggle ? TestHarnessBase::getNumVoices()
-                                            : mNumVoicesHigh;
+                        // Start low then high then low and so on.
+                        // Pattern should restart on each test.
+                        lastVoices = ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2))
+                                     ? TestHarnessBase::getNumVoices()
+                                     : mNumVoicesHigh;
                         break;
                 }
+            }
+            if (isVerbose()) {
+                printf("%s() returns %d\n", __func__, lastVoices);
+                fflush(stdout);
             }
             return lastVoices;
         } else {
@@ -226,7 +243,7 @@ private:
 
     HostThread       *mMonitorThread = nullptr;
     bool              mMonitorEnabled = true; // atomic is not sufficiently portable
-    float             mGlitchTime;
+    float             mGlitchTime = 0.0f;
 };
 
 #endif // SYNTHMARK_LATENCYMARK_HARNESS_H

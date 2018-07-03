@@ -94,7 +94,7 @@ public:
                     accepted = true;
                 }
             }
-            mLogTool->log("%d: %3d voices used %5.3f of CPU, %s\n",
+            mLogTool->log("%2d: %3d voices used %5.3f of CPU, %s\n",
                           mBeatCount, oldNumVoices, cpuLoad,
                           accepted ? "" : " - not used");
             setNumVoices(newNumVoices);
