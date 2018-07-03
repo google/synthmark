@@ -38,7 +38,7 @@ class Synthesizer
 public:
     Synthesizer()
     : mMaxVoices(0)
-    , mNumVoicesOn(0)
+    , mActiveVoiceCount(0)
     , mVoices(NULL)
     {}
 
@@ -62,13 +62,13 @@ public:
             printf("allNotesOn(%d) exceeded maxVoices of %d\n", numVoices, mMaxVoices);
             return -1;
         }
-        mNumVoicesOn = numVoices;
+        mActiveVoiceCount = numVoices;
         // Leave some headroom so the resonant filter does not clip.
-        mVoiceAmplitude = 0.5f / mNumVoicesOn;
+        mVoiceAmplitude = 0.5f / mActiveVoiceCount;
 
         int pitchIndex = 0;
         synth_float_t pitches[] = {60.0, 64.0, 67.0, 69.0};
-        for(int iv = 0; iv < mNumVoicesOn; iv++ ) {
+        for(int iv = 0; iv < mActiveVoiceCount; iv++ ) {
             SimpleVoice *voice = &mVoices[iv];
             // Randomize pitches by a few cents to smooth out the CPU load.
             float pitchOffset = 0.03f * (float) SynthTools::nextRandomDouble();
@@ -80,7 +80,7 @@ public:
     }
 
     void allNotesOff() {
-        for(int iv = 0; iv < mNumVoicesOn; iv++ ) {
+        for(int iv = 0; iv < mActiveVoiceCount; iv++ ) {
             SimpleVoice *voice = &mVoices[iv];
             voice->noteOff();
         }
@@ -94,15 +94,15 @@ public:
         memset(output, 0, numFrames * SAMPLES_PER_FRAME * sizeof(float));
 
         while (framesLeft >= kSynthmarkFramesPerRender) {
-            for(int iv = 0; iv < mNumVoicesOn; iv++ ) {
+            for(int iv = 0; iv < mActiveVoiceCount; iv++ ) {
                 SimpleVoice *voice = &mVoices[iv];
                 voice->generate(kSynthmarkFramesPerRender);
                 float *mix = renderBuffer;
 
                 synth_float_t leftGain = mVoiceAmplitude;
                 synth_float_t rightGain = mVoiceAmplitude;
-                if (mNumVoicesOn > 1) {
-                    synth_float_t pan = iv / (mNumVoicesOn - 1.0f);
+                if (mActiveVoiceCount > 1) {
+                    synth_float_t pan = iv / (mActiveVoiceCount - 1.0f);
                     leftGain *= pan;
                     rightGain *= 1.0 - pan;
                 }
@@ -119,9 +119,13 @@ public:
         assert(framesLeft == 0);
     }
 
+    int32_t getActiveVoiceCount() {
+        return mActiveVoiceCount;
+    }
+
 private:
     int32_t mMaxVoices;
-    int32_t mNumVoicesOn;
+    int32_t mActiveVoiceCount;
     int64_t mFrameCounter;
     SimpleVoice *mVoices;
     synth_float_t mVoiceAmplitude = 1.0;

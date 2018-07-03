@@ -31,6 +31,7 @@
 #include "tools/LogTool.h"
 #include "tools/ITestHarness.h"
 #include "tools/TimingAnalyzer.h"
+#include "tools/TestHarnessBase.h"
 
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
@@ -326,6 +327,10 @@ public:
         return mAudioSink->close();
     }
 
+    bool isVerbose() {
+        return mVerbose;
+    }
+
 protected:
     Synthesizer      mSynth;
     AudioSinkBase   *mAudioSink;
@@ -352,6 +357,7 @@ protected:
 
 private:
     int32_t          mNumVoices = 0;
+    bool             mVerbose = false;
 };
 
 #endif // SYNTHMARK_SYNTHMARK_HARNESS_H

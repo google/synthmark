@@ -20,7 +20,6 @@
 
 // We use #define here so we can build strings easier.
 #define SYNTHMARK_MAJOR_VERSION        1
-// #define SYNTHMARK_MINOR_VERSION        5
 // #define SYNTHMARK_MINOR_VERSION        6   /* Run under OpenSL thread for SCHED_FIFO. */
 // #define SYNTHMARK_MINOR_VERSION        7   /* wakeup/render/delivery jitter */
 // #define SYNTHMARK_MINOR_VERSION        8   /* changed SYNTHMARK_FRAMES_PER_BURST from 128 => 64 */
@@ -29,7 +28,8 @@
 // #define SYNTHMARK_MINOR_VERSION        11  /* Added UtilizationMark, print Jitter after Latency */
 // #define SYNTHMARK_MINOR_VERSION        12  /* Added CPU Governor hints */
 // #define SYNTHMARK_MINOR_VERSION        13  /* Default burst size changed from 64 to 96 frames */
-#define SYNTHMARK_MINOR_VERSION        14  /* Use more consistent report format */
+// #define SYNTHMARK_MINOR_VERSION        14  /* Use more consistent report format */
+#define SYNTHMARK_MINOR_VERSION        15  /* Fix LatencyMark low-high pattern. */
 
 // This may be increased without invalidating the benchmark.
 constexpr int kSynthmarkMaxVoices   = 512;
