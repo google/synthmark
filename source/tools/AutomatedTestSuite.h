@@ -63,19 +63,19 @@ public:
     virtual ~AutomatedTestSuite() {
     }
 
-    virtual void setNumVoices(int32_t numVoices) {
+    void setNumVoices(int32_t numVoices) override {
         mNumVoices = numVoices;
     }
 
-    virtual void setDelayNoteOnSeconds(int32_t delayNotesOn) {
+    void setDelayNoteOnSeconds(int32_t delayNotesOn) override {
         mDelayNotesOn = delayNotesOn;
     }
 
-    virtual const char *getName() {
+    const char *getName() const override {
         return "Automated Test Suite";
     }
 
-    virtual int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) {
+    int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
         int32_t err = measureLowHighCpuPerformance(sampleRate, framesPerBurst, 10);
         if (err) return err;
 
@@ -90,6 +90,15 @@ public:
         return err;
     }
 
+
+    HostThreadFactory::ThreadType getThreadType() const {
+        return mThreadType;
+    }
+
+    void setThreadType(HostThreadFactory::ThreadType threadType) override {
+        mThreadType = threadType;
+    }
+
 private:
 
     virtual int32_t measureLowHighCpuPerformance(int32_t sampleRate,
@@ -102,13 +111,17 @@ private:
         harness->setTargetCpuLoad(kMaxUtilization);
         harness->setInitialVoiceCount(mNumVoices);
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
+        harness->setThreadType(mThreadType);
 
         // TODO This is hack way to choose CPUs for BIG.little architectures.
         // TODO Test each CPU or come up with something better.
         int lowCpu = (1 * numCPUs) / 4;
         mAudioSink->setRequestedCpu(lowCpu);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
-        if (err) return err;
+        if (err) {
+            delete harness;
+            return err;
+        }
 
         double voiceMarkMaxLow = result1.getMeasurement();
         double voiceMarkMaxHigh = voiceMarkMaxLow;
@@ -159,6 +172,7 @@ private:
         std::cout << result1.getResultMessage();
 
         mResult->appendMessage(resultMessage.str());
+        delete harness;
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
@@ -175,10 +189,14 @@ private:
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
         harness->setNumVoices(numVoices);
         harness->setNumVoicesHigh(numVoicesHigh);
+        harness->setThreadType(mThreadType);
 
         mAudioSink->setRequestedCpu(cpu);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
-        if (err) return err;
+        if (err) {
+            delete harness;
+            return err;
+        }
 
         std::cout << result1.getResultMessage();
 
@@ -190,6 +208,7 @@ private:
         resultMessage << "audio.latency.msec" << suffix.str() << " = " << latencyMillis << std::endl;
         mResult->appendMessage(resultMessage.str());
         *latencyPtr = latencyFrames;
+        delete harness;
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
@@ -265,6 +284,7 @@ private:
     AudioSinkBase   *mAudioSink = nullptr;
     SynthMarkResult *mResult = nullptr;
     LogTool         *mLogTool = nullptr;
+    HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
 };
 
 #endif //SYNTHMARK_AUTOMATED_TEST_SUITE_H

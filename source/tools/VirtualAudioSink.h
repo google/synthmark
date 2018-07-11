@@ -23,6 +23,7 @@
 
 #include "AudioSinkBase.h"
 #include "HostTools.h"
+#include "HostThreadFactory.h"
 #include "LogTool.h"
 #include "SynthMark.h"
 #include "SynthMarkResult.h"
@@ -149,7 +150,7 @@ public:
         if (mUseRealThread) {
             mCallbackLoopResult = SYNTHMARK_RESULT_THREAD_FAILURE;
             if (mThread == NULL) {
-                mThread = new HostThread();
+                mThread = HostThreadFactory::createThread(mThreadType);
             }
             int err = mThread->start(threadProcWrapper, this);
             if (err != 0) {
@@ -169,6 +170,14 @@ public:
     virtual int32_t close() override {
         delete[] mBurstBuffer;
         return 0;
+    }
+
+    HostThreadFactory::ThreadType getThreadType() const override {
+        return mThreadType;
+    }
+
+    void setThreadType(HostThreadFactory::ThreadType threadType) override {
+        mThreadType = threadType;
     }
 
 private:
@@ -231,6 +240,7 @@ private:
      */
     virtual int32_t runCallbackLoop() override {
         if (mThread != NULL) {
+            printf("Try to join() mThread\n");
             int err = mThread->join();
             if (err != 0) {
                 printf("Could not join() callback thread! err = %d\n", err);
@@ -259,6 +269,9 @@ private:
     int     mThreadPriority = SYNTHMARK_THREAD_PRIORITY_DEFAULT;   // TODO control using new settings object
     int32_t mCallbackLoopResult = 0;
     HostThread * mThread = NULL;
+    HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
+
+private:
     LogTool    * mLogTool = NULL;
 
 

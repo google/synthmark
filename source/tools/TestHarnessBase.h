@@ -32,6 +32,7 @@
 #include "tools/ITestHarness.h"
 #include "tools/TimingAnalyzer.h"
 #include "tools/TestHarnessBase.h"
+#include "HostThreadFactory.h"
 
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
@@ -286,7 +287,7 @@ public:
         mDelayNotesOnUntilFrame = (int32_t)(delayInSeconds * mSampleRate);
     }
 
-    const char *getName() override {
+    const char *getName() const override {
         return mTestName.c_str();
     }
 
@@ -329,6 +330,14 @@ public:
 
     bool isVerbose() {
         return mVerbose;
+    }
+
+    HostThreadFactory::ThreadType getThreadType() const {
+        return mAudioSink->getThreadType();
+    }
+
+    void setThreadType(HostThreadFactory::ThreadType mThreadType) override {
+        mAudioSink->setThreadType(mThreadType);
     }
 
 protected:

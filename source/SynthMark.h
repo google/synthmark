@@ -29,7 +29,8 @@
 // #define SYNTHMARK_MINOR_VERSION        12  /* Added CPU Governor hints */
 // #define SYNTHMARK_MINOR_VERSION        13  /* Default burst size changed from 64 to 96 frames */
 // #define SYNTHMARK_MINOR_VERSION        14  /* Use more consistent report format */
-#define SYNTHMARK_MINOR_VERSION        15  /* Fix LatencyMark low-high pattern. */
+// #define SYNTHMARK_MINOR_VERSION        15  /* Fix LatencyMark low-high pattern. */
+#define SYNTHMARK_MINOR_VERSION        16  /* Use AAudio callback thread on Android. */
 
 // This may be increased without invalidating the benchmark.
 constexpr int kSynthmarkMaxVoices   = 512;

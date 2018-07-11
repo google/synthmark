@@ -181,7 +181,8 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         VoiceMarkHarness harness(&audioSink, &result, mLogTool);
 
-        audioSink.setHostThread(mHostThreadFactory->createThread());
+        audioSink.setHostThread(mHostThreadFactory->createThread(
+                HostThreadFactory::ThreadType::Audio));
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
         int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
@@ -197,8 +198,6 @@ public:
         audioSink.setRequestedCpu(CoreAffinity);
 #endif
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
-
-
 
         harness.open(sampleRate,
                      samplesPerFrame,
@@ -280,7 +279,8 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         LatencyMarkHarness harness(&audioSink, &result, mLogTool);
 
-        audioSink.setHostThread(mHostThreadFactory->createThread());
+        audioSink.setHostThread(mHostThreadFactory->createThread(
+                HostThreadFactory::ThreadType::Audio));
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
         int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
@@ -377,7 +377,8 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         JitterMarkHarness harness(&audioSink, &result, mLogTool);
 
-        audioSink.setHostThread(mHostThreadFactory->createThread());
+        audioSink.setHostThread(mHostThreadFactory->createThread(
+                HostThreadFactory::ThreadType::Audio));
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
         int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
