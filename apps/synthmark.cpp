@@ -58,6 +58,7 @@ void usage(const char *name) {
     printf("    -b{burstSize} frames read by virtual hardware at one time, default = %d\n",
            kDefaultFramesPerBurst);
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
+    printf("    -a{enable} 0 for normal thread, 1 for audio callback, default = 1\n");
 }
 
 #define TEXT_ERROR "ERROR: "
@@ -72,6 +73,7 @@ int main(int argc, char **argv)
     int32_t numVoicesHigh = 0;
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
+    bool    useAudioThread = true;
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
 
@@ -87,6 +89,9 @@ int main(int argc, char **argv)
         char * arg = argv[iarg];
         if (arg[0] == '-') {
             switch(arg[1]) {
+                case 'a':
+                    useAudioThread = (atoi(&arg[2]) != 0);
+                    break;
                 case 'c':
                     cpuAffinity = atoi(&arg[2]);
                     break;
@@ -229,6 +234,9 @@ int main(int argc, char **argv)
     }
     harness->setNumVoices(numVoices);
     harness->setDelayNoteOnSeconds(numSecondsDelayNoteOn);
+    harness->setThreadType(useAudioThread
+                           ? HostThreadFactory::ThreadType::Audio
+                           : HostThreadFactory::ThreadType::Default);
 
     // Print specified parameters.
     printf("  test.name          = %s\n", harness->getName());
@@ -241,6 +249,7 @@ int main(int argc, char **argv)
     printf("  msec.per.burst     = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
     printf("  cpu.affinity       = %6d\n", cpuAffinity);
     printf("  cpu.count          = %6d\n", HostTools::getCpuCount());
+    printf("  audio.thread       = %6d\n", (useAudioThread ? 1 : 0));
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 

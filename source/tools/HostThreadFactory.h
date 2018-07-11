@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef ANDROID_HOSTTHREADFACTORY_H
+#define ANDROID_HOSTTHREADFACTORY_H
 
-#ifndef SYNTHMARK_ITEST_HARNESS_H
-#define SYNTHMARK_ITEST_HARNESS_H
+#include <aaudio/AAudioHostThread.h>
 
-#include <cmath>
-#include <cstdint>
-
-class ITestHarness {
-
+class HostThreadFactory
+{
 public:
-    virtual void setNumVoices(int32_t numVoices) = 0;
 
-    virtual void setDelayNoteOnSeconds(int32_t seconds) = 0;
+    enum class ThreadType {
+        Default,
+        Audio
+    };
 
-    virtual const char *getName() const = 0;
-
-    virtual int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) = 0;
-
-    virtual void setThreadType(HostThreadFactory::ThreadType mThreadType) = 0;
+    static HostThread * createThread(ThreadType type) {
+#if defined(__ANDROID__)
+        if (type == ThreadType::Audio) {
+            return new AAudioHostThread();
+        }
+#endif
+        return new HostThread();
+    }
 };
 
-#endif //SYNTHMARK_ITEST_HARNESS_H
+#endif //ANDROID_HOSTTHREADFACTORY_H

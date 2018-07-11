@@ -17,6 +17,7 @@
 #define ANDROID_OPENSLHOSTTHREAD_H
 
 #include "tools/HostTools.h"
+#include "tools/HostThreadFactory.h"
 #include "OpenSLAudioSink.h"
 
 /**
@@ -25,7 +26,6 @@
  */
 class OpenSLHostThread : public HostThread, IAudioSinkCallback {
 public:
-    OpenSLHostThread() {};
     virtual ~OpenSLHostThread() {};
 
     /** Start the thread and call the specified proc. */
@@ -53,8 +53,11 @@ public:
     OpenSLHostThreadFactory() {}
     virtual ~OpenSLHostThreadFactory() = default;
 
-    virtual HostThread * createThread() {
-        return (HostThread *) new OpenSLHostThread();
+    virtual HostThread * createThread(ThreadType type) {
+        if (type == ThreadType::Audio) {
+            return (HostThread *) new OpenSLHostThread();
+        }
+        return HostThreadFactory::createThread(type);
     }
 };
 #endif //ANDROID_OPENSLHOSTTHREAD_H

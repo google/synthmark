@@ -22,6 +22,7 @@
 
 #include "IAudioSinkCallback.h"
 #include "SynthMark.h"
+#include "HostThreadFactory.h"
 
 
 #define SYNTHMARK_THREAD_PRIORITY_DEFAULT   2 // 2nd lowest priority, recommended by timmurray@
@@ -131,6 +132,14 @@ public:
     void setRequestedCpu(int cpuAffinity) {
         mRequestedCpu = cpuAffinity;
     }
+
+    virtual HostThreadFactory::ThreadType getThreadType() const {
+        return HostThreadFactory::ThreadType::Default;
+    }
+
+    virtual void setThreadType(HostThreadFactory::ThreadType mThreadType) {
+    }
+
 protected:
     void setActualCpu(int cpuAffinity) {
         mActualCpu = cpuAffinity;

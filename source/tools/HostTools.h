@@ -31,7 +31,6 @@
 #include <mach/mach_time.h>
 #endif
 
-
 constexpr int64_t kNanosPerMicrosecond  = 1000;
 constexpr int64_t kNanosPerSecond       = 1000000 * kNanosPerMicrosecond;
 
@@ -115,11 +114,8 @@ typedef void * host_thread_proc_t(void *arg);
  */
 class HostThread {
 public:
-    HostThread() { }
-
-    virtual ~HostThread() {
-        join();
-    }
+    // Note that destructors should not call virtual methods.
+    virtual ~HostThread() {};
 
     virtual int start(host_thread_proc_t proc, void *arg) {
         mProcedure = proc;
@@ -156,7 +152,8 @@ public:
         struct sched_param sp;
         memset(&sp, 0, sizeof(sp));
         sp.sched_priority = priority;
-        return sched_setscheduler((pid_t) 0, SCHED_FIFO, &sp);
+        int result = sched_setscheduler((pid_t) 0, SCHED_FIFO, &sp);
+        return result;
 #endif
     }
 
@@ -189,17 +186,6 @@ protected:
     pthread_t           mPthread;
 };
 
-class HostThreadFactory
-{
-public:
-    HostThreadFactory() { }
-
-    virtual ~HostThreadFactory() = default;
-
-    virtual HostThread * createThread() {
-        return new HostThread();
-    }
-};
 
 class HostCpuManagerBase
 {
