@@ -28,6 +28,7 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
+#include "TestHarnessParameters.h"
 
 
 /**

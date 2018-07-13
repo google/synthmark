@@ -27,6 +27,7 @@
 #include "tools/LatencyMarkHarness.h"
 #include "tools/TimingAnalyzer.h"
 #include "tools/UtilizationMarkHarness.h"
+#include "tools/UtilizationSeriesHarness.h"
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
 
@@ -41,7 +42,8 @@ void usage(const char *name) {
     printf("SynthMark version %d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
            " -s{seconds} -b{burstSize} -c{cpuAffinity}\n", name);
-    printf("    -t{test}, v=voice, l=latency, j=jitter, u=utilization, default is %c\n",
+    printf("    -t{test}, v=voice, l=latency, j=jitter, u=utilization"
+           ", s=series_util, default is %c\n",
            kDefaultTestCode);
     printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
     printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
@@ -165,11 +167,6 @@ int main(int argc, char **argv)
         usage(argv[0]);
         return 1;
     }
-    if (numVoicesHigh != 0 && testCode != 'l') {
-        printf(TEXT_ERROR "Num voices high only supported for LatencyMark\n");
-        usage(argv[0]);
-        return 1;
-    }
     if (voicesMode != VOICES_UNDEFINED && numVoicesHigh == 0) {
         printf(TEXT_ERROR "Random voices only supported for LatencyMark\n");
         usage(argv[0]);
@@ -202,6 +199,7 @@ int main(int argc, char **argv)
                 harness = voiceHarness;
             }
             break;
+
         case 'l':
             {
                 LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result);
@@ -210,20 +208,32 @@ int main(int argc, char **argv)
                 harness = latencyHarness;
             }
             break;
+
         case 'j':
             harness = new JitterMarkHarness(&audioSink, &result);
             break;
+
         case 'u':
             {
-                UtilizationMarkHarness *utilizationHarness = new UtilizationMarkHarness(&audioSink, &result);
-                utilizationHarness->setNumVoices(numVoices);
+                UtilizationMarkHarness *utilizationHarness = new UtilizationMarkHarness(&audioSink,
+                                                                                        &result);
                 harness = utilizationHarness;
             }
             break;
+
         case 'a':
             {
                 AutomatedTestSuite *testSuite = new AutomatedTestSuite(&audioSink, &result);
                 harness = testSuite;
+            }
+            break;
+
+        case 's':
+            {
+                UtilizationSeriesHarness *seriesHarness = new UtilizationSeriesHarness(&audioSink,
+                                                                                       &result);
+                seriesHarness->setNumVoicesHigh(numVoicesHigh);
+                harness = seriesHarness;
             }
             break;
         default:
