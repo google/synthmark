@@ -25,6 +25,7 @@
 #include "tools/UtilizationMarkHarness.h"
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
+#include "TestHarnessParameters.h"
 
 constexpr double kHighLowThreshold = 0.1; // Difference between CPUs to consider them BIG-little.
 constexpr double kMaxUtilization = 0.9; // Maximum load that we will push the CPU to.
@@ -42,18 +43,14 @@ constexpr double kMaxUtilization = 0.9; // Maximum load that we will push the CP
  *     assume the existence of only two architectures, homogeneous or BIG.little.
  * TODO handle more architectures.
  */
-class AutomatedTestSuite : public ITestHarness {
+class AutomatedTestSuite : public TestHarnessParameters {
 
 public:
     AutomatedTestSuite(AudioSinkBase *audioSink,
             SynthMarkResult *result,
             LogTool *logTool = nullptr)
-    : mAudioSink(audioSink)
-    , mResult(result)
-    , mLogTool(logTool)
+    : TestHarnessParameters(audioSink, result, logTool)
     {
-        setNumVoices(kSynthmarkNumVoicesLatency);
-
         // Constant seed to obtain a fixed pattern of pseudo-random voices
         // for experiment repeatability and reproducibility
         //srand(time(NULL)); // "Random" seed
@@ -61,14 +58,6 @@ public:
     }
 
     virtual ~AutomatedTestSuite() {
-    }
-
-    void setNumVoices(int32_t numVoices) override {
-        mNumVoices = numVoices;
-    }
-
-    void setDelayNoteOnSeconds(int32_t delayNotesOn) override {
-        mDelayNotesOn = delayNotesOn;
     }
 
     const char *getName() const override {
@@ -90,14 +79,6 @@ public:
         return err;
     }
 
-
-    HostThreadFactory::ThreadType getThreadType() const {
-        return mThreadType;
-    }
-
-    void setThreadType(HostThreadFactory::ThreadType threadType) override {
-        mThreadType = threadType;
-    }
 
 private:
 
@@ -270,9 +251,6 @@ private:
 
 private:
 
-    int32_t          mNumVoices = 8;
-    int32_t          mDelayNotesOn = 0;
-
     int              mBigCpu = 0;  // A CPU index in fast half of CPUs available.
     double           mVoiceMarkMaxBig = 0.0;
 
@@ -281,10 +259,6 @@ private:
 
     bool             mHaveBigLittle = false;
 
-    AudioSinkBase   *mAudioSink = nullptr;
-    SynthMarkResult *mResult = nullptr;
-    LogTool         *mLogTool = nullptr;
-    HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
 };
 
 #endif //SYNTHMARK_AUTOMATED_TEST_SUITE_H

@@ -31,6 +31,7 @@
 #include "TimingAnalyzer.h"
 #include "VirtualAudioSink.h"
 #include "VoiceMarkHarness.h"
+#include "TestHarnessParameters.h"
 
 #define NATIVETEST_SUCCESS 0
 #define NATIVETEST_ERROR -1

@@ -27,6 +27,7 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
+#include "TestHarnessParameters.h"
 
 
 /**
@@ -40,7 +41,6 @@ public:
                      LogTool *logTool = NULL)
             : TestHarnessBase(audioSink, result, logTool)
     {
-
         std::stringstream testName;
         testName << "UtilizationMark";
         mTestName = testName.str();
@@ -55,15 +55,21 @@ public:
         mLogTool->log("---- Starting %s ----\n", mTestName.c_str());
 
         float bufferSizeInMs = (float)
-                                       (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
+                               (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                                / mAudioSink->getSampleRate();
         mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
         mBeatCount = 0;
     }
 
-    virtual int32_t onBeforeNoteOn() override {
+    void reportUtilization() {
         mFractionOfCpu = mTimer.getDutyCycle();
         mLogTool->log("%2d: %3d voices used %5.3f of CPU\n", mBeatCount, getNumVoices(), mFractionOfCpu);
+    }
+
+    virtual int32_t onBeforeNoteOn() override {
+        if (mBeatCount > 0) {
+            reportUtilization();
+        }
         mTimer.reset();
         mBeatCount++;
         return 0;
@@ -74,6 +80,7 @@ public:
         int8_t resultCode = SYNTHMARK_RESULT_SUCCESS;
         std::stringstream resultMessage;
 
+        reportUtilization();
         double measurement = mFractionOfCpu;
         resultCode = SYNTHMARK_RESULT_SUCCESS;
         resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";

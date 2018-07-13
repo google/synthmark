@@ -27,6 +27,7 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
+#include "TestHarnessParameters.h"
 
 
 constexpr int kMinimumVoiceCount  = 4;
@@ -60,7 +61,7 @@ public:
                         (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                         / mAudioSink->getSampleRate();
         mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
-        setNumVoices(mInitialVoiceCount);
+        TestHarnessParameters::setNumVoices(mInitialVoiceCount);
         mSumVoicesOn = 0;
         mSumVoicesCount = 0;
         mBeatCount = 0;
@@ -97,7 +98,7 @@ public:
             mLogTool->log("%2d: %3d voices used %5.3f of CPU, %s\n",
                           mBeatCount, oldNumVoices, cpuLoad,
                           accepted ? "" : " - not used");
-            setNumVoices(newNumVoices);
+            TestHarnessParameters::setNumVoices(newNumVoices);
         }
         mTimer.reset();
         mBeatCount++;

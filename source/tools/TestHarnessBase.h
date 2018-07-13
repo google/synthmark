@@ -33,6 +33,7 @@
 #include "tools/TimingAnalyzer.h"
 #include "tools/TestHarnessBase.h"
 #include "HostThreadFactory.h"
+#include "TestHarnessParameters.h"
 
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
@@ -40,36 +41,21 @@ constexpr int JITTER_MAX_MSEC       = 100;
 /**
  * Base class for running a test.
  */
-class TestHarnessBase : public ITestHarness, IAudioSinkCallback {
+class TestHarnessBase : public TestHarnessParameters, IAudioSinkCallback  {
 public:
     TestHarnessBase(AudioSinkBase *audioSink,
                     SynthMarkResult *result,
                     LogTool *logTool = nullptr)
-    : mSynth()
-    , mAudioSink(audioSink)
+    : TestHarnessParameters(audioSink, result, logTool)
+    , mSynth()
     , mTimer()
     , mCpuAnalyzer()
-    , mLogTool(nullptr)
-    , mResult(result)
     , mSampleRate(kSynthmarkSampleRate)
     , mSamplesPerFrame(2)
     , mFrameCounter(0)
     , mDelayNotesOnUntilFrame(0)
     , mNoteCounter(0)
-    , mNumVoices(8)
     {
-        if (!logTool) {
-            mLogTool = new LogTool(this);
-        } else {
-            mLogTool = logTool;
-        }
-    }
-
-    virtual ~TestHarnessBase() {
-        if (mLogTool && mLogTool->getOwner() == this) {
-            delete(mLogTool);
-            mLogTool = nullptr;
-        }
     }
 
     void setupJitterRecording() {
@@ -144,7 +130,7 @@ public:
 
         // Gather timing information.
         // mLogTool->log("renderAudio() call the synthesizer\n");
-        // Calculate time when we ideally would have woken up.
+        // Calculate time when we ideally should have woken up.
         int64_t fullFramePosition = mAudioSink->getFramesWritten()
                                     - mAudioSink->getBufferSizeInFrames()
                                     - mFramesPerBurst;
@@ -267,14 +253,6 @@ public:
     }
 
 
-    void setNumVoices(int32_t numVoices) override {
-        mNumVoices = numVoices;
-    }
-
-    int32_t getNumVoices() {
-        return mNumVoices;
-    }
-
     virtual int32_t getCurrentNumVoices() {
         return getNumVoices();
     }
@@ -342,11 +320,8 @@ public:
 
 protected:
     Synthesizer      mSynth;
-    AudioSinkBase   *mAudioSink;
     TimingAnalyzer   mTimer;
     CpuAnalyzer      mCpuAnalyzer;
-    LogTool         *mLogTool;
-    SynthMarkResult *mResult;
     std::string      mTestName;
 
     int32_t          mSampleRate = 0;
@@ -365,7 +340,6 @@ protected:
     int32_t          mBurstsOff = 0;
 
 private:
-    int32_t          mNumVoices = 0;
     bool             mVerbose = false;
 };
 

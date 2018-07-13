@@ -55,7 +55,12 @@ public:
         mNanosPerBin = nanosPerBin;
     }
 
-    // idealTime is when the audio data was consumed
+    /**
+     * This is called soon after the audio task wakes up and right before it
+     * begins doing the audio computation.
+     *
+     * @param idealTime when the audio task should have woken up
+     */
     void markEntry(int64_t idealTime) {
         int64_t now = HostTools::getNanoTime(); // when we actually woke up
         if (mBaseTime == 0) {
@@ -74,6 +79,7 @@ public:
         }
     }
 
+    // This is called right after the audio task finishes computation.
     void markExit() {
         int64_t now = HostTools::getNanoTime();
         int64_t renderTime = now - mEntryTime;
@@ -94,13 +100,13 @@ public:
         mLoopIndex++;
     }
 
-    void recordJitter(int64_t jitterDuration) {
-        // throw away first bin
-        if (mLoopIndex > 0) {
-            int32_t binIndex = jitterDuration / mNanosPerBin;
-            mDeliveryBins->increment(binIndex);
-        }
-    }
+//    void recordJitter(int64_t jitterDuration) {
+//        // throw away first bin
+//        if (mLoopIndex > 0) {
+//            int32_t binIndex = jitterDuration / mNanosPerBin;
+//            mDeliveryBins->increment(binIndex);
+//        }
+//    }
 
     void reset() {
         mBaseTime = 0;
@@ -123,6 +129,9 @@ public:
         return mExitTime - mBaseTime;
     }
 
+    /**
+     * @return average duty cycle since the test began
+     */
     double getDutyCycle() {
         int64_t lastActivePeriod = mExitTime - mEntryTime;
         int64_t totalTime = mEntryTime - mBaseTime;

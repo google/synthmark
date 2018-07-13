@@ -28,6 +28,7 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
+#include "TestHarnessParameters.h"
 
 
 #define NOTES_PER_STEP   10
@@ -52,7 +53,7 @@ public:
     : TestHarnessBase(audioSink, result, logTool)
     {
         mTestName = "LatencyMark";
-        setNumVoices(kSynthmarkNumVoicesLatency);
+        TestHarnessParameters::setNumVoices(kSynthmarkNumVoicesLatency);
 
         // Constant seed to obtain a fixed pattern of pseudo-random voices
         // for experiment repeatability and reproducibility
@@ -181,16 +182,8 @@ public:
         mResult->setMeasurement((double) sizeFrames);
     }
 
-    void setNumVoicesHigh(int32_t numVoicesHigh) {
-        mNumVoicesHigh = numVoicesHigh;
-    }
-
     void setVoicesMode(VoicesMode vm) {
         mVoicesMode = vm;
-    }
-
-    int32_t getNumVoicesHigh() {
-        return mNumVoicesHigh;
     }
 
     int32_t getCurrentNumVoices() override {
@@ -207,20 +200,20 @@ public:
                         // from -n.
                         lastVoices += NOTES_PER_STEP / 2;
                         if (lastVoices > mNumVoicesHigh ||
-                                lastVoices < TestHarnessBase::getNumVoices())
-                            lastVoices = TestHarnessBase::getNumVoices();
+                                lastVoices < getNumVoices())
+                            lastVoices = getNumVoices();
                         break;
                     case VOICES_RANDOM:
                         // Return a number of voices in the range [-n, -N].
-                        lastVoices = (rand() % (mNumVoicesHigh - TestHarnessBase::getNumVoices() + 1))
-                                + TestHarnessBase::getNumVoices();
+                        lastVoices = (rand() % (mNumVoicesHigh - getNumVoices() + 1))
+                                + getNumVoices();
                         break;
                     case VOICES_SWITCH:
                     default:
                         // Start low then high then low and so on.
                         // Pattern should restart on each test.
                         lastVoices = ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2))
-                                     ? TestHarnessBase::getNumVoices()
+                                     ? getNumVoices()
                                      : mNumVoicesHigh;
                         break;
                 }
@@ -231,14 +224,13 @@ public:
             }
             return lastVoices;
         } else {
-            return TestHarnessBase::getNumVoices();
+            return getNumVoices();
         }
     }
 
 private:
 
     int32_t           mPreviousUnderrunCount = 0;
-    int32_t           mNumVoicesHigh = 0;
     VoicesMode        mVoicesMode = VOICES_SWITCH;
 
     HostThread       *mMonitorThread = nullptr;
