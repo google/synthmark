@@ -41,6 +41,18 @@ public:
     , mResult(result)
     , mLogTool(logTool) {
         setNumVoices(kSynthmarkNumVoicesLatency);
+        if (!logTool) {
+            mLogTool = new LogTool(this);
+        } else {
+            mLogTool = logTool;
+        }
+    }
+
+    virtual ~TestHarnessParameters() {
+        if (mLogTool && mLogTool->getOwner() == this) {
+            delete(mLogTool);
+            mLogTool = nullptr;
+        }
     }
 
     void setNumVoices(int32_t numVoices) override {
@@ -50,7 +62,6 @@ public:
     int32_t getNumVoices() {
         return mNumVoices;
     }
-
 
     HostThreadFactory::ThreadType getThreadType() const {
         return mThreadType;

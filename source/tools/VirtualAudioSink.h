@@ -240,7 +240,6 @@ private:
      */
     virtual int32_t runCallbackLoop() override {
         if (mThread != NULL) {
-            printf("Try to join() mThread\n");
             int err = mThread->join();
             if (err != 0) {
                 printf("Could not join() callback thread! err = %d\n", err);

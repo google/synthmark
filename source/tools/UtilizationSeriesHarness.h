@@ -41,16 +41,20 @@ public:
 
         // If user does not specify a max value then measure a reasonable one.
         if (getNumVoicesHigh()  == 0) {
-            err = measureVoiceMark(sampleRate, framesPerBurst, numSeconds, 0.95);
+            int32_t maxVoices = 0;
+            err = measureVoiceMark(sampleRate, framesPerBurst, numSeconds, 0.95, &maxVoices);
             if (err != SYNTHMARK_RESULT_SUCCESS) {
                 return err;
             }
-            setNumVoicesHigh((int32_t) mVoiceMarkMax);
+            setNumVoicesHigh((int32_t) maxVoices);
         }
+
+        mResult->appendMessage("voices, utilization\n");
 
         // Iterate over a range of voice counts.
         int32_t numVoicesBegin = getNumVoices();
         int32_t numVoicesEnd = getNumVoicesHigh();
+        mLogTool->log("max voices for series = %d\n", numVoicesEnd);
         int32_t range = numVoicesEnd - numVoicesBegin;
         const int kNumSteps = 20;
         for (int i = 0; i < kNumSteps; i++) {
@@ -62,6 +66,7 @@ public:
             if (err != SYNTHMARK_RESULT_SUCCESS) {
                 return err;
             }
+            // We are maxing out the CPU so stop the series.
             if (utilization > 0.96) {
                 break;
             }
@@ -72,7 +77,8 @@ public:
     int32_t measureVoiceMark(int32_t sampleRate,
                              int32_t framesPerBurst,
                              int32_t numSeconds,
-                             double fractionUtilization) {
+                             double fractionUtilization,
+                             int32_t *maxVoicesPtr) {
         std::stringstream resultMessage;
         SynthMarkResult result1;
         VoiceMarkHarness *harness = new VoiceMarkHarness(mAudioSink, &result1);
@@ -87,9 +93,9 @@ public:
             return err;
         }
 
-        mVoiceMarkMax = result1.getMeasurement();
+        *maxVoicesPtr = (int32_t) result1.getMeasurement();
 
-        resultMessage << "VoiceMarkMax = " << mVoiceMarkMax << std::endl;
+        resultMessage << "VoiceMarkMax = " << *maxVoicesPtr << std::endl;
 
         mResult->appendMessage(resultMessage.str());
         return SYNTHMARK_RESULT_SUCCESS;
@@ -115,14 +121,13 @@ public:
 
         double utilization = result1.getMeasurement();
 
-        resultMessage << "utilization, " << numVoices << ", " << utilization << std::endl;
+        resultMessage << "   " << numVoices << ", " << utilization << std::endl;
         mResult->appendMessage(resultMessage.str());
 
         *utilizationPtr = utilization;
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
-    double mVoiceMarkMax = 0.0;
 };
 
 #endif //ANDROID_UTILIZATION_SERIES_HARNESS_H

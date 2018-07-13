@@ -56,18 +56,6 @@ public:
     , mDelayNotesOnUntilFrame(0)
     , mNoteCounter(0)
     {
-        if (!logTool) {
-            mLogTool = new LogTool(this);
-        } else {
-            mLogTool = logTool;
-        }
-    }
-
-    virtual ~TestHarnessBase() {
-        if (mLogTool && mLogTool->getOwner() == this) {
-            delete(mLogTool);
-            mLogTool = nullptr;
-        }
     }
 
     void setupJitterRecording() {
