@@ -12,6 +12,24 @@ On Android, run as root so that SynthMark can request SCHED_FIFO:
 
 If you run with the -h option you will get some “help” information:
 
+    SynthMark V1.16
+    SynthMark version 1.16
+    synthmark -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate} -s{seconds} -b{burstSize} -c{cpuAffinity}
+        -t{test}, v=voice, l=latency, j=jitter, u=utilization, s=series, default is v
+        -n{numVoices} to render, default = 8
+        -N{numVoices} to render for toggling high load, LatencyMark only
+        -m{voicesMode} algorithm to choose the number of voices in the range
+          [-n, -N]. This value can be 'l' for a linear increment, 'r' for a
+          random choice, or 's' to switch between -n and -N. default = s
+        -d{noteOnDelay} seconds to delay the first NoteOn, default = 0
+        -p{percentCPU} target load, default = 50
+        -r{sampleRate} should be typical, 44100, 48000, etc. default is 48000
+        -s{seconds} to run the test, latencyMark may take longer, default is 10
+        -b{burstSize} frames read by virtual hardware at one time, default = 96
+        -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED
+        -a{enable} 0 for normal thread, 1 for audio callback, default = 1
+
+
 ## Running and Interpreting each Test
 
 ### VoiceMark
