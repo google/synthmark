@@ -1,3 +1,19 @@
+""" 
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+"""
+
 '''
 Measure power as a function of frequency.
 Generate a CSV report for printing
@@ -10,7 +26,7 @@ import time
 simulation = False
 
 durationSecond = 1200
-boostSize = 64
+burstSize = 64
 measureSecond = durationSecond - 2
 measureHz = 5
 measureSamples = measureSecond * measureHz
@@ -86,7 +102,7 @@ def measureCurrent(cpuIndex, numVoices, frequency):
 
     subprocess.call(["adb", "shell", "rm", "/sdcard/result.txt"])
 
-    command = ["adb", "shell", "nohup /system/bin/test_once.sh " + testMode + " " + str(numVoices) + " " + str(delaySecond) + " " + str(durationSecond) + " " + str(cpuIndex) + " " + str(frequency) + " " + str(boostSize) + " " + "&"]
+    command = ["adb", "shell", "nohup /system/bin/test_once.sh " + testMode + " " + str(numVoices) + " " + str(delaySecond) + " " + str(durationSecond) + " " + str(cpuIndex) + " " + str(frequency) + " " + str(burstSize) + " " + "&"]
 
     subprocess.Popen(command)
 

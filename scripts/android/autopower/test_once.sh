@@ -20,13 +20,13 @@ delayed_time="$3"
 exec_time="$4"
 cpu_index="$5"
 cpu_freq="$6"
-boost_size="$7"
+burst_size="$7"
 postfix=1
 file_path="/sdcard/"
 file_name="result.txt"
 
 echo "Running commad:"
-echo synthmark -t${mode} -n${voice_num} -d${delayed_time} -s${exec_time} -c${cpu_index} -b${boost_size}
+echo synthmark -t${mode} -n${voice_num} -d${delayed_time} -s${exec_time} -c${cpu_index} -b${burst_size}
 echo "CPU Freq: ${cpu_freq}"
 
 sleep 2;
@@ -45,8 +45,7 @@ echo ${cpu_freq} >> ${cpupath}/scaling_min_freq
 echo ${cpu_freq} >> ${cpupath}/scaling_max_freq
 echo ${cpu_freq} >> ${cpupath}/scaling_setspeed
 
-synthmark -t${mode} -n${voice_num} -d${delayed_time} -s${exec_time} -c${cpu_index} -b${boost_size} > ${file_path}${file_name}
-
+synthmark -t${mode} -n${voice_num} -d${delayed_time} -s${exec_time} -c${cpu_index} -b${burst_size} > ${file_path}${file_name}
 
 ###########################################
 # test part.
