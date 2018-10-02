@@ -37,7 +37,11 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 
@@ -51,6 +55,7 @@ public class MainActivity extends BaseActivity {
 
     private Spinner mSpinnerTest;
     private Button mButtonTest;
+    private Button mButtonShare;
     private Button mButtonSettings;
 
     @Override
@@ -72,13 +77,6 @@ public class MainActivity extends BaseActivity {
         mProgressBarRunning = (ProgressBar) findViewById(R.id.progressBarRunning);
         mTextViewShortUpdate = (TextView) findViewById(R.id.textViewShortUpdate);
 
-        mButtonListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onButtonClicked(view);
-            }
-        };
-
         mSwitchFakeTouches = (Switch) findViewById(R.id.switchFakeTouches);
         mKeyGenerator = FakeKeyGenerator.getInstance();
 
@@ -95,7 +93,8 @@ public class MainActivity extends BaseActivity {
         }
 
         mButtonTest = (Button) findViewById(R.id.buttonTest);
-        mButtonTest.setOnClickListener(mButtonListener);
+        mButtonShare = (Button) findViewById(R.id.buttonShare);
+        mButtonShare.setEnabled(false);
 
         mSpinnerTest = (Spinner) findViewById(R.id.spinnerTest);
         List<String> spinnerList = new ArrayList<String>();
@@ -160,6 +159,7 @@ public class MainActivity extends BaseActivity {
         mButtonSettings.setEnabled(false);
         mSpinnerTest.setEnabled(false);
         mButtonTest.setEnabled(false);
+        mButtonShare.setEnabled(false);
     }
 
     @Override
@@ -177,6 +177,7 @@ public class MainActivity extends BaseActivity {
         mButtonSettings.setEnabled(true);
         mSpinnerTest.setEnabled(true);
         mButtonTest.setEnabled(true);
+        mButtonShare.setEnabled(true);
     }
 
     @Override
@@ -184,22 +185,35 @@ public class MainActivity extends BaseActivity {
         mTextViewShortUpdate.setText(message);
     }
 
-    public void onButtonClicked(View view) {
+    public void onSettingsClicked(View view) {
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+    }
 
-        int id = view.getId();
-
-        switch(id) {
-            case R.id.buttonTest:
-                int currentTestId = getApp().getCurrentTestId();
-                if (currentTestId > -1) {
-                    getApp().startTest(currentTestId);
-                }
-                break;
-            case R.id.buttonSettings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-                break;
+    public void onRunTest(View view) {
+        int currentTestId = getApp().getCurrentTestId();
+        if (currentTestId > -1) {
+            getApp().startTest(currentTestId);
         }
+    }
+
+    public void onShareResult(View view) {
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("text/plain");
+
+        String subjectText = "SynthMark result " + getTimestampString();
+        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subjectText);
+
+        String shareBody = mTextViewOutput.getText().toString();
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+
+        startActivity(Intent.createChooser(sharingIntent, "Share using:"));
+    }
+
+    private String getTimestampString() {
+        DateFormat df = new SimpleDateFormat("yyyyMMdd-HHmmss");
+        Date now = Calendar.getInstance().getTime();
+        return df.format(now);
     }
 
     public void onWindowFocusChanged(boolean hasFocus){
@@ -220,4 +234,5 @@ public class MainActivity extends BaseActivity {
         }
         super.onPause();
     }
+
 }
