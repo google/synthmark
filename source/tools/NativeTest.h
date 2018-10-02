@@ -76,6 +76,8 @@ typedef enum {
 #define PARAMS_NUMB_VOICES_HIGH "num_voices_high"
 #define PARAMS_CORE_AFFINITY "core_affinity"
 
+static constexpr int kParamsDefaultIndexFramesPerBurst = 5; // 4->64, 5->96
+
 //============================
 // NativeTestUnit
 //============================
@@ -148,7 +150,7 @@ public:
 
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
         ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
-                                         &vFramesPerBurst, 4);
+                                         &vFramesPerBurst, kParamsDefaultIndexFramesPerBurst);
 
         std::vector<float> vCpuLoads = DEFAULT_TEST_TARGET_CPU_LOADS;
         ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load", &vCpuLoads, 9);
@@ -241,8 +243,10 @@ public:
         kSynthmarkFramesPerRender, 1, 8);
 
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
-                ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
-                                                 &vFramesPerBurst, 4);
+                ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST,
+                                                 "Frames per Burst",
+                                                 &vFramesPerBurst,
+                                                 kParamsDefaultIndexFramesPerBurst);
 
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
                                     kSynthmarkNumVoicesLatency, 1, 300);
@@ -342,8 +346,10 @@ public:
                                           kSynthmarkFramesPerRender, 1, 8);
 
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
-        ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
-                                         &vFramesPerBurst, 4);
+        ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST,
+                                         "Frames per Burst",
+                                         &vFramesPerBurst,
+                                         kParamsDefaultIndexFramesPerBurst);
 
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
                                     8, 1, 300);

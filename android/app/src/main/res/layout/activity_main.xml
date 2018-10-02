@@ -139,19 +139,28 @@ limitations under the License.
                 android:text="Settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:onClick="onSettingsClicked"
                 android:id="@+id/buttonSettings" />
         </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <Button
                 android:text="Run Test"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/buttonTest"
+                android:onClick="onRunTest"
+                android:layout_weight="1" />
+            <Button
+                android:text="Share Result"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/buttonShare"
+                android:onClick="onShareResult"
                 android:layout_weight="1" />
         </LinearLayout>
 
