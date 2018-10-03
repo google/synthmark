@@ -1,3 +1,9 @@
 synthmark.app
 */*.o
 
+*/.DS_Store
+.DS_Store
+.externalNativeBuild/
+.idea
+build
+
