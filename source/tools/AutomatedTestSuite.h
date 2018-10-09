@@ -71,11 +71,11 @@ public:
         // Test both sizes of CPU if needed. BIG or little
         if (mHaveBigLittle) {
             err = measureLatency(sampleRate, framesPerBurst, numSeconds,
-                                 mLittleCpu, mVoiceMarkMaxLittle);
+                                 mLittleCpu, mVoiceMarkLittle);
             if (err) return err;
         }
         err = measureLatency(sampleRate, framesPerBurst, numSeconds,
-                             mBigCpu, mVoiceMarkMaxBig);
+                             mBigCpu, mVoiceMarkBig);
         return err;
     }
 
@@ -104,8 +104,8 @@ private:
             return err;
         }
 
-        double voiceMarkMaxLow = result1.getMeasurement();
-        double voiceMarkMaxHigh = voiceMarkMaxLow;
+        double voiceMarkLowIndex = result1.getMeasurement();
+        double voiceMarkHighIndex = voiceMarkLowIndex;
 
         int highCpu = (3 * numCPUs) / 4;
         // If there are more than 2 CPUs than measure one each from top and bottom half in
@@ -113,41 +113,41 @@ private:
         if (lowCpu != highCpu) {
             mAudioSink->setRequestedCpu(highCpu);
             harness->runTest(sampleRate, framesPerBurst, numSeconds);
-            voiceMarkMaxHigh = result1.getMeasurement();
+            voiceMarkHighIndex = result1.getMeasurement();
 
-            double averageVoiceMark = 0.5 * (voiceMarkMaxHigh + voiceMarkMaxLow);
+            double averageVoiceMark = 0.5 * (voiceMarkHighIndex + voiceMarkLowIndex);
             double threshold = kHighLowThreshold * averageVoiceMark;
 
-            mHaveBigLittle = (abs(voiceMarkMaxHigh - voiceMarkMaxLow) > threshold);
+            mHaveBigLittle = (abs(voiceMarkHighIndex - voiceMarkLowIndex) > threshold);
         }
 
         if (mHaveBigLittle) {
-            if (mVoiceMarkMaxLittle > voiceMarkMaxLow) {
+            if (voiceMarkHighIndex > voiceMarkLowIndex) {
                 mLittleCpu = lowCpu;
-                mVoiceMarkMaxLittle = voiceMarkMaxLow;
+                mVoiceMarkLittle = voiceMarkLowIndex;
                 mBigCpu = highCpu;
-                mVoiceMarkMaxBig = voiceMarkMaxHigh;
+                mVoiceMarkBig = voiceMarkHighIndex;
             } else {
                 mLittleCpu = highCpu;
-                mVoiceMarkMaxLittle = voiceMarkMaxHigh;
+                mVoiceMarkLittle = voiceMarkHighIndex;
                 mBigCpu = lowCpu;
-                mVoiceMarkMaxBig = voiceMarkMaxLow;
+                mVoiceMarkBig = voiceMarkLowIndex;
             }
             resultMessage << "# The CPU seems to be heterogeneous. Assume BIG-little.\n";
             resultMessage << "cpu.little = " << mLittleCpu << std::endl;
             resultMessage << "cpu.big = " << mBigCpu << std::endl;
         } else {
             mLittleCpu = highCpu;
-            mVoiceMarkMaxLittle = voiceMarkMaxHigh;
+            mVoiceMarkLittle = voiceMarkHighIndex;
             mBigCpu = highCpu;
-            mVoiceMarkMaxBig = voiceMarkMaxHigh;
+            mVoiceMarkBig = voiceMarkHighIndex;
             resultMessage << "# The CPU seems to be homogeneous.\n";
             resultMessage << "cpu = " << mLittleCpu << std::endl;
         }
 
-        resultMessage << "voice.mark." << cpuToBigLittle(lowCpu) << " = " << voiceMarkMaxLow << std::endl;
+        resultMessage << "voice.mark." << cpuToBigLittle(lowCpu) << " = " << voiceMarkLowIndex << std::endl;
         if (lowCpu != highCpu) {
-            resultMessage << "voice.mark." << cpuToBigLittle(highCpu) << " = " << voiceMarkMaxHigh << std::endl;
+            resultMessage << "voice.mark." << cpuToBigLittle(highCpu) << " = " << voiceMarkHighIndex << std::endl;
         }
 
         std::cout << result1.getResultMessage();
@@ -252,10 +252,10 @@ private:
 private:
 
     int              mBigCpu = 0;  // A CPU index in fast half of CPUs available.
-    double           mVoiceMarkMaxBig = 0.0;
+    double           mVoiceMarkBig = 0.0;
 
     int              mLittleCpu = 0; // A CPU index in slow half of CPUs available.
-    double           mVoiceMarkMaxLittle = 0.0;
+    double           mVoiceMarkLittle = 0.0;
 
     bool             mHaveBigLittle = false;
 
