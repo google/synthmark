@@ -168,7 +168,7 @@ int main(int argc, char **argv)
         return 1;
     }
     if (voicesMode != VOICES_UNDEFINED && numVoicesHigh == 0) {
-        printf(TEXT_ERROR "Random voices only supported for LatencyMark\n");
+        printf(TEXT_ERROR "-N must be set when using -m\n");
         usage(argv[0]);
         return 1;
     }
@@ -210,7 +210,12 @@ int main(int argc, char **argv)
             break;
 
         case 'j':
-            harness = new JitterMarkHarness(&audioSink, &result);
+            {
+                JitterMarkHarness *jitterHarness = new JitterMarkHarness(&audioSink, &result);
+                jitterHarness->setNumVoicesHigh(numVoicesHigh);
+                jitterHarness->setVoicesMode(voicesMode);
+                harness = jitterHarness;
+            }
             break;
 
         case 'u':
