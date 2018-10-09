@@ -36,10 +36,10 @@
  * The "LatencyMark" is the minimum buffer size that is a multiple
  * of a block size that can be used for N minutes without glitching.
  */
-class JitterMarkHarness : public TestHarnessBase {
+class JitterMarkHarness : public ChangingVoiceHarness {
 public:
     JitterMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool *logTool = NULL)
-    : TestHarnessBase(audioSink, result, logTool) {
+    : ChangingVoiceHarness(audioSink, result, logTool) {
         mTestName = "JitterMark";
     }
 

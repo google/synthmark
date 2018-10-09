@@ -29,36 +29,23 @@
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
 #include "TestHarnessParameters.h"
+#include "ChangingVoiceHarness.h"
 
-
-#define NOTES_PER_STEP   10
-
-enum VoicesMode {
-    VOICES_UNDEFINED,
-    VOICES_SWITCH,
-    VOICES_RANDOM,
-    VOICES_LINEAR_LOOP,
-};
 
 /**
  * Determine buffer latency required to avoid glitches.
  * The "LatencyMark" is the minimum buffer size that is a multiple
  * of a burst size that can be used for N minutes without glitching.
  */
-class LatencyMarkHarness : public TestHarnessBase {
+class LatencyMarkHarness : public ChangingVoiceHarness {
 public:
     LatencyMarkHarness(AudioSinkBase *audioSink,
                        SynthMarkResult *result,
                        LogTool *logTool = nullptr)
-    : TestHarnessBase(audioSink, result, logTool)
+    : ChangingVoiceHarness(audioSink, result, logTool)
     {
         mTestName = "LatencyMark";
         TestHarnessParameters::setNumVoices(kSynthmarkNumVoicesLatency);
-
-        // Constant seed to obtain a fixed pattern of pseudo-random voices
-        // for experiment repeatability and reproducibility
-        //srand(time(NULL)); // "Random" seed
-        srand(0); // Fixed seed
     }
 
     virtual ~LatencyMarkHarness() {
@@ -86,7 +73,7 @@ public:
     }
 
     //
-    void monitorCallback() {
+    void monitorThreadProc() {
         static const int kMonitorPeriodMicros = 80000;
         int32_t previousBufferSize = mAudioSink->getBufferSizeInFrames();
         while (mMonitorEnabled) {
@@ -106,7 +93,7 @@ public:
 
     static void * threadProcWrapper(void *arg) {
         LatencyMarkHarness *harness = (LatencyMarkHarness *) arg;
-        harness->monitorCallback();
+        harness->monitorThreadProc();
         return NULL;
     }
 
@@ -182,56 +169,9 @@ public:
         mResult->setMeasurement((double) sizeFrames);
     }
 
-    void setVoicesMode(VoicesMode vm) {
-        mVoicesMode = vm;
-    }
-
-    int32_t getCurrentNumVoices() override {
-        if (mNumVoicesHigh > 0) {
-            // The same number of voices is kept every (NOTES_PER_STEP / 2).
-            bool needUpdate = ((getNoteCounter() % (NOTES_PER_STEP / 2)) == 0);
-            static int32_t lastVoices;
-
-            if (needUpdate) {
-                switch (mVoicesMode) {
-                    case VOICES_LINEAR_LOOP:
-                        // The number of voices is linearly incremented in the
-                        // range [-n, -N]. When it reaches -N, it restarts back
-                        // from -n.
-                        lastVoices += NOTES_PER_STEP / 2;
-                        if (lastVoices > mNumVoicesHigh ||
-                                lastVoices < getNumVoices())
-                            lastVoices = getNumVoices();
-                        break;
-                    case VOICES_RANDOM:
-                        // Return a number of voices in the range [-n, -N].
-                        lastVoices = (rand() % (mNumVoicesHigh - getNumVoices() + 1))
-                                + getNumVoices();
-                        break;
-                    case VOICES_SWITCH:
-                    default:
-                        // Start low then high then low and so on.
-                        // Pattern should restart on each test.
-                        lastVoices = ((getNoteCounter() % NOTES_PER_STEP) < (NOTES_PER_STEP / 2))
-                                     ? getNumVoices()
-                                     : mNumVoicesHigh;
-                        break;
-                }
-            }
-            if (isVerbose()) {
-                printf("%s() returns %d\n", __func__, lastVoices);
-                fflush(stdout);
-            }
-            return lastVoices;
-        } else {
-            return getNumVoices();
-        }
-    }
-
 private:
 
     int32_t           mPreviousUnderrunCount = 0;
-    VoicesMode        mVoicesMode = VOICES_SWITCH;
 
     HostThread       *mMonitorThread = nullptr;
     bool              mMonitorEnabled = true; // atomic is not sufficiently portable
