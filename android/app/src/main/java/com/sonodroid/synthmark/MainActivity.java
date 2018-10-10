@@ -131,8 +131,6 @@ public class MainActivity extends BaseActivity {
         });
 
         mButtonSettings = (Button) findViewById(R.id.buttonSettings);
-        mButtonSettings.setOnClickListener(mButtonListener);
-
     }
 
     @TargetApi(Build.VERSION_CODES.N)
@@ -234,5 +232,4 @@ public class MainActivity extends BaseActivity {
         }
         super.onPause();
     }
-
 }
