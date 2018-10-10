@@ -40,7 +40,7 @@ public:
     }
 
     // Needed for IAudioSinkCallback
-    virtual IAudioSinkCallback::Result renderAudio(float *buffer, int32_t numFrames) override;
+    virtual IAudioSinkCallback::Result onRenderAudio(float *buffer, int32_t numFrames) override;
 
 private:
     OpenSLAudioSink  mAudioSink;

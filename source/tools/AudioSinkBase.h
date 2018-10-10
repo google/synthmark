@@ -66,7 +66,7 @@ public:
 
     virtual IAudioSinkCallback::Result
             fireCallback(float *buffer, int32_t numFrames) {
-        return mCallback->renderAudio(buffer, numFrames);
+        return mCallback->onRenderAudio(buffer, numFrames);
     }
 
     /**

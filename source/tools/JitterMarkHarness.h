@@ -25,12 +25,11 @@
 #include "ChangingVoiceHarness.h"
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
+#include "TestHarnessParameters.h"
 #include "tools/CpuAnalyzer.h"
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
-#include "TestHarnessParameters.h"
-
 
 /**
  * Determine buffer latency required to avoid glitches.
@@ -39,8 +38,9 @@
  */
 class JitterMarkHarness : public ChangingVoiceHarness {
 public:
-    JitterMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool *logTool = NULL)
-    : ChangingVoiceHarness(audioSink, result, logTool) {
+    JitterMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result,
+                      LogTool *logTool = NULL)
+            : ChangingVoiceHarness(audioSink, result, logTool) {
         mTestName = "JitterMark";
     }
 
@@ -50,7 +50,7 @@ public:
     void onBeginMeasurement() override {
         mResult->setTestName(mTestName);
         mLogTool->log("---- Measure scheduling jitter ---- #voices = %d\n", getNumVoices());
-        setupJitterRecording();
+        setupHistograms();
     }
 
     virtual int32_t onBeforeNoteOn() override {

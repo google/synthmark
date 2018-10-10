@@ -48,7 +48,7 @@ public:
         mBins[binIndex] += 1;
         mLastMarkers[binIndex] = mIndex++;
     }
-
+/* TODO remove
     void reset() {
         mIndex = 0;
         delete[] mBins;
@@ -56,7 +56,7 @@ public:
         delete[] mLastMarkers;
         mLastMarkers = NULL;
     }
-
+*/
     int32_t getNumBins() const {
         return mNumBins;
     }

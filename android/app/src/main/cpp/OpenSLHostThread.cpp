@@ -18,7 +18,7 @@
 #include "OpenSLHostThread.h"
 
 // OpenSLAudioSink calls this. It then calls the thread proc.
-IAudioSinkCallback::Result OpenSLHostThread::renderAudio(
+IAudioSinkCallback::Result OpenSLHostThread::onRenderAudio(
         float *buffer, int32_t numFrames) {
     // Just call the thread proc and let it run for awhile.
     (*mProcedure)(mArgument);

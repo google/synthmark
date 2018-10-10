@@ -26,10 +26,10 @@
 #include "ChangingVoiceHarness.h"
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
+#include "TestHarnessParameters.h"
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
-#include "TestHarnessParameters.h"
 
 
 /**
@@ -112,7 +112,7 @@ public:
                       getNumVoices(),
                       getNumVoicesHigh());
 
-        setupJitterRecording();
+        setupHistograms();
     }
 
     void restart() {

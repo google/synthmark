@@ -213,9 +213,9 @@ private:
         double lightLatency;
         int32_t err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
                                          cpu, voiceMarkLow, voiceMarkLow, &lightLatency);
+        if (err) return err;
         message << "# Latency in frames with a steady light CPU load.\n";
         message << "latency.light." << cpuToBigLittle(cpu) << " = " << lightLatency << std::endl;
-        if (err) return err;
 
         // Test latency with a high number of voices.
         double heavyLatency;
@@ -242,7 +242,7 @@ private:
             message << "# Dynamic load on CPU " << cpu << " has higher latency than"
                     << " a steady heavy load.\n";
             message << "# This suggests that the CPU governor is not responding\n";
-            message << "# quickly enough to sudden changes in load.\n";
+            message << "# very quickly to sudden changes in load.\n";
         }
         message << std::endl;
         mResult->appendMessage(message.str());

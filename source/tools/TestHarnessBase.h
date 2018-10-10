@@ -58,13 +58,13 @@ public:
     {
     }
 
-    void setupJitterRecording() {
+    void setupHistograms() {
         // set resolution and size of histogram
         int32_t nanosPerMilli = (int32_t) (SYNTHMARK_NANOS_PER_SECOND /
                                            SYNTHMARK_MILLIS_PER_SECOND);
         mNanosPerBin = nanosPerMilli / JITTER_BINS_PER_MSEC;
         int32_t numBins = JITTER_MAX_MSEC * JITTER_BINS_PER_MSEC;
-        mTimer.setupJitterRecording(mNanosPerBin, numBins);
+        mTimer.setupHistograms(mNanosPerBin, numBins);
     }
 
     // Customize the test by defining these virtual methods.
@@ -88,9 +88,9 @@ public:
     };
 
     // This is called by the AudioSink in a loop.
-    virtual IAudioSinkCallback::Result renderAudio(float *buffer,
+    virtual IAudioSinkCallback::Result onRenderAudio(float *buffer,
                                                      int32_t numFrames) override {
-        // mLogTool->log("renderAudio() callback called\n");
+        // mLogTool->log("onRenderAudio() callback called\n");
         int32_t result;
         if (mFrameCounter >= mFramesNeeded) {
             return IAudioSinkCallback::Result::Finished;
@@ -108,7 +108,7 @@ public:
                 } else {
                     result = onBeforeNoteOn();
                     if (result < 0) {
-                        mLogTool->log("renderAudio() onBeforeNoteOn() returned %d\n", result);
+                        mLogTool->log("%s() onBeforeNoteOn() returned %d\n", __func__, result);
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
                     }
@@ -117,7 +117,7 @@ public:
                                                                       kSynthmarkMaxVoices);
                     result = mSynth.notesOn(currentNumVoices);
                     if (result < 0) {
-                        mLogTool->log("renderAudio() allNotesOn() returned %d\n", result);
+                        mLogTool->log("%s() allNotesOn() returned %d\n", __func__, result);
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
                     }
@@ -129,7 +129,7 @@ public:
         }
 
         // Gather timing information.
-        // mLogTool->log("renderAudio() call the synthesizer\n");
+        // mLogTool->log("onRenderAudio() call the synthesizer\n");
         // Calculate time when we ideally should have woken up.
         int64_t fullFramePosition = mAudioSink->getFramesWritten()
                                     - mAudioSink->getBufferSizeInFrames()
@@ -204,52 +204,7 @@ public:
     }
 
     std::string dumpJitter() {
-        const bool showDeliveryTime = false;
-        std::stringstream resultMessage;
-        // Print jitter histogram
-        BinCounter *wakeupBins = mTimer.getWakeupBins();
-        BinCounter *renderBins = mTimer.getRenderBins();
-        BinCounter *deliveryBins = mTimer.getDeliveryBins();
-        if (wakeupBins != NULL && renderBins != NULL && deliveryBins != NULL) {
-            resultMessage << TEXT_CSV_BEGIN << std::endl;
-            int32_t numBins = deliveryBins->getNumBins();
-            const int32_t *wakeupCounts = wakeupBins->getBins();
-            const int32_t *wakeupLast = wakeupBins->getLastMarkers();
-            const int32_t *renderCounts = renderBins->getBins();
-            const int32_t *renderLast = renderBins->getLastMarkers();
-            const int32_t *deliveryCounts = deliveryBins->getBins();
-            const int32_t *deliveryLast = deliveryBins->getLastMarkers();
-            resultMessage << " bin#,  msec,"
-                          << "   wakeup#,  wlast,"
-                          << "   render#,  rlast";
-            if (showDeliveryTime) {
-                resultMessage << " delivery#,  dlast";
-            }
-            resultMessage << std::endl;
-            for (int i = 0; i < numBins; i++) {
-                if (wakeupCounts[i] > 0 || renderCounts[i] > 0
-                        || (deliveryCounts[i] > 0 && showDeliveryTime)) {
-                    double msec = (double) i * mNanosPerBin * SYNTHMARK_MILLIS_PER_SECOND
-                                  / SYNTHMARK_NANOS_PER_SECOND;
-                    resultMessage << "  " << std::setw(3) << i
-                                  << ", " << std::fixed << std::setw(5) << std::setprecision(2)
-                                  << msec
-                                  << ", " << std::setw(9) << wakeupCounts[i]
-                                  << ", " << std::setw(6) << wakeupLast[i]
-                                  << ", " << std::setw(9) << renderCounts[i]
-                                  << ", " << std::setw(6) << renderLast[i];
-                    if (showDeliveryTime) {
-                        resultMessage << ", " << std::setw(9) << deliveryCounts[i]
-                              << ", " << std::setw(6) << deliveryLast[i];
-                    }
-                    resultMessage << std::endl;
-                }
-            }
-            resultMessage << TEXT_CSV_END << std::endl;
-        } else {
-            resultMessage << "ERROR NULL BinCounter!\n";
-        }
-        return resultMessage.str();
+        return mTimer.dumpJitter();
     }
 
 
