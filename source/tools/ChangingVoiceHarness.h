@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_CHANGINGVOICEHARNESS_H
-#define ANDROID_CHANGINGVOICEHARNESS_H
-
+#ifndef ANDROID_CHANGING_VOICE_HARNESS_H
+#define ANDROID_CHANGING_VOICE_HARNESS_H
 
 #include "tools/TestHarnessBase.h"
 #include "TestHarnessParameters.h"
-#include "LatencyMarkHarness.h"
 
 enum VoicesMode {
     VOICES_UNDEFINED,
@@ -100,4 +98,4 @@ private:
 };
 
 
-#endif //ANDROID_CHANGINGVOICEHARNESS_H
+#endif //ANDROID_CHANGING_VOICE_HARNESS_H

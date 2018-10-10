@@ -22,6 +22,7 @@
 #include <iomanip>
 
 #include "AudioSinkBase.h"
+#include "ChangingVoiceHarness.h"
 #include "SynthMark.h"
 #include "synth/Synthesizer.h"
 #include "tools/CpuAnalyzer.h"
