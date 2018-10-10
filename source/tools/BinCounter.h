@@ -29,9 +29,8 @@ public:
             , mNumBins(0)
             , mIndex(0)
     {
-        mBins = new int32_t[numBins];
-        mLastMarkers = new int32_t[numBins];
-        memset(mBins, 0, numBins * sizeof(int32_t));
+        mBins = new int32_t[numBins]{};
+        mLastMarkers = new int32_t[numBins]{};
         mNumBins = numBins;
     }
 
