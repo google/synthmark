@@ -35,7 +35,7 @@ public:
         Finished = 1,   // all done so stop calling the callback
     };
 
-    virtual Result renderAudio(float *buffer, int32_t numFrames) = 0;
+    virtual Result onRenderAudio(float *buffer, int32_t numFrames) = 0;
 };
 
 #endif //ANDROID_IAUDIOSINKCALLBACK_H

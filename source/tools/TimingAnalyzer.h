@@ -48,7 +48,7 @@ public:
         delete mDeliveryBins;
     }
 
-    void setupJitterRecording(int32_t nanosPerBin, int32_t numBins) {
+    void setupHistograms(int32_t nanosPerBin, int32_t numBins) {
         mWakeupBins = new BinCounter(numBins);
         mRenderBins = new BinCounter(numBins);
         mDeliveryBins = new BinCounter(numBins);
@@ -150,6 +150,52 @@ public:
     }
     BinCounter *getDeliveryBins() {
         return mDeliveryBins;
+    }
+
+    std::string dumpJitter() {
+        const bool showDeliveryTime = false;
+        std::stringstream resultMessage;
+        // Print jitter histogram
+        if (mWakeupBins != NULL && mRenderBins != NULL && mDeliveryBins != NULL) {
+            resultMessage << TEXT_CSV_BEGIN << std::endl;
+            int32_t numBins = mDeliveryBins->getNumBins();
+            const int32_t *wakeupCounts = mWakeupBins->getBins();
+            const int32_t *wakeupLast = mWakeupBins->getLastMarkers();
+            const int32_t *renderCounts = mRenderBins->getBins();
+            const int32_t *renderLast = mRenderBins->getLastMarkers();
+            const int32_t *deliveryCounts = mDeliveryBins->getBins();
+            const int32_t *deliveryLast = mDeliveryBins->getLastMarkers();
+            resultMessage << " bin#,  msec,"
+                          << "   wakeup#,  wlast,"
+                          << "   render#,  rlast";
+            if (showDeliveryTime) {
+                resultMessage << " delivery#,  dlast";
+            }
+            resultMessage << std::endl;
+            for (int i = 0; i < numBins; i++) {
+                if (wakeupCounts[i] > 0 || renderCounts[i] > 0
+                    || (deliveryCounts[i] > 0 && showDeliveryTime)) {
+                    double msec = (double) i * mNanosPerBin * SYNTHMARK_MILLIS_PER_SECOND
+                                  / SYNTHMARK_NANOS_PER_SECOND;
+                    resultMessage << "  " << std::setw(3) << i
+                                  << ", " << std::fixed << std::setw(5) << std::setprecision(2)
+                                  << msec
+                                  << ", " << std::setw(9) << wakeupCounts[i]
+                                  << ", " << std::setw(6) << wakeupLast[i]
+                                  << ", " << std::setw(9) << renderCounts[i]
+                                  << ", " << std::setw(6) << renderLast[i];
+                    if (showDeliveryTime) {
+                        resultMessage << ", " << std::setw(9) << deliveryCounts[i]
+                                      << ", " << std::setw(6) << deliveryLast[i];
+                    }
+                    resultMessage << std::endl;
+                }
+            }
+            resultMessage << TEXT_CSV_END << std::endl;
+        } else {
+            resultMessage << "ERROR NULL BinCounter!\n";
+        }
+        return resultMessage.str();
     }
 
 private:
