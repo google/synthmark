@@ -1,6 +1,16 @@
-autopower.py is a script which measure the power cost by monsoon power monitor.
-It would exec basic monsoon.py to get the power cost.
-You need to assign the path of your monsoon.py to [monsoonPath] in autopower.py.
+The "autopower.py" script measures the current used by an Android device
+while running SynthMark.
+
+Required
+
+* phone with battery replacement cables
+* Monsoon power monitor device to measure the current
+* script called "monsoon.py" to control the Monsoon device
+
+Note that there are many scripts called "monsoon.py" on the web.
+You need the one that has a main function and takes commands such as "usbpassthrough" and "samples".
+
+You need to assign the path of your monsoon.py to [monsoonPath] for use by autopower.py.
 
 For example:
 
