@@ -22,6 +22,7 @@
 #include "SynthMark.h"
 #include "synth/IncludeMeOnce.h"
 #include "synth/Synthesizer.h"
+#include "tools/ClockRampHarness.h"
 #include "tools/JitterMarkHarness.h"
 #include "tools/ITestHarness.h"
 #include "tools/LatencyMarkHarness.h"
@@ -43,7 +44,7 @@ void usage(const char *name) {
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
            " -s{seconds} -b{burstSize} -c{cpuAffinity}\n", name);
     printf("    -t{test}, v=voice, l=latency, j=jitter, u=utilization"
-           ", s=series_util, default is %c\n",
+           ", s=series_util, c=clock_ramp, default is %c\n",
            kDefaultTestCode);
     printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
     printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
@@ -101,7 +102,7 @@ int main(int argc, char **argv)
                     percentCpu = atoi(&arg[2]);
                     break;
                 case 'n':
-                    numVoices = atoi(&arg[2]);
+                    numVoices = atoi(&arg[2]); // TODO check for invalid input like -nz
                     break;
                 case 'N':
                     numVoicesHigh = atoi(&arg[2]);
@@ -218,10 +219,19 @@ int main(int argc, char **argv)
             }
             break;
 
+        case 'c':
+            {
+                ClockRampHarness *clockHarness = new ClockRampHarness(&audioSink, &result);
+                clockHarness->setNumVoicesHigh(numVoicesHigh);
+                clockHarness->setVoicesMode(voicesMode);
+                harness = clockHarness;
+            }
+            break;
+
         case 'u':
             {
-                UtilizationMarkHarness *utilizationHarness = new UtilizationMarkHarness(&audioSink,
-                                                                                        &result);
+                UtilizationMarkHarness *utilizationHarness
+                        = new UtilizationMarkHarness(&audioSink, &result);
                 harness = utilizationHarness;
             }
             break;
@@ -235,12 +245,13 @@ int main(int argc, char **argv)
 
         case 's':
             {
-                UtilizationSeriesHarness *seriesHarness = new UtilizationSeriesHarness(&audioSink,
-                                                                                       &result);
+                UtilizationSeriesHarness *seriesHarness
+                        = new UtilizationSeriesHarness(&audioSink, &result);
                 seriesHarness->setNumVoicesHigh(numVoicesHigh);
                 harness = seriesHarness;
             }
             break;
+
         default:
             printf(TEXT_ERROR "unrecognized testCode = %c\n", testCode);
             usage(argv[0]);
@@ -254,7 +265,7 @@ int main(int argc, char **argv)
                            : HostThreadFactory::ThreadType::Default);
 
     // Print specified parameters.
-    printf("  test.name          = %s\n", harness->getName());
+    printf("  test.name          = %s\n",  harness->getName());
     printf("  num.voices         = %6d\n", numVoices);
     printf("  num.voices.high    = %6d\n", numVoicesHigh);
     printf("  voices.mode        = %6d\n", voicesMode);

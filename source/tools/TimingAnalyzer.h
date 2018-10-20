@@ -82,13 +82,13 @@ public:
     // This is called right after the audio task finishes computation.
     void markExit() {
         int64_t now = HostTools::getNanoTime();
-        int64_t renderTime = now - mEntryTime;
-        mActiveTime += renderTime; // for CPU load calculation
+        mLastRenderDuration = now - mEntryTime;
+        mActiveTime += mLastRenderDuration; // for CPU load calculation
         // Calculate jitter delay values for histogram.
         mExitTime = now;
         if (mLoopIndex > 0) {
             if (mRenderBins != NULL) {
-                int32_t binIndex = renderTime / mNanosPerBin;
+                int32_t binIndex = mLastRenderDuration / mNanosPerBin;
                 mRenderBins->increment(binIndex);
             }
             if (mDeliveryBins != NULL) {
@@ -99,14 +99,6 @@ public:
         }
         mLoopIndex++;
     }
-
-//    void recordJitter(int64_t jitterDuration) {
-//        // throw away first bin
-//        if (mLoopIndex > 0) {
-//            int32_t binIndex = jitterDuration / mNanosPerBin;
-//            mDeliveryBins->increment(binIndex);
-//        }
-//    }
 
     void reset() {
         mBaseTime = 0;
@@ -124,6 +116,13 @@ public:
         return mActiveTime;
     }
 
+    int64_t getLastRenderDurationNanos() {
+        return mLastRenderDuration;
+    }
+
+    int64_t getLastEntryTime() {
+        return mEntryTime;
+    }
 
     int64_t getTotalTime() {
         return mExitTime - mBaseTime;
@@ -204,6 +203,7 @@ private:
     int64_t  mEntryTime;
     int64_t  mExitTime;
     int64_t  mActiveTime;
+    int64_t  mLastRenderDuration = 0;
     BinCounter *mWakeupBins;
     BinCounter *mRenderBins;
     BinCounter *mDeliveryBins;

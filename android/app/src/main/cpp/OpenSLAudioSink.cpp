@@ -38,6 +38,11 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
 int32_t OpenSLAudioSink::open(int32_t sampleRate, int32_t samplesPerFrame,
                          int32_t framesPerBurst){
 
+    int32_t result = AudioSinkBase::open(sampleRate, samplesPerFrame, framesPerBurst);
+    if (result < 0) {
+        return result;
+    }
+
     __android_log_print(ANDROID_LOG_VERBOSE,
                         CLASSNAME,
                         "Creating audio engine with %d sample rate, %d samples per frame, "
@@ -47,9 +52,6 @@ int32_t OpenSLAudioSink::open(int32_t sampleRate, int32_t samplesPerFrame,
                         framesPerBurst
     );
 
-    mSampleRate = sampleRate;
-    mSamplesPerFrame = samplesPerFrame;
-    mFramesPerBurst = framesPerBurst;
     mSamplesPerBurst = mFramesPerBurst * mSamplesPerFrame;
     mBytesPerBurst = mSamplesPerBurst * sizeof(float);
 
@@ -207,10 +209,6 @@ void OpenSLAudioSink::playerCallback(SLAndroidSimpleBufferQueueItf bq){
 
 int32_t OpenSLAudioSink::getBufferSizeInFrames() {
     return mBufferSizeInFrames;
-}
-
-int32_t OpenSLAudioSink::getSampleRate(){
-    return mSampleRate;
 }
 
 int32_t OpenSLAudioSink::getUnderrunCount(){

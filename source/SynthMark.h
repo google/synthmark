@@ -45,9 +45,10 @@ constexpr int kSynthmarkSampleRate = 48000;
 
 // These should not be changed.
 constexpr int64_t SYNTHMARK_MILLIS_PER_SECOND      = 1000;
-constexpr int64_t SYNTHMARK_MICROS_PER_SECOND      = 1000000;
+constexpr int64_t SYNTHMARK_MICROS_PER_SECOND      = 1000 * 1000;
 constexpr int64_t SYNTHMARK_NANOS_PER_MICROSECOND  = 1000;
-constexpr int64_t SYNTHMARK_NANOS_PER_SECOND       = 1000000000;
+constexpr int64_t SYNTHMARK_NANOS_PER_MILLISECOND  = 1000 * 1000;
+constexpr int64_t SYNTHMARK_NANOS_PER_SECOND       = 1000 * 1000 * 1000;
 
 typedef float synth_float_t;
 

@@ -45,10 +45,13 @@ public:
         delete mThread;
     }
 
-    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame,
+    int32_t open(int32_t sampleRate, int32_t samplesPerFrame,
             int32_t framesPerBurst) override {
-        mSampleRate = sampleRate;
-        mFramesPerBurst = framesPerBurst;
+        int32_t result = AudioSinkBase::open(sampleRate, samplesPerFrame, framesPerBurst);
+        if (result < 0) {
+            return result;
+        }
+
         mBufferSizeInFrames = kBufferSizeInBursts * framesPerBurst;
         mMaxBufferCapacityInFrames = kMaxBufferCapacityInBursts * framesPerBurst;
 
@@ -61,10 +64,10 @@ public:
         mNextHardwareReadTimeNanos = 0;
         mFramesConsumed = 0;
         mStartTimeNanos = 0;
-        return 0;
+        return result;
     }
 
-    virtual int64_t convertFrameToTime(int64_t framePosition) override {
+    int64_t convertFrameToTime(int64_t framePosition) override {
         return (int64_t) (mStartTimeNanos + (framePosition * mNanosPerBurst / mFramesPerBurst));
     }
 
@@ -78,10 +81,6 @@ public:
 
     virtual int32_t getUnderrunCount() override {
         return mUnderrunCount;
-    }
-
-    int32_t getSampleRate() override {
-        return mSampleRate;
     }
 
     /**
@@ -254,8 +253,6 @@ private:
 
 private:
 
-    int32_t mSampleRate = kSynthmarkSampleRate;
-    int32_t mFramesPerBurst = 0; // set in open
     int64_t mStartTimeNanos = 0;
     int32_t mNanosPerBurst = 1; // set in open
     int64_t mNextHardwareReadTimeNanos = 0;

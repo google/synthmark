@@ -32,9 +32,7 @@
 #include "tools/TimingAnalyzer.h"
 
 /**
- * Determine buffer latency required to avoid glitches.
- * The "LatencyMark" is the minimum buffer size that is a multiple
- * of a block size that can be used for N minutes without glitching.
+ * Measure the wakeup time and render time for each wakeup period.
  */
 class JitterMarkHarness : public ChangingVoiceHarness {
 public:
