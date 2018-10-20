@@ -41,7 +41,7 @@ constexpr int JITTER_MAX_MSEC       = 100;
 /**
  * Base class for running a test.
  */
-class TestHarnessBase : public TestHarnessParameters, IAudioSinkCallback  {
+class TestHarnessBase : public TestHarnessParameters, public IAudioSinkCallback  {
 public:
     TestHarnessBase(AudioSinkBase *audioSink,
                     SynthMarkResult *result,

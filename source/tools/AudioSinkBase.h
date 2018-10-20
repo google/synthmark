@@ -43,7 +43,13 @@ public:
         return 0;
     }
 
-    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame, int32_t framesPerBurst) = 0;
+    virtual int32_t open(int32_t sampleRate, int32_t samplesPerFrame, int32_t framesPerBurst) {
+        mSampleRate = sampleRate;
+        mSamplesPerFrame = samplesPerFrame;
+        mFramesPerBurst = framesPerBurst;
+        return 0;
+    }
+
     virtual int32_t start() = 0;
 
     virtual int32_t stop() = 0;
@@ -89,7 +95,15 @@ public:
         return -1; // UNIMPLEMENTED
     }
 
-    virtual int32_t getSampleRate() = 0;
+    int32_t getSampleRate() {
+        return mSampleRate;
+    }
+    int32_t getSamplesPerFrame() {
+        return mSamplesPerFrame;
+    }
+    int32_t getFramesPerBurst() {
+        return mFramesPerBurst;
+    }
 
     void setSchedFifoUsed(bool schedFifoUsed) {
         mSchedFifoUsed = schedFifoUsed;
@@ -144,6 +158,11 @@ protected:
     void setActualCpu(int cpuAffinity) {
         mActualCpu = cpuAffinity;
     }
+
+    // set in open
+    int32_t       mSampleRate = kSynthmarkSampleRate;
+    int32_t       mSamplesPerFrame = 1;
+    int32_t       mFramesPerBurst = 0;
 
 private:
     IAudioSinkCallback *mCallback = NULL;

@@ -92,6 +92,7 @@ public:
             return getNumVoices();
         }
     }
+
 private:
 
     VoicesMode        mVoicesMode = VOICES_SWITCH;

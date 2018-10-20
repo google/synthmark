@@ -39,7 +39,6 @@ public:
     int32_t stop() override;
     int32_t close() override;
     int32_t getBufferSizeInFrames() override;
-    int32_t getSampleRate() override;
     int32_t getUnderrunCount() override;
     int32_t runCallbackLoop() override;
 
@@ -60,12 +59,9 @@ public:
 
 
 private:
-    int32_t mSampleRate;
     int32_t mBufferSizeInFrames = 0;
-    int32_t mFramesPerBurst = 0;
     int32_t mSamplesPerBurst = 0;
     int32_t mBytesPerBurst = 0;
-    int32_t mSamplesPerFrame = 0;
     float *mBurstBuffer;
     int32_t mUnderrunCount = 0;
     std::mutex mCallbackMutex;
