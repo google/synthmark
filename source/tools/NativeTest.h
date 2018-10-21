@@ -126,34 +126,26 @@ protected:
     HostThreadFactory *mHostThreadFactory = NULL;
 };
 
-
-//============================
-// Custom Tests
-//============================
-
-class TestVoiceMark : public NativeTestUnit {
+class CommonNativeTestUnit : public NativeTestUnit {
 public:
-    TestVoiceMark(LogTool *logTool = NULL) : NativeTestUnit("VoiceMark", logTool) {
+    CommonNativeTestUnit(std::string title, LogTool *logTool = NULL) : NativeTestUnit(title, logTool) {
 
     }
 
-    int init() {
+    int init() override {
         //Register parameters
 
         std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
         ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", &vSamplingRates, 5);
 
         ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
-        SAMPLES_PER_FRAME, 1, 8);
+                                          SAMPLES_PER_FRAME, 1, 8);
         ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        kSynthmarkFramesPerRender, 1, 8);
+                                          kSynthmarkFramesPerRender, 1, 8);
 
         std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
         ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
                                          &vFramesPerBurst, kParamsDefaultIndexFramesPerBurst);
-
-        std::vector<float> vCpuLoads = DEFAULT_TEST_TARGET_CPU_LOADS;
-        ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load", &vCpuLoads, 9);
 
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
 
@@ -164,7 +156,6 @@ public:
         mParams.addParam(&paramSamplesPerFrame);
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
-        mParams.addParam(&paramTargetCpuLoad);
         mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
@@ -172,17 +163,15 @@ public:
         std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
         std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
         ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
-            &vCoreAffinityLabels);
+                                       &vCoreAffinityLabels);
         mParams.addParam(&paramCoreAffinity);
 #endif
 
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
-    int run() {
+    int run(TestHarnessBase &harness, VirtualAudioSink &audioSink) {
         SynthMarkResult result;
-        VirtualAudioSink audioSink(mLogTool);
-        VoiceMarkHarness harness(&audioSink, &result, mLogTool);
 
         audioSink.setHostThread(mHostThreadFactory->createThread(
                 HostThreadFactory::ThreadType::Audio));
@@ -208,7 +197,6 @@ public:
                      framesPerBurst);
 
         harness.setDelayNoteOnSeconds(noteOnDelay);
-        harness.setTargetCpuLoad(targetCpuLoad);
         harness.measure(numSeconds);
         harness.close();
 
@@ -220,6 +208,44 @@ public:
 
     int finish() {
         return SYNTHMARK_RESULT_SUCCESS;
+    }
+
+protected:
+};
+
+//============================
+// Custom Tests
+//============================
+
+class TestVoiceMark : public CommonNativeTestUnit {
+public:
+    TestVoiceMark(LogTool *logTool = NULL) : CommonNativeTestUnit("VoiceMark", logTool) {
+
+    }
+
+    int init() override {
+        int err = CommonNativeTestUnit::init();
+        if (err != SYNTHMARK_RESULT_SUCCESS) {
+            return err;
+        }
+
+        std::vector<float> vCpuLoads = DEFAULT_TEST_TARGET_CPU_LOADS;
+        ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load", &vCpuLoads, 9);
+
+        mParams.addParam(&paramTargetCpuLoad);
+
+        return err;
+    }
+
+    int run() override {
+        SynthMarkResult result;
+        VirtualAudioSink audioSink(mLogTool);
+        VoiceMarkHarness harness(&audioSink, &result, mLogTool);
+        
+        float targetCpuLoad = mParams.getValueFromFloat(PARAMS_TARGET_CPU_LOAD);
+        harness.setTargetCpuLoad(targetCpuLoad);
+
+        return CommonNativeTestUnit::run(harness, audioSink);
     }
 
 protected:
