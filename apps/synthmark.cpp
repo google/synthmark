@@ -17,6 +17,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <stdlib.h>
 #include <tools/AutomatedTestSuite.h>
 
 #include "SynthMark.h"
@@ -66,6 +67,22 @@ void usage(const char *name) {
 
 #define TEXT_ERROR "ERROR: "
 
+/**
+ * Convert the input string to a positive integer.
+ * @param input
+ * @param message
+ * @return -1 if an invalid number and print the message
+ */
+long stringToPositiveInteger(const char *input, const char *message) {
+    char *end;
+    long result = strtol(input,	&end, 10);
+    if (errno || (*end != '\0')) {
+        printf(TEXT_ERROR "argument %s invalid : %s\n", input, message);
+        result = -1;
+    }
+    return result;
+}
+
 int main(int argc, char **argv)
 {
     int32_t percentCpu = kDefaultPercentCpu;
@@ -90,28 +107,32 @@ int main(int argc, char **argv)
     // Parse command line arguments.
     for (int iarg = 1; iarg < argc; iarg++) {
         char * arg = argv[iarg];
+        const char *errstr;
+        int temp;
         if (arg[0] == '-') {
             switch(arg[1]) {
                 case 'a':
-                    useAudioThread = (atoi(&arg[2]) != 0);
+                    temp = stringToPositiveInteger(&arg[2], "-a");
+                    if (temp < 0) return 1;
+                    useAudioThread = (temp > 0);
                     break;
                 case 'c':
-                    cpuAffinity = atoi(&arg[2]);
+                    if ((cpuAffinity = stringToPositiveInteger(&arg[2], "-c")) < 0) return 1;
                     break;
                 case 'p':
-                    percentCpu = atoi(&arg[2]);
+                    if ((percentCpu = stringToPositiveInteger(&arg[2], "-p")) < 0) return 1;
                     break;
                 case 'n':
-                    numVoices = atoi(&arg[2]); // TODO check for invalid input like -nz
+                    if ((numVoices = stringToPositiveInteger(&arg[2], "-n")) < 0) return 1;
                     break;
                 case 'N':
-                    numVoicesHigh = atoi(&arg[2]);
+                    if ((numVoicesHigh = stringToPositiveInteger(&arg[2], "-N")) < 0) return 1;
                     break;
                 case 'd':
-                    numSecondsDelayNoteOn = atoi(&arg[2]);
+                    if ((numSecondsDelayNoteOn = stringToPositiveInteger(&arg[2], "-d")) < 0) return 1;
                     break;
                 case 'r':
-                    sampleRate = atoi(&arg[2]);
+                    if ((sampleRate = stringToPositiveInteger(&arg[2], "-r")) < 0) return 1;
                     break;
                 case 'm':
                     switch (arg[2]) {
@@ -128,10 +149,10 @@ int main(int argc, char **argv)
                     }
                     break;
                 case 's':
-                    numSeconds = atoi(&arg[2]);
+                    if ((numSeconds = stringToPositiveInteger(&arg[2], "-s")) < 0) return 1;
                     break;
                 case 'b':
-                    framesPerBurst = atoi(&arg[2]);
+                    if ((framesPerBurst = stringToPositiveInteger(&arg[2], "-b")) < 0) return 1;
                     break;
                 case 't':
                     testCode = arg[2];
