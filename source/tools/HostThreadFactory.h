@@ -16,7 +16,12 @@
 #ifndef ANDROID_HOSTTHREADFACTORY_H
 #define ANDROID_HOSTTHREADFACTORY_H
 
+
+#include "tools/HostTools.h"
+
+#if defined(__ANDROID__)
 #include <aaudio/AAudioHostThread.h>
+#endif
 
 class HostThreadFactory
 {

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-//#include <mutex>
+
+#if defined(__ANDROID__)
 
 #include <aaudio/AAudio.h>
 #include "AAudioHostThread.h"
@@ -84,3 +85,5 @@ int AAudioHostThread::join() {
     }
     return AAUDIO_ERROR_INVALID_STATE;
 }
+
+#endif // __ANDROID__

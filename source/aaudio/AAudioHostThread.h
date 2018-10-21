@@ -16,6 +16,7 @@
 #ifndef ANDROID_AAUDIOHOSTTHREAD_H
 #define ANDROID_AAUDIOHOSTTHREAD_H
 
+#if defined(__ANDROID__)
 #include <mutex>
 
 #include <aaudio/AAudio.h>
@@ -48,4 +49,5 @@ private:
     volatile bool       mDone = false;
 };
 
-#endif //ANDROID_AAUDIOHOSTTHREAD_H
+#endif // __ANDROID__
+#endif // ANDROID_AAUDIOHOSTTHREAD_H

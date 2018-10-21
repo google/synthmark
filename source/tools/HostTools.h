@@ -24,11 +24,12 @@
 #include <memory.h>
 #include <pthread.h>
 #include <sched.h>
-#include <sys/sysinfo.h>
 #include <unistd.h>
 
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
+#else
+#include <sys/sysinfo.h>
 #endif
 
 constexpr int64_t kNanosPerMicrosecond  = 1000;

@@ -234,7 +234,6 @@ private:
         message << "latency.mixed." << cpuToBigLittle(cpu) << " = " << mixedLatency << std::endl;
 
         // Analysis
-        double highOverLow = heavyLatency / lightLatency;
         double mixedOverHigh = mixedLatency / heavyLatency;
         message << "latency.mixed.over.heavy." << cpuToBigLittle(cpu)
                 << " = " << mixedOverHigh << std::endl;
