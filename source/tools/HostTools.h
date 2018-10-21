@@ -26,12 +26,10 @@
 #include <sched.h>
 #include <unistd.h>
 
-#if defined(__ANDROID__)
-#include <sys/sysinfo.h>
-#endif
-
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
+#else
+#include <sys/sysinfo.h>
 #endif
 
 constexpr int64_t kNanosPerMicrosecond  = 1000;
