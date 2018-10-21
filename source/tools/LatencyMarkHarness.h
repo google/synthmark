@@ -45,7 +45,7 @@ public:
     : ChangingVoiceHarness(audioSink, result, logTool)
     {
         mTestName = "LatencyMark";
-        TestHarnessParameters::setNumVoices(kSynthmarkNumVoicesLatency);
+        ChangingVoiceHarness::setNumVoices(kSynthmarkNumVoicesLatency);
     }
 
     virtual ~LatencyMarkHarness() {

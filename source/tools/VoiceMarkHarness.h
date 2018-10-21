@@ -61,7 +61,7 @@ public:
                         (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                         / mAudioSink->getSampleRate();
         mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
-        TestHarnessParameters::setNumVoices(mInitialVoiceCount);
+        TestHarnessBase::setNumVoices(mInitialVoiceCount);
         mSumVoicesOn = 0;
         mSumVoicesCount = 0;
         mBeatCount = 0;
@@ -98,7 +98,7 @@ public:
             mLogTool->log("%2d: %3d voices used %5.3f of CPU, %s\n",
                           mBeatCount, oldNumVoices, cpuLoad,
                           accepted ? "" : " - not used");
-            TestHarnessParameters::setNumVoices(newNumVoices);
+            TestHarnessBase::setNumVoices(newNumVoices);
         }
         mTimer.reset();
         mBeatCount++;
