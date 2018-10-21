@@ -83,6 +83,10 @@ public:
         return mNumVoicesHigh;
     }
 
+    SynthMarkResult *getResult() {
+        return mResult;
+    }
+
 protected:
     int32_t          mNumVoices = 8;
     int32_t          mDelayNotesOn = 0;

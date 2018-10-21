@@ -32,6 +32,8 @@
 #include "VirtualAudioSink.h"
 #include "VoiceMarkHarness.h"
 #include "TestHarnessParameters.h"
+#include "UtilizationMarkHarness.h"
+#include "ClockRampHarness.h"
 
 #define NATIVETEST_SUCCESS 0
 #define NATIVETEST_ERROR -1
@@ -57,9 +59,10 @@ typedef enum {
     NATIVETEST_ID_VOICEMARK       = 0,
     NATIVETEST_ID_LATENCYMARK     = 1,
     NATIVETEST_ID_JITTERMARK      = 2,
-//    NATIVETEST_ID_UTILIZATIONMARK = 3,
-//    NATIVETEST_ID_AUTOMARK        = 4,
-    NATIVETEST_ID_MAX             = 2,
+    NATIVETEST_ID_UTILIZATIONMARK = 3,
+    NATIVETEST_ID_CLOCKRAMP       = 4,
+//    NATIVETEST_ID_AUTOMARK        = 5,
+    NATIVETEST_ID_MAX             = 4,
 } native_test_t;
 
 
@@ -126,215 +129,14 @@ protected:
     HostThreadFactory *mHostThreadFactory = NULL;
 };
 
-
-//============================
-// Custom Tests
-//============================
-
-class TestVoiceMark : public NativeTestUnit {
+class CommonNativeTestUnit : public NativeTestUnit {
 public:
-    TestVoiceMark(LogTool *logTool = NULL) : NativeTestUnit("VoiceMark", logTool) {
+    CommonNativeTestUnit(std::string title, LogTool *logTool = NULL)
+            : NativeTestUnit(title, logTool) {
 
     }
 
-    int init() {
-        //Register parameters
-
-        std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
-        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", &vSamplingRates, 5);
-
-        ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
-        SAMPLES_PER_FRAME, 1, 8);
-        ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        kSynthmarkFramesPerRender, 1, 8);
-
-        std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
-        ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST, "Frames per Burst",
-                                         &vFramesPerBurst, kParamsDefaultIndexFramesPerBurst);
-
-        std::vector<float> vCpuLoads = DEFAULT_TEST_TARGET_CPU_LOADS;
-        ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load", &vCpuLoads, 9);
-
-        ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
-
-        std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
-        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS, "Number of Seconds", &vDurations, 3);
-
-        mParams.addParam(&paramSamplingRate);
-        mParams.addParam(&paramSamplesPerFrame);
-        mParams.addParam(&paramFramesPerRender);
-        mParams.addParam(&paramFramesPerBurst);
-        mParams.addParam(&paramTargetCpuLoad);
-        mParams.addParam(&paramNoteOnDelay);
-        mParams.addParam(&paramNumSeconds);
-
-#if !HOST_IS_APPLE
-        std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
-        std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
-        ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
-            &vCoreAffinityLabels);
-        mParams.addParam(&paramCoreAffinity);
-#endif
-
-        return SYNTHMARK_RESULT_SUCCESS;
-    }
-
-    int run() {
-        SynthMarkResult result;
-        VirtualAudioSink audioSink(mLogTool);
-        VoiceMarkHarness harness(&audioSink, &result, mLogTool);
-
-        audioSink.setHostThread(mHostThreadFactory->createThread(
-                HostThreadFactory::ThreadType::Audio));
-
-        int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
-        int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
-        int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER);
-        int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
-
-        float targetCpuLoad = mParams.getValueFromFloat(PARAMS_TARGET_CPU_LOAD);
-        int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
-        float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
-
-#if !HOST_IS_APPLE
-        int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
-        audioSink.setRequestedCpu(CoreAffinity);
-#endif
-        mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
-
-        harness.open(sampleRate,
-                     samplesPerFrame,
-                     framesPerRender,
-                     framesPerBurst);
-
-        harness.setDelayNoteOnSeconds(noteOnDelay);
-        harness.setTargetCpuLoad(targetCpuLoad);
-        harness.measure(numSeconds);
-        harness.close();
-
-        mLogTool->log(result.getResultMessage().c_str());
-        mLogTool->log("\n");
-
-        return SYNTHMARK_RESULT_SUCCESS;
-    }
-
-    int finish() {
-        return SYNTHMARK_RESULT_SUCCESS;
-    }
-
-protected:
-};
-
-class TestLatencyMark : public NativeTestUnit {
-public:
-    TestLatencyMark(LogTool *logTool = NULL) : NativeTestUnit("LatencyMark", logTool) {
-
-    }
-
-    int init() {
-        //Register parameters
-
-        std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
-        ParamInteger paramSamplingRate(PARAMS_SAMPLE_RATE, "Sample Rate", &vSamplingRates, 5);
-
-        ParamInteger paramSamplesPerFrame(PARAMS_SAMPLES_PER_FRAME, "Samples per Frame",
-        SAMPLES_PER_FRAME, 1, 8);
-        ParamInteger paramFramesPerRender(PARAMS_FRAMES_PER_RENDER, "Frames per Render",
-        kSynthmarkFramesPerRender, 1, 8);
-
-        std::vector<int> vFramesPerBurst = DEFAULT_TEST_FRAMES_PER_BURST;
-                ParamInteger paramFramesPerBurst(PARAMS_FRAMES_PER_BURST,
-                                                 "Frames per Burst",
-                                                 &vFramesPerBurst,
-                                                 kParamsDefaultIndexFramesPerBurst);
-
-        ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
-                                    kSynthmarkNumVoicesLatency, 1, 300);
-
-        ParamInteger paramNumVoicesHigh(PARAMS_NUMB_VOICES_HIGH, "Number of Voices High", 0, 0,
-        300);
-
-        ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
-
-        std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
-        ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS, "Number of Seconds", &vDurations, 3);
-
-        mParams.addParam(&paramSamplingRate);
-        mParams.addParam(&paramSamplesPerFrame);
-        mParams.addParam(&paramFramesPerRender);
-        mParams.addParam(&paramFramesPerBurst);
-        mParams.addParam(&paramNumVoices);
-        mParams.addParam(&paramNumVoicesHigh);
-        mParams.addParam(&paramNoteOnDelay);
-        mParams.addParam(&paramNumSeconds);
-
-#if !HOST_IS_APPLE
-        std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
-        std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
-        ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
-                                      &vCoreAffinityLabels);
-        mParams.addParam(&paramCoreAffinity);
-#endif
-
-        return SYNTHMARK_RESULT_SUCCESS;
-    }
-
-    int run() {
-        SynthMarkResult result;
-        VirtualAudioSink audioSink(mLogTool);
-        LatencyMarkHarness harness(&audioSink, &result, mLogTool);
-
-        audioSink.setHostThread(mHostThreadFactory->createThread(
-                HostThreadFactory::ThreadType::Audio));
-
-        int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
-        int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
-        int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER);
-        int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
-
-        int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
-        int32_t numVoicesHigh = mParams.getValueFromInt(PARAMS_NUMB_VOICES_HIGH);
-        int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
-        float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
-
-#if !HOST_IS_APPLE
-        int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
-        audioSink.setRequestedCpu(CoreAffinity);
-#endif
-        mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
-
-
-        harness.open(sampleRate,
-                     samplesPerFrame,
-                     framesPerRender,
-                     framesPerBurst);
-
-        harness.setDelayNoteOnSeconds(noteOnDelay);
-        harness.setNumVoices(numVoices);
-        harness.setNumVoicesHigh(numVoicesHigh);
-        harness.measure(numSeconds);
-        harness.close();
-
-        mLogTool->log(result.getResultMessage().c_str());
-        mLogTool->log("\n");
-
-        return SYNTHMARK_RESULT_SUCCESS;
-    }
-
-    int finish() {
-        return SYNTHMARK_RESULT_SUCCESS;
-    }
-
-protected:
-};
-
-
-class TestJitterMark : public NativeTestUnit {
-public:
-    TestJitterMark(LogTool *logTool = NULL) : NativeTestUnit("JitterMark", logTool) {
-    }
-
-    int init() {
+    int init() override {
         //Register parameters
 
         std::vector<int> vSamplingRates = DEFAULT_TEST_SAMPLING_RATES;
@@ -351,9 +153,6 @@ public:
                                          &vFramesPerBurst,
                                          kParamsDefaultIndexFramesPerBurst);
 
-        ParamInteger paramNumVoices(PARAMS_NUM_VOICES,"Number of Voices",
-                                    8, 1, 300);
-
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
 
         std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
@@ -363,8 +162,6 @@ public:
         mParams.addParam(&paramSamplesPerFrame);
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
-
-        mParams.addParam(&paramNumVoices);
         mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
@@ -372,18 +169,14 @@ public:
         std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
         std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
         ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
-                                      &vCoreAffinityLabels);
+                                       &vCoreAffinityLabels);
         mParams.addParam(&paramCoreAffinity);
 #endif
 
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
-    int run() {
-        SynthMarkResult result;
-        VirtualAudioSink audioSink(mLogTool);
-        JitterMarkHarness harness(&audioSink, &result, mLogTool);
-
+    int run(TestHarnessBase &harness, VirtualAudioSink &audioSink) {
         audioSink.setHostThread(mHostThreadFactory->createThread(
                 HostThreadFactory::ThreadType::Audio));
 
@@ -392,7 +185,6 @@ public:
         int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER);
         int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
 
-        int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
         int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
 
@@ -408,11 +200,10 @@ public:
                      framesPerBurst);
 
         harness.setDelayNoteOnSeconds(noteOnDelay);
-        harness.setNumVoices(numVoices);
         harness.measure(numSeconds);
         harness.close();
 
-        mLogTool->log(result.getResultMessage().c_str());
+        mLogTool->log(harness.getResult()->getResultMessage().c_str());
         mLogTool->log("\n");
 
         return SYNTHMARK_RESULT_SUCCESS;
@@ -425,11 +216,183 @@ public:
 protected:
 };
 
+//============================
+// Custom Tests
+//============================
+
+class TestVoiceMark : public CommonNativeTestUnit {
+public:
+    TestVoiceMark(LogTool *logTool = NULL) : CommonNativeTestUnit("VoiceMark", logTool) {
+
+    }
+
+    int init() override {
+        int err = CommonNativeTestUnit::init();
+        if (err != SYNTHMARK_RESULT_SUCCESS) {
+            return err;
+        }
+
+        std::vector<float> vCpuLoads = DEFAULT_TEST_TARGET_CPU_LOADS;
+        ParamFloat paramTargetCpuLoad(PARAMS_TARGET_CPU_LOAD, "Target CPU Load", &vCpuLoads, 9);
+        mParams.addParam(&paramTargetCpuLoad);
+
+        return err;
+    }
+
+    int run() override {
+        SynthMarkResult result;
+        VirtualAudioSink audioSink(mLogTool);
+        VoiceMarkHarness harness(&audioSink, &result, mLogTool);
+        
+        float targetCpuLoad = mParams.getValueFromFloat(PARAMS_TARGET_CPU_LOAD);
+        harness.setTargetCpuLoad(targetCpuLoad);
+
+        return CommonNativeTestUnit::run(harness, audioSink);
+    }
+
+protected:
+};
+
+class TestUtilizationMark : public CommonNativeTestUnit {
+public:
+    TestUtilizationMark(LogTool *logTool = NULL) : CommonNativeTestUnit("UtilizationMark", logTool) {
+    }
+
+    int init() override {
+        int err = CommonNativeTestUnit::init();
+        if (err != SYNTHMARK_RESULT_SUCCESS) {
+            return err;
+        }
+
+        ParamInteger paramNumVoices(PARAMS_NUM_VOICES,
+                                    "Number of Voices",
+                                    kSynthmarkNumVoicesLatency,
+                                    1,
+                                    300);
+        mParams.addParam(&paramNumVoices);
+
+        return err;
+    }
+
+    int run() override {
+        SynthMarkResult result;
+        VirtualAudioSink audioSink(mLogTool);
+        UtilizationMarkHarness harness(&audioSink, &result, mLogTool);
+
+        int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
+        harness.setNumVoices(numVoices);
+
+        return CommonNativeTestUnit::run(harness, audioSink);
+    }
+
+protected:
+};
+
+class ChangingVoiceTestUnit : public CommonNativeTestUnit {
+public:
+    ChangingVoiceTestUnit(std::string title, LogTool *logTool = NULL)
+            : CommonNativeTestUnit(title, logTool) {
+    }
+
+    int init() override {
+        int err = CommonNativeTestUnit::init();
+        if (err != SYNTHMARK_RESULT_SUCCESS) {
+            return err;
+        }
+
+        ParamInteger paramNumVoices(PARAMS_NUM_VOICES,
+                                    "Number of Voices",
+                                    kSynthmarkNumVoicesLatency,
+                                    1,
+                                    300);
+        mParams.addParam(&paramNumVoices);
+
+        ParamInteger paramNumVoicesHigh(PARAMS_NUMB_VOICES_HIGH,
+                                        "Number of Voices High",
+                                        0,
+                                        0,
+                                        300);
+        mParams.addParam(&paramNumVoicesHigh);
+
+        return err;
+    }
+
+    int run(TestHarnessBase &harness, VirtualAudioSink &audioSink) {
+
+        int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
+        harness.setNumVoices(numVoices);
+
+        int32_t numVoicesHigh = mParams.getValueFromInt(PARAMS_NUMB_VOICES_HIGH);
+        harness.setNumVoicesHigh(numVoicesHigh);
+
+        return CommonNativeTestUnit::run(harness, audioSink);
+    }
+
+protected:
+};
+
+class TestLatencyMark : public ChangingVoiceTestUnit {
+public:
+    TestLatencyMark(LogTool *logTool = NULL)
+            : ChangingVoiceTestUnit("LatencyMark", logTool) {
+
+    }
+
+    int run() override {
+        SynthMarkResult result;
+        VirtualAudioSink audioSink(mLogTool);
+        LatencyMarkHarness harness(&audioSink, &result, mLogTool);
+
+        return ChangingVoiceTestUnit::run(harness, audioSink);
+    }
+protected:
+};
+
+class TestJitterMark : public ChangingVoiceTestUnit {
+public:
+    TestJitterMark(LogTool *logTool = NULL)
+            : ChangingVoiceTestUnit("JitterMark", logTool) {
+
+    }
+
+    int run() override {
+        SynthMarkResult result;
+        VirtualAudioSink audioSink(mLogTool);
+        JitterMarkHarness harness(&audioSink, &result, mLogTool);
+
+        return ChangingVoiceTestUnit::run(harness, audioSink);
+    }
+protected:
+};
+
+class TestClockRamp : public ChangingVoiceTestUnit {
+public:
+    TestClockRamp(LogTool *logTool = NULL)
+            : ChangingVoiceTestUnit("ClockRamp", logTool) {
+
+    }
+
+    int run() override {
+        SynthMarkResult result;
+        VirtualAudioSink audioSink(mLogTool);
+        ClockRampHarness harness(&audioSink, &result, mLogTool);
+
+        return ChangingVoiceTestUnit::run(harness, audioSink);
+    }
+protected:
+};
+
 //Native Test manager.
 class NativeTest {
 public:
-    NativeTest() : mCurrentStatus(NATIVETEST_STATUS_UNDEFINED),
-    mTestVoiceMark(&mLog), mTestLatencyMark(&mLog), mTestJitterMark(&mLog){
+    NativeTest()
+            : mCurrentStatus(NATIVETEST_STATUS_UNDEFINED)
+            , mTestVoiceMark(&mLog)
+            , mTestLatencyMark(&mLog)
+            , mTestJitterMark(&mLog)
+            , mTestUtilizationMark(&mLog)
+            , mTestClockRamp(&mLog)
+    {
         mLog.setStream(&mStream);
         initTests();
         setHostThreadFactory(&mHostThreadFactoryOwned);
@@ -549,6 +512,8 @@ private:
             case NATIVETEST_ID_VOICEMARK: pTestUnit = &mTestVoiceMark; break;
             case NATIVETEST_ID_LATENCYMARK: pTestUnit = &mTestLatencyMark; break;
             case NATIVETEST_ID_JITTERMARK: pTestUnit = &mTestJitterMark; break;
+            case NATIVETEST_ID_UTILIZATIONMARK: pTestUnit = &mTestUtilizationMark; break;
+            case NATIVETEST_ID_CLOCKRAMP: pTestUnit = &mTestClockRamp; break;
         }
         return pTestUnit;
     }
@@ -556,9 +521,11 @@ private:
     int mCurrentTest;
     int mCurrentStatus;
 
-    TestVoiceMark   mTestVoiceMark;
-    TestLatencyMark mTestLatencyMark;
-    TestJitterMark  mTestJitterMark;
+    TestVoiceMark        mTestVoiceMark;
+    TestLatencyMark      mTestLatencyMark;
+    TestJitterMark       mTestJitterMark;
+    TestUtilizationMark  mTestUtilizationMark;
+    TestClockRamp        mTestClockRamp;
 
     LogTool mLog;
     std::stringstream mStream;

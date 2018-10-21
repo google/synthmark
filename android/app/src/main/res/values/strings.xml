@@ -8,6 +8,7 @@
     <string name="test_1">Voices</string>
     <string name="test_2">Latency</string>
     <string name="test_3">Jitter</string>
+    <string name="test_4">Utilization</string>
     <string name="test_results_title">Test results</string>
     <string name="short_update">0.0</string>
 </resources>
