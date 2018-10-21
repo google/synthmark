@@ -24,8 +24,11 @@
 #include <memory.h>
 #include <pthread.h>
 #include <sched.h>
-#include <sys/sysinfo.h>
 #include <unistd.h>
+
+#if defined(__ANDROID__)
+#include <sys/sysinfo.h>
+#endif
 
 #if defined(__APPLE__)
 #include <mach/mach_time.h>

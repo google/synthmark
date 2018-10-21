@@ -107,7 +107,6 @@ int main(int argc, char **argv)
     // Parse command line arguments.
     for (int iarg = 1; iarg < argc; iarg++) {
         char * arg = argv[iarg];
-        const char *errstr;
         int temp;
         if (arg[0] == '-') {
             switch(arg[1]) {
