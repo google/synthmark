@@ -31,7 +31,8 @@
 // #define SYNTHMARK_MINOR_VERSION        14  /* Use more consistent report format */
 // #define SYNTHMARK_MINOR_VERSION        15  /* Fix LatencyMark low-high pattern. */
 // #define SYNTHMARK_MINOR_VERSION        16  /* Use AAudio callback thread on Android. */
-#define SYNTHMARK_MINOR_VERSION        17  /* Add -N to JitterMark. */
+// #define SYNTHMARK_MINOR_VERSION        17  /* Add -N to JitterMark. */
+#define SYNTHMARK_MINOR_VERSION         18  /* Add "-tc", ClockRamp test. Add harness to Android app. */
 
 // This may be increased without invalidating the benchmark.
 constexpr int kSynthmarkMaxVoices   = 512;
