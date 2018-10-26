@@ -121,10 +121,10 @@ public:
         } else {
 
             measurement = mSumVoicesOn / mSumVoicesCount;
-            resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << std::endl;
+            resultMessage << "Underruns = " << mAudioSink->getUnderrunCount() << std::endl;
             resultMessage << mTestName << "_"
-                << ((int)(mFractionOfCpu * 100)) << " = " << measurement;
-            resultMessage << ", normalized to 100% = "
+                << ((int)(mFractionOfCpu * 100)) << " = " << measurement << std::endl;
+            resultMessage << "normalized.voices.100 = "
                     << (measurement / mFractionOfCpu) << std::endl;
         }
 
