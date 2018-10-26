@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -75,8 +76,9 @@ void usage(const char *name) {
  */
 long stringToPositiveInteger(const char *input, const char *message) {
     char *end;
+    errno = 0;
     long result = strtol(input,	&end, 10);
-    if (errno || (*end != '\0')) {
+    if ((errno != 0) || isgraph(*end)) {
         printf(TEXT_ERROR "argument %s invalid : %s\n", input, message);
         result = -1;
     }
