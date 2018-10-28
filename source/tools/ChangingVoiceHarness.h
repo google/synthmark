@@ -20,12 +20,6 @@
 #include "tools/TestHarnessBase.h"
 #include "TestHarnessParameters.h"
 
-enum VoicesMode {
-    VOICES_UNDEFINED,
-    VOICES_SWITCH,
-    VOICES_RANDOM,
-    VOICES_LINEAR_LOOP,
-};
 
 #define NOTES_PER_STEP   10
 
@@ -45,10 +39,6 @@ public:
     }
 
     virtual ~ChangingVoiceHarness() {
-    }
-
-    void setVoicesMode(VoicesMode vm) {
-        mVoicesMode = vm;
     }
 
     int32_t getCurrentNumVoices() override {
@@ -95,7 +85,6 @@ public:
 
 private:
 
-    VoicesMode        mVoicesMode = VOICES_SWITCH;
 };
 
 

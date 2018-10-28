@@ -45,6 +45,12 @@ public:
         delete mThread;
     }
 
+    virtual int32_t close() override {
+        delete[] mBurstBuffer;
+        mBurstBuffer = nullptr;
+        return 0;
+    }
+
     int32_t open(int32_t sampleRate, int32_t samplesPerFrame,
             int32_t framesPerBurst) override {
         int32_t result = AudioSinkBase::open(sampleRate, samplesPerFrame, framesPerBurst);
@@ -52,13 +58,21 @@ public:
             return result;
         }
 
-        mBufferSizeInFrames = kBufferSizeInBursts * framesPerBurst;
+        // This must be set before setting the size.
         mMaxBufferCapacityInFrames = kMaxBufferCapacityInBursts * framesPerBurst;
+
+        // If UNSPECIFIED then set to a reasonable default.
+        if (getBufferSizeInFrames() == 0) {
+            int32_t bufferSize = kBufferSizeInBursts * framesPerBurst;
+            setBufferSizeInFrames(bufferSize);
+        }
 
         int64_t nanosPerBurst = mFramesPerBurst * SYNTHMARK_NANOS_PER_SECOND / mSampleRate;
         mNanosPerBurst = (int32_t) nanosPerBurst;
         HostCpuManager::getInstance()->setNanosPerBurst(nanosPerBurst);
 
+        delete[] mBurstBuffer;
+        mBurstBuffer = nullptr;
         mBurstBuffer = new float[samplesPerFrame * framesPerBurst];
 
         mNextHardwareReadTimeNanos = 0;
@@ -72,35 +86,28 @@ public:
     }
 
     int32_t getEmptyFramesAvailable() {
-        return mBufferSizeInFrames - getFullFramesAvailable();
+        return getBufferSizeInFrames() - getFullFramesAvailable();
     }
 
     int32_t getFullFramesAvailable() {
         return (int32_t) (getFramesWritten() - mFramesConsumed);
     }
 
-    virtual int32_t getUnderrunCount() override {
-        return mUnderrunCount;
+    int32_t getBufferSizeInFrames() override {
+        return mBufferSizeInFrames;
     }
 
     /**
      * Set the amount of the buffer that will be used. Determines latency.
      */
-    virtual int32_t setBufferSizeInFrames(int32_t numFrames) override {
-        if (numFrames < 2) {
-            mBufferSizeInFrames = 2;
+     int32_t setBufferSizeInFrames(int32_t numFrames) override {
+        // printf("VirtualAudioSink::%s(%d) max = %d\n", __func__, numFrames, mMaxBufferCapacityInFrames);
+        if (numFrames < 1) {
+            numFrames = 1;
         } else if (numFrames > mMaxBufferCapacityInFrames) {
-            mBufferSizeInFrames = mMaxBufferCapacityInFrames;
-        } else {
-            mBufferSizeInFrames = numFrames;
+            numFrames = mMaxBufferCapacityInFrames;
         }
-        return mBufferSizeInFrames;
-    }
-
-    /**
-     * Get the size size of the buffer.
-     */
-    virtual int32_t getBufferSizeInFrames() override {
+        mBufferSizeInFrames = numFrames;
         return mBufferSizeInFrames;
     }
 
@@ -144,7 +151,7 @@ public:
     }
 
     virtual int32_t start() override {
-        setFramesWritten(mBufferSizeInFrames);  // start full and primed
+        setFramesWritten(getBufferSizeInFrames());  // start full and primed
 
         if (mUseRealThread) {
             mCallbackLoopResult = SYNTHMARK_RESULT_THREAD_FAILURE;
@@ -163,11 +170,6 @@ public:
     }
 
     virtual int32_t stop() override {
-        return 0;
-    }
-
-    virtual int32_t close() override {
-        delete[] mBurstBuffer;
         return 0;
     }
 
@@ -279,17 +281,14 @@ private:
     int32_t mBufferSizeInFrames = 0;
     int32_t mMaxBufferCapacityInFrames = 0;
     int64_t mFramesConsumed = 0;
-    int32_t mUnderrunCount = 0;
-    float*  mBurstBuffer = NULL;   // contains output of the synthesizer
+    float*  mBurstBuffer = nullptr;   // contains output of the synthesizer
     bool    mUseRealThread = true; // TODO control using new settings object
     int     mThreadPriority = SYNTHMARK_THREAD_PRIORITY_DEFAULT;   // TODO control using new settings object
     int32_t mCallbackLoopResult = 0;
     HostThread * mThread = NULL;
     HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
 
-private:
     LogTool    * mLogTool = NULL;
-
 
     // Advance mFramesConsumed and mNextHardwareReadTimeNanos based on real-time clock.
     void updateHardwareSimulator() {

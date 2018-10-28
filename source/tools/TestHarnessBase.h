@@ -68,12 +68,12 @@ public:
     }
 
     // Customize the test by defining these virtual methods.
-    virtual void onBeginMeasurement() = 0;
+    virtual void onBeginMeasurement() {}
 
     // TODO Use Result type return value.
-    virtual int32_t onBeforeNoteOn() = 0;
+    virtual int32_t onBeforeNoteOn() { return 0; }
 
-    virtual void onEndMeasurement() = 0;
+    virtual void onEndMeasurement() {}
 
     // Run the benchmark.
     int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
@@ -157,9 +157,6 @@ public:
 
         assert(mResult != NULL);
 
-        mLogTool->log("---- SynthMark version %d.%d ----\n", SYNTHMARK_MAJOR_VERSION,
-                      SYNTHMARK_MINOR_VERSION);
-
         int32_t result; // Used to store the results of various operations during the test
         mFramesNeeded = (int)(mSampleRate * seconds);
         mFrameCounter = 0;
@@ -191,13 +188,6 @@ public:
 
         mAudioSink->stop();
         onEndMeasurement();
-
-        mLogTool->log("SCHED_FIFO %sused\n", mAudioSink->wasSchedFifoUsed() ? "" : "NOT ");
-        mLogTool->log("bufferSizeInFrames     = %6d\n", mAudioSink->getBufferSizeInFrames());
-        mLogTool->log("bufferCapacityInFrames = %6d\n", mAudioSink->getBufferCapacityInFrames());
-        mLogTool->log("sampleRate             = %6d\n", mAudioSink->getSampleRate());
-        mLogTool->log("measured CPU load      = %6.2f%%\n", mTimer.getDutyCycle() * 100);
-        mLogTool->log("CPU affinity           = %6d\n", mAudioSink->getActualCpu());
 
         mResult->setResultCode(result);
         return result;
@@ -271,6 +261,10 @@ public:
 
     void setThreadType(HostThreadFactory::ThreadType mThreadType) override {
         mAudioSink->setThreadType(mThreadType);
+    }
+
+    int32_t getFrameCount() {
+        return mFrameCounter;
     }
 
 protected:

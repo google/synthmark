@@ -31,6 +31,14 @@
 #include "tools/TestHarnessBase.h"
 #include "HostThreadFactory.h"
 
+
+enum VoicesMode {
+    VOICES_UNDEFINED,
+    VOICES_SWITCH,
+    VOICES_RANDOM,
+    VOICES_LINEAR_LOOP,
+};
+
 class TestHarnessParameters : public ITestHarness {
 
 public:
@@ -63,6 +71,14 @@ public:
         return mNumVoices;
     }
 
+    void setVoicesMode(VoicesMode voicesMode) {
+        mVoicesMode = voicesMode;
+    }
+
+    VoicesMode getVoicesMode() {
+        return mVoicesMode;
+    }
+
     HostThreadFactory::ThreadType getThreadType() const {
         return mThreadType;
     }
@@ -87,10 +103,20 @@ public:
         return mResult;
     }
 
+    int32_t getFramesPerBurst() {
+        return mAudioSink->getFramesPerBurst();
+    }
+
+    int32_t getSampleRate() {
+        return mAudioSink->getSampleRate();
+    }
+
 protected:
     int32_t          mNumVoices = 8;
     int32_t          mDelayNotesOn = 0;
     int32_t          mNumVoicesHigh = 0;
+
+    VoicesMode       mVoicesMode = VOICES_SWITCH;
 
     AudioSinkBase   *mAudioSink = nullptr;
     SynthMarkResult *mResult = nullptr;
