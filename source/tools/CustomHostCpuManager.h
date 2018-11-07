@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,9 +108,8 @@ public:
             double bandwidth;
 
             /*
-             * mBWUpdateCounter is reset, to prevent a close bandwith updates
-             * due to the timer, after a workUnit change. This allows the
-             * statistics for the new workUnits to stabilize.
+             * mBWUpdateCounter is reset to avoid consecutive, automatic
+             * bandwith updates.
              */
             if (mBWUpdateCounter != 0)
                 mBWUpdateCounter = 0;
@@ -127,8 +126,14 @@ public:
             else
                 bandwidth = static_cast<double>(expectedRuntime_ns) / mPeriod_ns;
 
-            /* Add some offset to the computed bandwidth */
+            /*
+             * Add some margins to the computed bandwidth, since the
+             * application execution times are noisy.
+             * A first margin is a multiplication factor, meaning that the margin
+             * proportionally increases with the duration.
+             */ 
             bandwidth *= 1.1;
+            /* A second margin is an absolute offset. */
             bandwidth += 0.05;
 
             /* Bound the bandwidth to the limit set by the Kernel */
@@ -254,8 +259,8 @@ private:
                                 &sa,
                                 sizeof(sa),
                                 SCHED_GETATTR_FLAGS_DL_ABSOLUTE);
-        if (ret) {
-            printf("ERROR performing absolute getattr\n");
+        if (ret == -1) {
+            perror("ERROR performing absolute getattr");
             exit(-1);
         }
 
