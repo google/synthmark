@@ -126,8 +126,14 @@ public:
             else
                 bandwidth = static_cast<double>(expectedRuntime_ns) / mPeriod_ns;
 
-            /* Add some offset to the computed bandwidth */
+            /*
+             * Add some margins to the computed bandwidth, since the
+             * application execution times are noisy.
+             * A first margin is a multiplication factor, meaning that the margin
+             * proportionally increases with the duration.
+             */ 
             bandwidth *= 1.1;
+            /* A second margin is an absolute offset. */
             bandwidth += 0.05;
 
             /* Bound the bandwidth to the limit set by the Kernel */
