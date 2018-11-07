@@ -253,8 +253,8 @@ private:
                                 &sa,
                                 sizeof(sa),
                                 SCHED_GETATTR_FLAGS_DL_ABSOLUTE);
-        if (ret) {
-            printf("ERROR performing absolute getattr\n");
+        if (ret == -1) {
+            perror("ERROR performing absolute getattr");
             exit(-1);
         }
 
