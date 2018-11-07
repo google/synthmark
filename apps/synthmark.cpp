@@ -62,6 +62,7 @@ void usage(const char *name) {
            kDefaultSeconds);
     printf("    -b{burstSize} frames read by virtual hardware at one time, default = %d\n",
            kDefaultFramesPerBurst);
+    printf("    -B{burstNum} initial number of bursts, default = %d\n", 1);
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
     printf("    -a{enable} 0 for normal thread, 1 for audio callback, default = 1\n");
 }
@@ -96,6 +97,7 @@ int main(int argc, char **argv)
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
     bool    useAudioThread = true;
+    int32_t initialBursts = 1;
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
 
@@ -154,6 +156,9 @@ int main(int argc, char **argv)
                     break;
                 case 'b':
                     if ((framesPerBurst = stringToPositiveInteger(&arg[2], "-b")) < 0) return 1;
+                    break;
+                case 'B':
+                    initialBursts = atoi(&arg[2]);
                     break;
                 case 't':
                     testCode = arg[2];
@@ -228,6 +233,7 @@ int main(int argc, char **argv)
                 LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result);
                 latencyHarness->setNumVoicesHigh(numVoicesHigh);
                 latencyHarness->setVoicesMode(voicesMode);
+                latencyHarness->setInitialBursts(initialBursts);
                 harness = latencyHarness;
             }
             break;

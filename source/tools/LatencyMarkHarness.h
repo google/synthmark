@@ -107,7 +107,7 @@ public:
 
     virtual void onBeginMeasurement() override {
         mPreviousUnderrunCount = 0;
-        mAudioSink->setBufferSizeInFrames(mFramesPerBurst);
+        mAudioSink->setBufferSizeInFrames(mFramesPerBurst * mInitialBursts);
         mLogTool->log("---- Measure latency ---- #voices = %d / %d\n",
                       getNumVoices(),
                       getNumVoicesHigh());
@@ -169,8 +169,12 @@ public:
         mResult->setMeasurement((double) sizeFrames);
     }
 
-private:
+    void setInitialBursts(int32_t bursts) {
+        mInitialBursts = bursts;
+    }
 
+private:
+    int32_t           mInitialBursts = 1;
     int32_t           mPreviousUnderrunCount = 0;
 
     HostThread       *mMonitorThread = nullptr;
