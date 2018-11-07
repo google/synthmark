@@ -26,8 +26,6 @@
 #include <sched.h>
 #include <unistd.h>
 
-#define SYNTHMARK_USE_CUSTOM_CPU_MANAGER
-
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
 #else
