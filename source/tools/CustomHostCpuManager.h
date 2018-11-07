@@ -108,9 +108,8 @@ public:
             double bandwidth;
 
             /*
-             * mBWUpdateCounter is reset, to prevent a close bandwith updates
-             * due to the timer, after a workUnit change. This allows the
-             * statistics for the new workUnits to stabilize.
+             * mBWUpdateCounter is reset to avoid consecutive, automatic
+             * bandwith updates.
              */
             if (mBWUpdateCounter != 0)
                 mBWUpdateCounter = 0;
