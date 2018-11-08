@@ -55,6 +55,7 @@ void usage(const char *name) {
            "      random choice, or 's' to switch between -n and -N. default = s\n");
     printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
            kDefaultNoteOnDelay);
+    printf("    -w{workloadHintsEnabled} 0 = no (default), 1 = give workload hints to scheduler\n");
     printf("    -p{percentCPU} target load, default = %d\n", kDefaultPercentCpu);
     printf("    -r{sampleRate} should be typical, 44100, 48000, etc. default is %d\n",
            kSynthmarkSampleRate);
@@ -97,6 +98,7 @@ int main(int argc, char **argv)
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
     bool    useAudioThread = true;
+    bool    workloadHintsEnabled = false;
     int32_t initialBursts = 1;
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
@@ -163,10 +165,17 @@ int main(int argc, char **argv)
                 case 't':
                     testCode = arg[2];
                     break;
+                case 'w':
+                    temp = stringToPositiveInteger(&arg[2], "-w");
+                    if (temp < 0) return 1;
+                    workloadHintsEnabled = (temp > 0);
+                    break;
+
                 case 'h': // help
                 case '?': // help
                     usage(argv[0]);
                     return 0;
+
                 default:
                     printf(TEXT_ERROR "Unrecognized switch: %s\n", arg);
                     usage(argv[0]);
@@ -291,6 +300,7 @@ int main(int argc, char **argv)
     harness->setThreadType(useAudioThread
                            ? HostThreadFactory::ThreadType::Audio
                            : HostThreadFactory::ThreadType::Default);
+    HostCpuManager::setWorkloadHintsEnabled(workloadHintsEnabled);
 
     // Print specified parameters.
     printf("  test.name          = %s\n",  harness->getName());
@@ -304,6 +314,7 @@ int main(int argc, char **argv)
     printf("  cpu.affinity       = %6d\n", cpuAffinity);
     printf("  cpu.count          = %6d\n", HostTools::getCpuCount());
     printf("  audio.thread       = %6d\n", (useAudioThread ? 1 : 0));
+    printf("  workload.hints     = %6d\n", (workloadHintsEnabled ? 1 : 0));
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 
