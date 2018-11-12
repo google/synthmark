@@ -366,9 +366,7 @@ private:
     int64_t   mEndingTime = 0;
 };
 
-#ifdef SYNTHMARK_USE_CUSTOM_CPU_MANAGER
 #include "CustomHostCpuManager.h"
-#endif
 
 /**
  * Return a singleton instance of a HostCpuManagerBase.
@@ -379,18 +377,28 @@ public:
 
     static HostCpuManagerBase *getInstance() {
         if (mInstance == nullptr) {
-#ifdef SYNTHMARK_USE_CUSTOM_CPU_MANAGER
-            mInstance = new CustomHostCpuManager();
-#else
-            mInstance = new HostCpuManagerStub();
-#endif
+            if (mWorkloadHintsEnabled) {
+                mInstance = new CustomHostCpuManager();
+            } else {
+                mInstance = new HostCpuManagerStub();
+            }
         }
         return mInstance;
+    }
+
+    static bool areWorkloadHintsEnabled() {
+        return mWorkloadHintsEnabled;
+    }
+
+    static void setWorkloadHintsEnabled(bool deadlineSchedulerEnabled) {
+        mWorkloadHintsEnabled = deadlineSchedulerEnabled;
     }
 
 private:
     HostCpuManager() {}
     static HostCpuManagerBase *mInstance;
+    static bool                mWorkloadHintsEnabled;
+
 };
 
 #endif //ANDROID_HOSTTOOLS_H

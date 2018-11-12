@@ -260,7 +260,8 @@ private:
                                 sizeof(sa),
                                 SCHED_GETATTR_FLAGS_DL_ABSOLUTE);
         if (ret == -1) {
-            perror("ERROR performing absolute getattr");
+            perror("ERROR performing absolute getattr for SCHED_DEADLINE");
+            perror("ERROR This kernel probably does not have the necessary patches");
             exit(-1);
         }
 

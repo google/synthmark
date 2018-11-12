@@ -209,7 +209,7 @@ public:
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
-    int finish() {
+    int finish() override {
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
