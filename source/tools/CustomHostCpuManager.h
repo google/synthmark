@@ -467,7 +467,7 @@ private:
     int64_t   mStartingTime_ns = -1;
     int64_t   mEndingTime_ns   = -1;
 
-    double    mMaxBW           = 0.94;
+    double    mMaxBW           = 0.9;
 
     bool      mBoosted         = false;
     double    mBoostedBW       = 0.94;
