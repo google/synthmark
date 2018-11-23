@@ -116,6 +116,10 @@ public:
                           testCount++, numSeconds, bursts);
             fflush(stdout);
             int32_t err = measureOnce(sampleRate, framesPerBurst, numSeconds);
+            if (err < 0) {
+                mLogTool->log("LatencyMark: %s returning err = %d -----------\n",  __func__, err);
+                return err;
+            }
             bool glitched = (mAudioSink->getUnderrunCount() > 0);
             if (!glitched) {
                 printf("LatencyMark: no glitches\n");
