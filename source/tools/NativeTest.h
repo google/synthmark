@@ -17,7 +17,8 @@
 #ifndef ANDROID_NATIVETEST_H
 #define ANDROID_NATIVETEST_H
 
-#define HOST_IS_APPLE  defined(__APPLE__)
+#define HOST_IS_APPLE       defined(__APPLE__)
+#define HOST_IS_NOT_APPLE  !defined(__APPLE__)
 
 #include <string>
 #include <sstream>
@@ -165,7 +166,7 @@ public:
         mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramNumSeconds);
 
-#if !HOST_IS_APPLE
+#ifndef __APPLE__
         std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
         std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
         ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
@@ -188,7 +189,7 @@ public:
         int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
         float numSeconds = mParams.getValueFromFloat(PARAMS_NUM_SECONDS);
 
-#if !HOST_IS_APPLE
+#ifndef __APPLE__
         int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
         audioSink.setRequestedCpu(CoreAffinity);
 #endif
@@ -343,7 +344,7 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         LatencyMarkHarness harness(&audioSink, &result, mLogTool);
 
-        return ChangingVoiceTestUnit::run(harness, audioSink);
+        return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
     }
 protected:
 };
@@ -360,7 +361,7 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         JitterMarkHarness harness(&audioSink, &result, mLogTool);
 
-        return ChangingVoiceTestUnit::run(harness, audioSink);
+        return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
     }
 protected:
 };
@@ -377,7 +378,7 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         ClockRampHarness harness(&audioSink, &result, mLogTool);
 
-        return ChangingVoiceTestUnit::run(harness, audioSink);
+        return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
     }
 protected:
 };

@@ -92,7 +92,11 @@ public:
     virtual int32_t getBufferCapacityInFrames() = 0;
 
     virtual int32_t getUnderrunCount() {
-        return -1; // UNIMPLEMENTED
+        return mUnderrunCount;
+    }
+
+    virtual void setUnderrunCount(int i) {
+        mUnderrunCount = i;
     }
 
     int32_t getSampleRate() {
@@ -163,6 +167,7 @@ protected:
     int32_t       mSampleRate = kSynthmarkSampleRate;
     int32_t       mSamplesPerFrame = 1;
     int32_t       mFramesPerBurst = 0;
+    int32_t       mUnderrunCount = 0;
 
 private:
     IAudioSinkCallback *mCallback = NULL;

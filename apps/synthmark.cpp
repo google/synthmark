@@ -321,6 +321,13 @@ int main(int argc, char **argv)
     // Run the benchmark.
     harness->runTest(sampleRate, framesPerBurst, numSeconds);
 
+    printf("SCHED_FIFO %s used\n", audioSink.wasSchedFifoUsed() ? "" : "NOT ");
+    printf("bufferSizeInFrames2    = %6d\n", audioSink.getBufferSizeInFrames());
+    printf("bufferCapacityInFrames = %6d\n", audioSink.getBufferCapacityInFrames());
+    printf("sampleRate             = %6d\n", audioSink.getSampleRate());
+    printf("CPU affinity           = %6d\n", audioSink.getActualCpu());
+    fflush(stdout);
+
     // Print the test results.
     printf(TEXT_RESULTS_BEGIN "\n");
     std::cout << result.getResultMessage();

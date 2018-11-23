@@ -46,14 +46,14 @@ public:
      * Set the amount of the buffer that will be used. Determines latency.
      * @return the actual size, which may not match the requested size, or a negative error
      */
-    virtual int32_t setBufferSizeInFrames(int32_t numFrames) override {
+    int32_t setBufferSizeInFrames(int32_t numFrames) override {
         return -1;
     }
 
     /**
      * Get the maximum size of the buffer.
      */
-    virtual int32_t getBufferCapacityInFrames() override {
+    int32_t getBufferCapacityInFrames() override {
         return -1;
     }
 
