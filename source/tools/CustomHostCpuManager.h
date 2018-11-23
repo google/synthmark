@@ -129,24 +129,25 @@ public:
              * something bad is going on, so, set the maximum runtime.
              * This may happen when the linear regression fails.
              */
-            if (expectedRuntime_ns == 0 && currentWorkUnits != 0)
+            if (expectedRuntime_ns == 0 && currentWorkUnits != 0) {
                 bandwidth = BW_MAX;
-            else
+            } else {
                 bandwidth = static_cast<double>(expectedRuntime_ns) / mPeriod_ns;
 
-            /*
-             * Add some margins to the computed bandwidth, since the
-             * application execution times are noisy.
-             * A first margin is a multiplication factor, meaning that the margin
-             * proportionally increases with the duration.
-             */ 
-            bandwidth *= BW_OFFSET_REL;
-            /* A second margin is an absolute offset. */
-            bandwidth += BW_OFFSET_ABS;
+                /*
+                 * Add some margins to the computed bandwidth, since the
+                 * application execution times are noisy.
+                 * A first margin is a multiplication factor, meaning that the margin
+                 * proportionally increases with the duration.
+                 */ 
+                bandwidth *= BW_OFFSET_REL;
+                /* A second margin is an absolute offset. */
+                bandwidth += BW_OFFSET_ABS;
 
-            /* Bound the bandwidth to the limit set by the Kernel */
-            if (bandwidth > BW_MAX)
-                bandwidth = BW_MAX;
+                /* Bound the bandwidth to the limit set by the Kernel */
+                if (bandwidth > BW_MAX)
+                    bandwidth = BW_MAX;
+            }
 
             if (currentWorkUnits != getCurrentWorkUnits() ||
                     maxWorkUnits != getMaxWorkUnits()) {
