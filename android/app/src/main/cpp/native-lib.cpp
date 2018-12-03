@@ -33,9 +33,6 @@
 OpenSLHostThreadFactory sOpenSLHostThreadFactory;
 #endif /* USE_OPENSL_THREAD */
 
-// TODO this should be compiled from HostTools.cpp! Why is it missing?
-HostCpuManagerBase *HostCpuManager::mInstance = nullptr;
-
 JNIEXPORT jlong JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1create(
     JNIEnv* env,
