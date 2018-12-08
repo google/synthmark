@@ -62,7 +62,7 @@ public:
         resultMessage << mTestName << " = " << measurement << std::endl;
 
         resultMessage << dumpJitter();
-        resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
+        resultMessage << "underrun.count = " << mAudioSink->getUnderrunCount() << "\n";
         resultMessage << mCpuAnalyzer.dump();
 
         mResult->setMeasurement(measurement);

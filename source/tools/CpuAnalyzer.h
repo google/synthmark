@@ -44,10 +44,10 @@ public:
             mCpuBins.increment(cpuIndex);
         }
         // Did we change CPUs?
-        if (cpuIndex != mPreviousCpu) {
-            mPreviousCpu = cpuIndex;
+        if (cpuIndex != mPreviousCpu && mPreviousCpu != kCpuIndexInvalid) {
             mMigrationCount++;
         }
+        mPreviousCpu = cpuIndex;
         mTotalCount++;
     }
 
@@ -76,7 +76,9 @@ public:
     }
 
 private:
-    int         mPreviousCpu = -1;
+    static constexpr int kCpuIndexInvalid = -1;
+
+    int         mPreviousCpu = kCpuIndexInvalid;
     int32_t     mMigrationCount = 0;
     int32_t     mTotalCount = 0;
     BinCounter  mCpuBins{MAX_CPUS};

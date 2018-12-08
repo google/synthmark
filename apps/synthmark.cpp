@@ -37,6 +37,7 @@
 constexpr char kDefaultTestCode         = 'v';
 constexpr int  kDefaultSeconds          = 10;
 constexpr int  kDefaultFramesPerBurst   = 96; // 2 msec at 48000 Hz
+constexpr int  kDefaultBufferSizeBursts = 1;
 constexpr int  kDefaultNumVoices        = 8;
 constexpr int  kDefaultNoteOnDelay      = 0;
 constexpr int  kDefaultPercentCpu       = 50;
@@ -63,7 +64,8 @@ void usage(const char *name) {
            kDefaultSeconds);
     printf("    -b{burstSize} frames read by virtual hardware at one time, default = %d\n",
            kDefaultFramesPerBurst);
-    printf("    -B{burstNum} initial number of bursts, default = %d\n", 1);
+    printf("    -B{bursts} initial buffer size in bursts, default = %d\n",
+           kDefaultBufferSizeBursts);
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
     printf("    -a{enable} 0 for normal thread, 1 for audio callback, default = 1\n");
 }
@@ -99,7 +101,7 @@ int main(int argc, char **argv)
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
     bool    useAudioThread = true;
     bool    workloadHintsEnabled = false;
-    int32_t initialBursts = 1;
+    int32_t bufferSizeBursts = kDefaultBufferSizeBursts;
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
 
@@ -160,7 +162,7 @@ int main(int argc, char **argv)
                     if ((framesPerBurst = stringToPositiveInteger(&arg[2], "-b")) < 0) return 1;
                     break;
                 case 'B':
-                    initialBursts = atoi(&arg[2]);
+                    if ((bufferSizeBursts = stringToPositiveInteger(&arg[2], "-B")) < 0) return 1;
                     break;
                 case 't':
                     testCode = arg[2];
@@ -225,6 +227,7 @@ int main(int argc, char **argv)
     }
 
     audioSink.setRequestedCpu(cpuAffinity);
+    audioSink.setDefaultBufferSizeInBursts(bufferSizeBursts);
 
     // Create a test harness and set the parameters.
     switch(testCode) {
@@ -242,7 +245,7 @@ int main(int argc, char **argv)
                 LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result);
                 latencyHarness->setNumVoicesHigh(numVoicesHigh);
                 latencyHarness->setVoicesMode(voicesMode);
-                latencyHarness->setInitialBursts(initialBursts);
+                latencyHarness->setInitialBursts(bufferSizeBursts);
                 harness = latencyHarness;
             }
             break;
@@ -303,29 +306,31 @@ int main(int argc, char **argv)
     HostCpuManager::setWorkloadHintsEnabled(workloadHintsEnabled);
 
     // Print specified parameters.
-    printf("  test.name          = %s\n",  harness->getName());
-    printf("  num.voices         = %6d\n", numVoices);
-    printf("  num.voices.high    = %6d\n", numVoicesHigh);
-    printf("  voices.mode        = %6d\n", voicesMode);
-    printf("  note.on.delay      = %6d\n", numSecondsDelayNoteOn);
-    printf("  target.cpu.percent = %6d\n", percentCpu);
-    printf("  frames.per.burst   = %6d\n", framesPerBurst);
-    printf("  msec.per.burst     = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
-    printf("  cpu.affinity       = %6d\n", cpuAffinity);
-    printf("  cpu.count          = %6d\n", HostTools::getCpuCount());
-    printf("  audio.thread       = %6d\n", (useAudioThread ? 1 : 0));
-    printf("  workload.hints     = %6d\n", (workloadHintsEnabled ? 1 : 0));
+    printf("  test.name            = %s\n",  harness->getName());
+    printf("  num.voices           = %6d\n", numVoices);
+    printf("  num.voices.high      = %6d\n", numVoicesHigh);
+    printf("  voices.mode          = %6d\n", voicesMode);
+    printf("  note.on.delay        = %6d\n", numSecondsDelayNoteOn);
+    printf("  target.cpu.percent   = %6d\n", percentCpu);
+    printf("  buffer.size.bursts   = %6d\n", bufferSizeBursts);
+    printf("  frames.per.burst     = %6d\n", framesPerBurst);
+    printf("  msec.per.burst       = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
+    printf("  cpu.affinity         = %6d\n", cpuAffinity);
+    printf("  cpu.count            = %6d\n", HostTools::getCpuCount());
+    printf("  audio.thread         = %6d\n", (useAudioThread ? 1 : 0));
+    printf("  workload.hints       = %6d\n", (workloadHintsEnabled ? 1 : 0));
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 
     // Run the benchmark.
     harness->runTest(sampleRate, framesPerBurst, numSeconds);
 
-    printf("SCHED_FIFO %s used\n", audioSink.wasSchedFifoUsed() ? "" : "NOT ");
-    printf("bufferSizeInFrames2    = %6d\n", audioSink.getBufferSizeInFrames());
-    printf("bufferCapacityInFrames = %6d\n", audioSink.getBufferCapacityInFrames());
-    printf("sampleRate             = %6d\n", audioSink.getSampleRate());
-    printf("CPU affinity           = %6d\n", audioSink.getActualCpu());
+    printf("scheduler              = %s\n",  audioSink.wasSchedFifoUsed() ? "SCHED_FIFO" : "unknown");
+    printf("buffer.size.frames     = %6d\n", audioSink.getBufferSizeInFrames());
+    printf("buffer.size.bursts     = %6d\n", audioSink.getBufferSizeInFrames() / audioSink.getFramesPerBurst());
+    printf("buffer.capacity.frames = %6d\n", audioSink.getBufferCapacityInFrames());
+    printf("sample.rate            = %6d\n", audioSink.getSampleRate());
+    printf("cpu.affinity           = %6d\n", audioSink.getActualCpu());
     fflush(stdout);
 
     // Print the test results.

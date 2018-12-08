@@ -28,7 +28,6 @@
 #include "SynthMark.h"
 #include "SynthMarkResult.h"
 
-
 constexpr int kMaxBufferCapacityInBursts = 128;
 
 // Use 2 for double buffered
@@ -63,7 +62,7 @@ public:
 
         // If UNSPECIFIED then set to a reasonable default.
         if (getBufferSizeInFrames() == 0) {
-            int32_t bufferSize = kBufferSizeInBursts * framesPerBurst;
+            int32_t bufferSize = mDefaultBufferSizeInBursts * framesPerBurst;
             setBufferSizeInFrames(bufferSize);
         }
 
@@ -97,6 +96,10 @@ public:
         return mBufferSizeInFrames;
     }
 
+    void setDefaultBufferSizeInBursts(int32_t numBursts) override {
+        mDefaultBufferSizeInBursts = numBursts;
+    }
+
     /**
      * Set the amount of the buffer that will be used. Determines latency.
      */
@@ -119,21 +122,26 @@ public:
     }
 
     virtual void writeBurst(const float *buffer) {
-        (void) buffer;
+        (void) buffer; // discard the audio data
+
         if (mStartTimeNanos == 0) {
             mStartTimeNanos = HostTools::getNanoTime();
             mNextHardwareReadTimeNanos = mStartTimeNanos;
         }
 
+        int32_t availableData = getFullFramesAvailable();
+        if (availableData < 0) {
+            // Not enough data! Hardware underflowed while we were gone.
+            mUnderrunCount++;
+        }
+
         updateHardwareSimulator();
-        int32_t available = getEmptyFramesAvailable();
+        int32_t availableRoom = getEmptyFramesAvailable();
 
         // If there is not enough room then sleep until the hardware reads another burst.
-        if (available < mFramesPerBurst) {
+        if (availableRoom < mFramesPerBurst) {
             HostCpuManager::getInstance()->sleepAndTuneCPU(mNextHardwareReadTimeNanos);
             updateHardwareSimulator();
-            available = getEmptyFramesAvailable();
-            assert(available >= mFramesPerBurst);
         } else {
             // Just let CPU Manager know that a burst has occurred.
             HostCpuManager::getInstance()->sleepAndTuneCPU(0);
@@ -280,6 +288,7 @@ private:
     int64_t mNextHardwareReadTimeNanos = 0;
     int32_t mBufferSizeInFrames = 0;
     int32_t mMaxBufferCapacityInFrames = 0;
+    int32_t mDefaultBufferSizeInBursts = kBufferSizeInBursts;
     int64_t mFramesConsumed = 0;
     float*  mBurstBuffer = nullptr;   // contains output of the synthesizer
     bool    mUseRealThread = true; // TODO control using new settings object
@@ -296,15 +305,11 @@ private:
         int countdown = 32; // Avoid spinning like crazy.
         // Is it time to consume a block?
         while ((currentTime >= mNextHardwareReadTimeNanos) && (countdown-- > 0)) {
-            int32_t available = getFullFramesAvailable();
-            if (available < mFramesPerBurst) {
-                // Not enough data!
-                mUnderrunCount++;
-            }
             mFramesConsumed += mFramesPerBurst; // fake read
             mNextHardwareReadTimeNanos += mNanosPerBurst; // avoid drift
         }
     }
+
 };
 
 #endif // SYNTHMARK_VIRTUAL_AUDIO_SINK_H

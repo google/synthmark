@@ -75,6 +75,8 @@ public:
         return mCallback->onRenderAudio(buffer, numFrames);
     }
 
+    virtual void setDefaultBufferSizeInBursts(int32_t numBursts) = 0;
+
     /**
      * Set the amount of the buffer that will be used. Determines latency.
      * @return the actual size, which may not match the requested size, or a negative error
