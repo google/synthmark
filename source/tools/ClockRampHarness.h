@@ -170,13 +170,14 @@ public:
             resultMessage << " FAIL - Never saturated the CPU. Difference in voices was too low."
                           << std::endl;
         } else {
-            double averageRampMilliss = ((double) mRampDurationSum)
+            resultMessage << " valid" << std::endl;
+            double averageRampMillis = ((double) mRampDurationSum)
                                         / (mRampDurationCount * SYNTHMARK_NANOS_PER_MILLISECOND);
-            mResult->setMeasurement(averageRampMilliss);
-            resultMessage << " = " << averageRampMilliss << " msec" << std::endl;
+            mResult->setMeasurement(averageRampMillis);
+            resultMessage << "clock.ramp.msec = " << averageRampMillis << std::endl;
         }
 
-        resultMessage << "Underruns " << mAudioSink->getUnderrunCount() << "\n";
+        resultMessage << "underrun.count = " << mAudioSink->getUnderrunCount() << "\n";
         resultMessage << mCpuAnalyzer.dump();
 
         mResult->appendMessage(resultMessage.str());

@@ -68,11 +68,12 @@ public:
         }
         mIdealTime = idealTime;
         mEntryTime = now;
-        if (mLoopIndex > 0) {
+        if (mCallCount > 0) {
             if (mWakeupBins != NULL) {
                 // Be fair. We can't wake up before we go to sleep.
                 int64_t realisticWakeTime = (mExitTime > idealTime) ? mExitTime : idealTime;
                 int64_t wakeupDelay = now - realisticWakeTime;
+                mTotalWakeupDelay += wakeupDelay;
                 int32_t binIndex = wakeupDelay / mNanosPerBin;
                 mWakeupBins->increment(binIndex);
             }
@@ -86,7 +87,7 @@ public:
         mActiveTime += mLastRenderDuration; // for CPU load calculation
         // Calculate jitter delay values for histogram.
         mExitTime = now;
-        if (mLoopIndex > 0) {
+        if (mCallCount > 0) {
             if (mRenderBins != NULL) {
                 int32_t binIndex = mLastRenderDuration / mNanosPerBin;
                 mRenderBins->increment(binIndex);
@@ -97,7 +98,7 @@ public:
                 mDeliveryBins->increment(binIndex);
             }
         }
-        mLoopIndex++;
+        mCallCount++;
     }
 
     void reset() {
@@ -106,7 +107,8 @@ public:
         mEntryTime = 0;
         mExitTime = 0;
         mActiveTime = 0;
-        mLoopIndex = 0;
+        mCallCount = 0;
+        mTotalWakeupDelay = 0;
         delete mWakeupBins;
         delete mRenderBins;
         delete mDeliveryBins;
@@ -114,6 +116,14 @@ public:
 
     int64_t getActiveTime() {
         return mActiveTime;
+    }
+
+    int32_t getCallCount() {
+        return mCallCount;
+    }
+
+    int64_t getTotalWakeupDelayNanos() {
+        return mTotalWakeupDelay;
     }
 
     int64_t getLastRenderDurationNanos() {
@@ -191,6 +201,11 @@ public:
                 }
             }
             resultMessage << TEXT_CSV_END << std::endl;
+
+            double averageWakeupDelayMicros = getTotalWakeupDelayNanos()
+                    / (double) (mCallCount * SYNTHMARK_NANOS_PER_MICROSECOND);
+            resultMessage << "average.wakeup.delay.micros = " << averageWakeupDelayMicros
+                          << std::endl;
         } else {
             resultMessage << "ERROR NULL BinCounter!\n";
         }
@@ -203,12 +218,13 @@ private:
     int64_t  mEntryTime;
     int64_t  mExitTime;
     int64_t  mActiveTime;
+    int64_t  mTotalWakeupDelay;
     int64_t  mLastRenderDuration = 0;
     BinCounter *mWakeupBins;
     BinCounter *mRenderBins;
     BinCounter *mDeliveryBins;
     int32_t  mNanosPerBin;
-    int32_t  mLoopIndex;
+    int32_t  mCallCount;
 };
 
 #endif // SYNTHMARK_TIMING_ANALYZER_H

@@ -83,7 +83,7 @@ public:
         reportUtilization();
         double measurement = mFractionOfCpu;
         resultCode = SYNTHMARK_RESULT_SUCCESS;
-        resultMessage << "Underruns = " << mAudioSink->getUnderrunCount() << std::endl;
+        resultMessage << "underrun.count = " << mAudioSink->getUnderrunCount() << std::endl;
         resultMessage << mTestName << " = " << measurement << std::endl;
 
         resultMessage << "normalized.voices.100 = " << (getNumVoices() / mFractionOfCpu) << std::endl;

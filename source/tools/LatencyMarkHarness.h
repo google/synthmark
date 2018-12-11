@@ -85,6 +85,7 @@ public:
 
         std::stringstream resultMessage;
         resultMessage << "frames.per.burst     = " << getFramesPerBurst() << std::endl;
+        resultMessage << "# Latency values apply only to the top level buffer." << std::endl;
         resultMessage << "audio.latency.bursts = " << mLowestGoodBursts << std::endl;
         resultMessage << "audio.latency.frames = " << sizeFrames << std::endl;
         resultMessage << "audio.latency.msec   = " << latencyMsec << std::endl;
