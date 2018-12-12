@@ -25,6 +25,14 @@
 #include "scheddl.h"
 
 
+constexpr double ALPHA_BIG	= 0.95;
+constexpr double ALPHA_SMALL	= 0.1;
+constexpr uint32_t STATS_PERIOD	= 30;
+constexpr double BW_MAX		= 0.9;
+constexpr double BW_BOOST	= BW_MAX;
+constexpr double BW_OFFSET_REL	= 1.1;
+constexpr double BW_OFFSET_ABS	= 0.05;
+
 class CustomHostCpuManager : public HostCpuManagerBase
 {
 public:
@@ -64,7 +72,7 @@ public:
                  * workload is above/below a given threshold.
                  */
                 mBWUpdateCounter++;
-                if (mBWUpdateCounter >= mBWUpdatePeriod) {
+                if (mBWUpdateCounter >= STATS_PERIOD) {
                     mBWUpdateCounter = 0;
                     setApplicationLoad(getCurrentWorkUnits(), getMaxWorkUnits());
                 }
@@ -121,24 +129,25 @@ public:
              * something bad is going on, so, set the maximum runtime.
              * This may happen when the linear regression fails.
              */
-            if (expectedRuntime_ns == 0 && currentWorkUnits != 0)
-                bandwidth = mMaxBW;
-            else
+            if (expectedRuntime_ns == 0 && currentWorkUnits != 0) {
+                bandwidth = BW_MAX;
+            } else {
                 bandwidth = static_cast<double>(expectedRuntime_ns) / mPeriod_ns;
 
-            /*
-             * Add some margins to the computed bandwidth, since the
-             * application execution times are noisy.
-             * A first margin is a multiplication factor, meaning that the margin
-             * proportionally increases with the duration.
-             */ 
-            bandwidth *= 1.1;
-            /* A second margin is an absolute offset. */
-            bandwidth += 0.05;
+                /*
+                 * Add some margins to the computed bandwidth, since the
+                 * application execution times are noisy.
+                 * A first margin is a multiplication factor, meaning that the margin
+                 * proportionally increases with the duration.
+                 */ 
+                bandwidth *= BW_OFFSET_REL;
+                /* A second margin is an absolute offset. */
+                bandwidth += BW_OFFSET_ABS;
 
-            /* Bound the bandwidth to the limit set by the Kernel */
-            if (bandwidth > mMaxBW)
-                bandwidth = mMaxBW;
+                /* Bound the bandwidth to the limit set by the Kernel */
+                if (bandwidth > BW_MAX)
+                    bandwidth = BW_MAX;
+            }
 
             if (currentWorkUnits != getCurrentWorkUnits() ||
                     maxWorkUnits != getMaxWorkUnits()) {
@@ -194,7 +203,7 @@ public:
              * If the task is boosted, then apply the maximum bandwidth.
              */
             if (mBoosted)
-                sa.sched_runtime = period_ns * mBoostedBW;
+                sa.sched_runtime = period_ns * BW_BOOST;
             else
                 sa.sched_runtime = runtime_ns;
             sa.sched_deadline = deadline_ns;
@@ -360,12 +369,12 @@ private:
                 int64_t stored = mUtils[currentWorkUnits];
                 if (stored < callbackComputingTime)
                     mUtils[currentWorkUnits] =
-                            mAlphaBig * callbackComputingTime +
-                            (1.0 - mAlphaBig) * stored;
+                            ALPHA_BIG * callbackComputingTime +
+                            (1.0 - ALPHA_BIG) * stored;
                 else
                     mUtils[currentWorkUnits] =
-                            mAlphaSmall * callbackComputingTime +
-                            (1.0 - mAlphaSmall) * stored;
+                            ALPHA_SMALL * callbackComputingTime +
+                            (1.0 - ALPHA_SMALL) * stored;
             }
         }
 
@@ -455,8 +464,6 @@ private:
 
         int32_t smallestSampledWorkUnits = -1;
         std::map<int32_t, int64_t> mUtils;
-        double mAlphaBig       = 0.95;
-        double mAlphaSmall     = 0.1;
     };
 
     CpuTiming mCpuTiming;
@@ -467,16 +474,12 @@ private:
     int64_t   mStartingTime_ns = -1;
     int64_t   mEndingTime_ns   = -1;
 
-    double    mMaxBW           = 0.94;
-
     bool      mBoosted         = false;
-    double    mBoostedBW       = 0.94;
 
     uint64_t  mRuntime_ns      = 0;
     uint64_t  mDeadline_ns     = 0;
     uint64_t  mPeriod_ns       = 0;
 
-    uint32_t  mBWUpdatePeriod  = 30;
     uint32_t  mBWUpdateCounter = 0;
 };
 

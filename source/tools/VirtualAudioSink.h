@@ -204,7 +204,7 @@ private:
         if (callback != NULL) {
             if (mUseRealThread) {
                 if (HostCpuManager::areWorkloadHintsEnabled()) {
-                    double initial_bw = 0.94;
+                    double initial_bw = BW_MAX;
 
                     int err = static_cast<CustomHostCpuManager *>(HostCpuManager::getInstance())->updateDeadlineParams(
                             mNanosPerBurst * initial_bw,
