@@ -6,7 +6,7 @@ Instructions for building the app or the command line executable.
 
 * Start Android Studio 2.2.1 or later
 * Click “Open an existing Android Studio project”
-* Select pathname “tools/synthmark/android”
+* Select pathname “synthmark/android”
 * Click OK button
 * Then build and run as usual
 
