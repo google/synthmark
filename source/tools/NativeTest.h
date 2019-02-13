@@ -199,11 +199,14 @@ public:
         harness.setDelayNoteOnSeconds(noteOnDelay);
         harness.setThreadType(HostThreadFactory::ThreadType::Audio);
 
+        harness.runCompleteTest(sampleRate, framesPerBurst, numSeconds);
 
-        harness.runTest(sampleRate, framesPerBurst, numSeconds);
-
-        mLogTool->log(mResult.getResultMessage().c_str());
-        mLogTool->log("\n");
+        // Send one line at a time so we do not overflow the LOG buffer.
+        std::istringstream f(mResult.getResultMessage());
+        std::string line;
+        while (std::getline(f, line)) {
+            mLogTool->log((line + "\n").c_str());
+        }
 
         return SYNTHMARK_RESULT_SUCCESS;
     }
@@ -550,10 +553,10 @@ private:
     TestClockRamp        mTestClockRamp;
     TestAutomatedSuite   mTestAutomatedSuite;
 
-    LogTool mLog;
-    std::stringstream mStream;
-    HostThreadFactory mHostThreadFactoryOwned;
-    HostThreadFactory *mHostThreadFactory = NULL;
+    LogTool              mLog;
+    std::stringstream    mStream;
+    HostThreadFactory    mHostThreadFactoryOwned;
+    HostThreadFactory   *mHostThreadFactory = NULL;
 };
 
 #endif //ANDROID_NATIVETEST_H

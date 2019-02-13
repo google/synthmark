@@ -23,7 +23,7 @@
 
 
 #define LOGTOOL_BUFFER_SIZE (10 * 1024) //max single log that can be added at once
-#define LOGTOOL_PREFIX_MAX 10
+
 class LogTool
 {
 public:
@@ -33,7 +33,6 @@ public:
         , mOStream(os)
         , mVar1(0)
     {
-        setPrefix("[Log] ");
     }
     virtual ~LogTool() {}
 
@@ -44,13 +43,11 @@ public:
         va_list args;
         va_start(args, format);
         if (mOStream) {
-            snprintf(mBuffer, LOGTOOL_BUFFER_SIZE, "%s", mPrefix);
             r = vsnprintf(mBuffer, LOGTOOL_BUFFER_SIZE, format, args);
             if (r > 0) {
                 mOStream->write(mBuffer, r);
             }
         } else {
-            printf("%s", mPrefix);
             r = std::vprintf(format, args);
         }
         va_end(args);
@@ -59,10 +56,6 @@ public:
 
     void * getOwner() {
         return mOwner;
-    }
-
-    void setPrefix(const char* prefix) {
-        strncpy(mPrefix, prefix, LOGTOOL_PREFIX_MAX);
     }
 
     void setStream(std::ostream * os) {
@@ -86,12 +79,11 @@ public:
     }
 
 private:
-    bool mEnabled;
-    void * mOwner;
+    bool          mEnabled;
+    void         *mOwner;
     std::ostream *mOStream;
-    char mBuffer[LOGTOOL_BUFFER_SIZE + 1];
-    char mPrefix[LOGTOOL_PREFIX_MAX + 1];
-    int mVar1;    //user assigned variable.
+    char          mBuffer[LOGTOOL_BUFFER_SIZE + 1];
+    int           mVar1;    //user assigned variable.
 };
 
 #endif //SYNTHMARK_LOGTOOL_H

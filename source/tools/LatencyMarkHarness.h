@@ -100,7 +100,7 @@ public:
         for (int i=1; i<200; i++) {
             int latency = testSearch(i);
             if (latency != i) {
-                printf("ERROR expected %d, got %d\n", i, latency);
+                mLogTool->log("ERROR expected %d, got %d\n", i, latency);
                 return 1;
             }
         }
@@ -113,7 +113,7 @@ public:
         int32_t bursts = getNextBurstsToTry(true); // assume zero latency glitches
         while (bursts > 0) {
             int32_t numSeconds = (mState == STATE_VERIFY) ? maxSeconds : std::min(maxSeconds, 10);
-            printf("LatencyMark: try #%d for %d seconds with bursts = %d -----------\n",
+            mLogTool->log("LatencyMark: try #%d for %d seconds with bursts = %d -----------\n",
                           testCount++, numSeconds, bursts);
             fflush(stdout);
             int32_t err = measureOnce(sampleRate, framesPerBurst, numSeconds);
@@ -123,7 +123,7 @@ public:
             }
             bool glitched = (mAudioSink->getUnderrunCount() > 0);
             if (!glitched) {
-                printf("LatencyMark: no glitches\n");
+                mLogTool->log("LatencyMark: no glitches\n");
             }
             bursts = getNextBurstsToTry(glitched);
             if (bursts != 0) {
@@ -157,7 +157,7 @@ public:
         if (mAudioSink->getUnderrunCount() > 0) {
             // Record when the glitch occurred.
             float glitchTime = ((float) harness.getFrameCount() / mAudioSink->getSampleRate());
-            printf("LatencyMark: detected glitch at %5.2f seconds\n", glitchTime);
+            mLogTool->log("LatencyMark: detected glitch at %5.2f seconds\n", glitchTime);
             fflush(stdout);
         }
 
@@ -185,11 +185,11 @@ public:
         resetBinarySearch();
         int32_t bursts = getNextBurstsToTry(true); // assume zero latency glitches
         while (bursts > 0) {
-            printf("%2d, ", bursts);
+            mLogTool->log("%2d, ", bursts);
             bool glitched = (bursts < target);
             bursts = getNextBurstsToTry(glitched);
         }
-        printf("\n");
+        mLogTool->log("\n");
         fflush(stdout);
         return mLowestGoodBursts;
     }

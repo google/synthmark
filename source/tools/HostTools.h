@@ -90,7 +90,6 @@ public:
             } else if (microsToSleep > kMaxMicros) {
                 microsToSleep = kMaxMicros;
             }
-            //printf("Sleep for %d micros\n", microsToSleep);
             usleep(microsToSleep);
             currentTime = getNanoTime();
             nanosToSleep = wakeupTime - currentTime;

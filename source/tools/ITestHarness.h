@@ -29,7 +29,9 @@ public:
 
     virtual const char *getName() const = 0;
 
-    virtual int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) = 0;
+    virtual int32_t runCompleteTest(int32_t sampleRate,
+                                    int32_t framesPerBurst,
+                                    int32_t numSeconds) = 0;
 
     virtual void setThreadType(HostThreadFactory::ThreadType mThreadType) = 0;
 };

@@ -325,21 +325,10 @@ int synthmark_command_main(int argc, char **argv)
     fflush(stdout);
 
     // Run the benchmark.
-    harness->runTest(sampleRate, framesPerBurst, numSeconds);
-
-    printf("scheduler              = %s\n",  audioSink.wasSchedFifoUsed() ? "SCHED_FIFO" : "unknown");
-    printf("buffer.size.frames     = %6d\n", audioSink.getBufferSizeInFrames());
-    printf("buffer.size.bursts     = %6d\n", audioSink.getBufferSizeInFrames() / audioSink.getFramesPerBurst());
-    printf("buffer.capacity.frames = %6d\n", audioSink.getBufferCapacityInFrames());
-    printf("sample.rate            = %6d\n", audioSink.getSampleRate());
-    printf("cpu.affinity           = %6d\n", audioSink.getActualCpu());
-    fflush(stdout);
+    harness->runCompleteTest(sampleRate, framesPerBurst, numSeconds);
 
     // Print the test results.
-    printf(TEXT_RESULTS_BEGIN "\n");
     std::cout << result.getResultMessage();
-    printf(TEXT_RESULTS_END "\n");
-    printf("# Benchmark complete.\n");
 
     return result.getResultCode();
 }

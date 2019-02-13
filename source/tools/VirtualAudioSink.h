@@ -104,7 +104,7 @@ public:
      * Set the amount of the buffer that will be used. Determines latency.
      */
      int32_t setBufferSizeInFrames(int32_t numFrames) override {
-        // printf("VirtualAudioSink::%s(%d) max = %d\n", __func__, numFrames, mMaxBufferCapacityInFrames);
+        // mLogTool->log("VirtualAudioSink::%s(%d) max = %d\n", __func__, numFrames, mMaxBufferCapacityInFrames);
         if (numFrames < 1) {
             numFrames = 1;
         } else if (numFrames > mMaxBufferCapacityInFrames) {
@@ -211,15 +211,15 @@ private:
                             mNanosPerBurst,
                             mNanosPerBurst);
                     if (err == 0) {
-                        printf("requestDLBandwidth(%lf)\n", initial_bw);
+                        mLogTool->log("requestDLBandwidth(%lf)\n", initial_bw);
                         fflush(stdout);
                     } else {
-                        printf("Error setting SCHED_DEADLINE\n");
-                        exit(-1);
+                        mLogTool->log("Error setting SCHED_DEADLINE\n");
+                        return -1;
                     }
                     if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
-                        printf("Error setting affinity for SCHED_DEADLINE task\n");
-                        exit(-1);
+                        mLogTool->log("Error setting affinity for SCHED_DEADLINE task\n");
+                        return -1;
                     }
                 } else {
                     int err = mThread->promote(mThreadPriority);
@@ -271,7 +271,7 @@ private:
         if (mThread != NULL) {
             int err = mThread->join();
             if (err != 0) {
-                printf("Could not join() callback thread! err = %d\n", err);
+                mLogTool->log("Could not join() callback thread! err = %d\n", err);
             }
             delete mThread;
             mThread = NULL;

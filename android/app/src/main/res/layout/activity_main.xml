@@ -55,7 +55,8 @@ limitations under the License.
             <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:background="#ffc0d0e0">
 
                 <ProgressBar
                     style="?android:attr/progressBarStyle"

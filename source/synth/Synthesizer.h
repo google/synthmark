@@ -59,7 +59,6 @@ public:
 
     int32_t notesOn(int32_t numVoices) {
         if (numVoices > mMaxVoices) {
-            printf("allNotesOn(%d) exceeded maxVoices of %d\n", numVoices, mMaxVoices);
             return -1;
         }
         mActiveVoiceCount = numVoices;
