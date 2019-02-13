@@ -25,6 +25,7 @@
 
 #include "../SynthMark.h"
 #include "../synth/Synthesizer.h"
+#include "AutomatedTestSuite.h"
 #include "JitterMarkHarness.h"
 #include "LatencyMarkHarness.h"
 #include "LogTool.h"
@@ -56,14 +57,14 @@
 #define DEFAULT_CORE_AFFINITIES_LABELS {"UNSPECIFIED", "0", "1", "2", "3", "4", "5", "6", "7"}
 
 typedef enum {
-    NATIVETEST_ID_MIN             = 0,
     NATIVETEST_ID_VOICEMARK       = 0,
     NATIVETEST_ID_LATENCYMARK     = 1,
     NATIVETEST_ID_JITTERMARK      = 2,
     NATIVETEST_ID_UTILIZATIONMARK = 3,
     NATIVETEST_ID_CLOCKRAMP       = 4,
-//    NATIVETEST_ID_AUTOMARK        = 5,
-    NATIVETEST_ID_MAX             = 4,
+    NATIVETEST_ID_AUTOMATED       = 5,
+
+    NATIVETEST_ID_COUNT           = 6,
 } native_test_t;
 
 
@@ -177,13 +178,13 @@ public:
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
-    int run(TestHarnessBase &harness, VirtualAudioSink &audioSink) {
+    int run(ITestHarness &harness, VirtualAudioSink &audioSink) {
         audioSink.setHostThread(mHostThreadFactory->createThread(
                 HostThreadFactory::ThreadType::Audio));
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
-        int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME);
-        int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER);
+        int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME); // IGNORED!
+        int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER); // IGNORED!
         int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
 
         int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
@@ -195,16 +196,13 @@ public:
 #endif
         mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
 
-        harness.open(sampleRate,
-                     samplesPerFrame,
-                     framesPerRender,
-                     framesPerBurst);
-
         harness.setDelayNoteOnSeconds(noteOnDelay);
-        harness.measure(numSeconds);
-        harness.close();
+        harness.setThreadType(HostThreadFactory::ThreadType::Audio);
 
-        mLogTool->log(harness.getResult()->getResultMessage().c_str());
+
+        harness.runTest(sampleRate, framesPerBurst, numSeconds);
+
+        mLogTool->log(mResult.getResultMessage().c_str());
         mLogTool->log("\n");
 
         return SYNTHMARK_RESULT_SUCCESS;
@@ -215,6 +213,8 @@ public:
     }
 
 protected:
+
+    SynthMarkResult mResult;
 };
 
 //============================
@@ -241,9 +241,8 @@ public:
     }
 
     int run() override {
-        SynthMarkResult result;
         VirtualAudioSink audioSink(mLogTool);
-        VoiceMarkHarness harness(&audioSink, &result, mLogTool);
+        VoiceMarkHarness harness(&audioSink, &mResult, mLogTool);
         
         float targetCpuLoad = mParams.getValueFromFloat(PARAMS_TARGET_CPU_LOAD);
         harness.setTargetCpuLoad(targetCpuLoad);
@@ -276,9 +275,8 @@ public:
     }
 
     int run() override {
-        SynthMarkResult result;
         VirtualAudioSink audioSink(mLogTool);
-        UtilizationMarkHarness harness(&audioSink, &result, mLogTool);
+        UtilizationMarkHarness harness(&audioSink, &mResult, mLogTool);
 
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
         harness.setNumVoices(numVoices);
@@ -340,9 +338,8 @@ public:
     }
 
     int run() override {
-        SynthMarkResult result;
         VirtualAudioSink audioSink(mLogTool);
-        LatencyMarkHarness harness(&audioSink, &result, mLogTool);
+        LatencyMarkHarness harness(&audioSink, &mResult, mLogTool);
 
         return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
     }
@@ -357,9 +354,8 @@ public:
     }
 
     int run() override {
-        SynthMarkResult result;
         VirtualAudioSink audioSink(mLogTool);
-        JitterMarkHarness harness(&audioSink, &result, mLogTool);
+        JitterMarkHarness harness(&audioSink, &mResult, mLogTool);
 
         return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
     }
@@ -374,12 +370,35 @@ public:
     }
 
     int run() override {
-        SynthMarkResult result;
         VirtualAudioSink audioSink(mLogTool);
-        ClockRampHarness harness(&audioSink, &result, mLogTool);
+        ClockRampHarness harness(&audioSink, &mResult, mLogTool);
 
         return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
     }
+protected:
+};
+
+class TestAutomatedSuite : public CommonNativeTestUnit {
+public:
+    TestAutomatedSuite(LogTool *logTool = NULL) : CommonNativeTestUnit("AutomatedSuite", logTool) {
+    }
+
+    int init() override {
+        int err = CommonNativeTestUnit::init();
+        if (err != SYNTHMARK_RESULT_SUCCESS) {
+            return err;
+        }
+
+        return err;
+    }
+
+    int run() override {
+        VirtualAudioSink audioSink(mLogTool);
+        AutomatedTestSuite harness(&audioSink, &mResult, mLogTool);
+
+        return CommonNativeTestUnit::run(harness, audioSink);
+    }
+
 protected:
 };
 
@@ -393,6 +412,7 @@ public:
             , mTestJitterMark(&mLog)
             , mTestUtilizationMark(&mLog)
             , mTestClockRamp(&mLog)
+            , mTestAutomatedSuite(&mLog)
     {
         mLog.setStream(&mStream);
         initTests();
@@ -482,7 +502,7 @@ public:
     }
 
     int getTestCount() {
-        return NATIVETEST_ID_MAX + 1;
+        return NATIVETEST_ID_COUNT;
     }
 
     ParamGroup * getParamGroup(int testId) {
@@ -515,6 +535,7 @@ private:
             case NATIVETEST_ID_JITTERMARK: pTestUnit = &mTestJitterMark; break;
             case NATIVETEST_ID_UTILIZATIONMARK: pTestUnit = &mTestUtilizationMark; break;
             case NATIVETEST_ID_CLOCKRAMP: pTestUnit = &mTestClockRamp; break;
+            case NATIVETEST_ID_AUTOMATED: pTestUnit = &mTestAutomatedSuite; break;
         }
         return pTestUnit;
     }
@@ -527,6 +548,7 @@ private:
     TestJitterMark       mTestJitterMark;
     TestUtilizationMark  mTestUtilizationMark;
     TestClockRamp        mTestClockRamp;
+    TestAutomatedSuite   mTestAutomatedSuite;
 
     LogTool mLog;
     std::stringstream mStream;
