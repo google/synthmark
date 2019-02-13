@@ -57,6 +57,10 @@ public:
         return -1;
     }
 
+    void setDefaultBufferSizeInBursts(int32_t numBursts) override {
+        (void) numBursts; // unused by OpenSL ES
+    }
+
 
 private:
     int32_t mBufferSizeInFrames = 0;
