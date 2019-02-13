@@ -24,6 +24,12 @@ import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +47,7 @@ public class AppObject extends Application {
     public final static int PARAM_HOLD_RANGE = 0; //From params.h
     public final static int PARAM_HOLD_LIST = 1;
 
+    public static final String SCHEDTUNE_BOOST_FILE_NAME = "/dev/stune/rt/schedtune.boost";
 
     private int mCurrentTestId = -1;
 
@@ -210,20 +217,53 @@ public class AppObject extends Application {
         super.finalize();
     }
 
+    /**
+     * Read contents of a file into a String.
+     *
+     * @param filename
+     * @return contents of a text file
+     */
+    public static String readFile(String filename) {
+        try {
+            FileInputStream fis = new FileInputStream(filename);
+            InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
+            BufferedReader bufferedReader = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            return sb.toString();
+        } catch (FileNotFoundException e) {
+            return "";
+        } catch (UnsupportedEncodingException e) {
+            return "";
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
     public static String getDeviceInfo(){
 
         StringBuffer info = new StringBuffer();
 
-        info.append("Manufacturer " + Build.MANUFACTURER + "\n");
-        info.append("Model " + Build.MODEL + "\n");
-        info.append("ABI " + Build.SUPPORTED_ABIS[0] + "\n");
-        info.append("Android API " + Build.VERSION.SDK_INT + " Build " + Build.ID + "\n");
-        info.append("CPU cores " + Runtime.getRuntime().availableProcessors() + "\n");
+        info.append("Manufacturer: " + Build.MANUFACTURER + "\n");
+        info.append("Model: " + Build.MODEL + "\n");
+        info.append("ABI: " + Build.SUPPORTED_ABIS[0] + "\n");
+        info.append("Android API: " + Build.VERSION.SDK_INT + " Build " + Build.ID + "\n");
+        info.append("CPU cores: " + Runtime.getRuntime().availableProcessors() + "\n");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
             int[] exclusiveCoreIds = android.os.Process.getExclusiveCores();
-            info.append("Exclusive cores " + exclusiveCoreIds.length + "\n");
+            info.append("Exclusive cores IDs: ");
+            for (int id : exclusiveCoreIds) {
+                info.append(id + ", ");
+            }
+            info.append("\n");
         }
+
+        String boostInfo = readFile(SCHEDTUNE_BOOST_FILE_NAME);
+        info.append("schedtune.boost: " + boostInfo.trim() + "\n");
 
         return info.toString();
     }
