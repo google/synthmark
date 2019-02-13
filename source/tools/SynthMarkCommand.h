@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
+#ifndef ANDROID_SYNTHMARK_COMMAND_H
+#define ANDROID_SYNTHMARK_COMMAND_H
+
 #include <cstdio>
 
-#include "tools/SynthMarkCommand.h"
+/**
+ * This function will be called by int main().
+ *
+ * It allows the guts of the synthmark app to be visible in the AndroidStudio project
+ *
+ */
+int synthmark_command_main(int argc, char **argv);
 
-int main(int argc, char **argv)
-{
-    return synthmark_command_main(argc, argv);
-}
+#endif //ANDROID_SYNTHMARK_COMMAND_H
