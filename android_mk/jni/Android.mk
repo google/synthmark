@@ -7,6 +7,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_SRC_FILES:= \
     ../../apps/synthmark.cpp \
     ../../source/tools/HostTools.cpp \
+    ../../source/tools/SynthMarkCommand.cpp \
     ../../source/aaudio/AAudioHostThread.cpp
 LOCAL_CFLAGS += -g -std=c++11 -Ofast -Wall -Werror
 LOCAL_LDLIBS := -laaudio
