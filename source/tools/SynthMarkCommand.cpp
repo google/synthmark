@@ -21,11 +21,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stdlib.h>
-#include <tools/AutomatedTestSuite.h>
 
 #include "SynthMark.h"
 #include "synth/IncludeMeOnce.h"
 #include "synth/Synthesizer.h"
+#include "tools/AutomatedTestSuite.h"
 #include "tools/ClockRampHarness.h"
 #include "tools/JitterMarkHarness.h"
 #include "tools/ITestHarness.h"
@@ -49,7 +49,7 @@ static void usage(const char *name) {
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
            " -s{seconds} -b{burstSize} -c{cpuAffinity}\n", name);
     printf("    -t{test}, v=voice, l=latency, j=jitter, u=utilization"
-           ", s=series_util, c=clock_ramp, default is %c\n",
+           ", s=series_util, c=clock_ramp, a=automated, default is %c\n",
            kDefaultTestCode);
     printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
     printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
