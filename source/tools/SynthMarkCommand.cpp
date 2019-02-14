@@ -107,10 +107,10 @@ int synthmark_command_main(int argc, char **argv)
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
 
-    ITestHarness *harness = nullptr;
-
-    SynthMarkResult result;
-    VirtualAudioSink audioSink;
+    ITestHarness    *harness = nullptr;
+    SynthMarkResult  result;
+    LogTool          logTool;
+    VirtualAudioSink audioSink(logTool);
 
     printf("# SynthMark V%d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
 
@@ -235,7 +235,7 @@ int synthmark_command_main(int argc, char **argv)
     switch(testCode) {
         case 'v':
         {
-            VoiceMarkHarness *voiceHarness = new VoiceMarkHarness(&audioSink, &result);
+            VoiceMarkHarness *voiceHarness = new VoiceMarkHarness(&audioSink, &result, logTool);
             voiceHarness->setTargetCpuLoad(percentCpu * 0.01);
             voiceHarness->setInitialVoiceCount(numVoices);
             harness = voiceHarness;
@@ -244,7 +244,7 @@ int synthmark_command_main(int argc, char **argv)
 
         case 'l':
         {
-            LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result);
+            LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result, logTool);
             latencyHarness->setNumVoicesHigh(numVoicesHigh);
             latencyHarness->setVoicesMode(voicesMode);
             latencyHarness->setInitialBursts(bufferSizeBursts);
@@ -254,7 +254,7 @@ int synthmark_command_main(int argc, char **argv)
 
         case 'j':
         {
-            JitterMarkHarness *jitterHarness = new JitterMarkHarness(&audioSink, &result);
+            JitterMarkHarness *jitterHarness = new JitterMarkHarness(&audioSink, &result, logTool);
             jitterHarness->setNumVoicesHigh(numVoicesHigh);
             jitterHarness->setVoicesMode(voicesMode);
             harness = jitterHarness;
@@ -263,7 +263,7 @@ int synthmark_command_main(int argc, char **argv)
 
         case 'c':
         {
-            ClockRampHarness *clockHarness = new ClockRampHarness(&audioSink, &result);
+            ClockRampHarness *clockHarness = new ClockRampHarness(&audioSink, &result, logTool);
             clockHarness->setNumVoicesHigh(numVoicesHigh);
             clockHarness->setVoicesMode(voicesMode);
             harness = clockHarness;
@@ -273,14 +273,14 @@ int synthmark_command_main(int argc, char **argv)
         case 'u':
         {
             UtilizationMarkHarness *utilizationHarness
-                    = new UtilizationMarkHarness(&audioSink, &result);
+                    = new UtilizationMarkHarness(&audioSink, &result, logTool);
             harness = utilizationHarness;
         }
             break;
 
         case 'a':
         {
-            AutomatedTestSuite *testSuite = new AutomatedTestSuite(&audioSink, &result);
+            AutomatedTestSuite *testSuite = new AutomatedTestSuite(&audioSink, &result, logTool);
             harness = testSuite;
         }
             break;
@@ -288,7 +288,7 @@ int synthmark_command_main(int argc, char **argv)
         case 's':
         {
             UtilizationSeriesHarness *seriesHarness
-                    = new UtilizationSeriesHarness(&audioSink, &result);
+                    = new UtilizationSeriesHarness(&audioSink, &result, logTool);
             seriesHarness->setNumVoicesHigh(numVoicesHigh);
             harness = seriesHarness;
         }
@@ -324,11 +324,27 @@ int synthmark_command_main(int argc, char **argv)
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 
-    // Run the benchmark.
-    harness->runCompleteTest(sampleRate, framesPerBurst, numSeconds);
+    // Run the benchmark, poll for logs and print them.
+    harness->launch(sampleRate, framesPerBurst, numSeconds);
+    do {
+            if (logTool.hasLogs()) {
+                std::cout << logTool.readLog();
+                fflush(stdout);
+            } else {
+                //std::cout << ".";
+                //fflush(stdout);
+                usleep(50 * 1000);
+            }
+    } while (harness->isRunning());
+
+    if (logTool.hasLogs()) {
+        std::cout << logTool.readLog();
+        fflush(stdout);
+    }
 
     // Print the test results.
     std::cout << result.getResultMessage();
+    fflush(stdout);
 
     return result.getResultCode();
 }

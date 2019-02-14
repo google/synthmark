@@ -29,6 +29,7 @@
 
 constexpr double kHighLowThreshold = 0.1; // Difference between CPUs to consider them BIG-little.
 constexpr double kMaxUtilization = 0.9; // Maximum load that we will push the CPU to.
+constexpr int    kMaxUtilizationPercent = (int)(kMaxUtilization * 100); // as a percentage
 
 /**
  * Run an automated test, analyze the results and print a report.
@@ -47,8 +48,7 @@ class AutomatedTestSuite : public TestHarnessParameters {
 
 public:
     AutomatedTestSuite(AudioSinkBase *audioSink,
-            SynthMarkResult *result,
-            LogTool *logTool = nullptr)
+            SynthMarkResult *result, LogTool &logTool)
     : TestHarnessParameters(audioSink, result, logTool)
     {
         // Constant seed to obtain a fixed pattern of pseudo-random voices
@@ -65,9 +65,11 @@ public:
     }
 
     int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
+        mLogTool.log("\n-------- CPU Performance ------------\n");
         int32_t err = measureLowHighCpuPerformance(sampleRate, framesPerBurst, 10);
         if (err) return err;
 
+        mLogTool.log("\n-------- LATENCY ------------\n");
         // Test both sizes of CPU if needed. BIG or little
         if (mHaveBigLittle) {
             err = measureLatency(sampleRate, framesPerBurst, numSeconds,
@@ -88,7 +90,7 @@ private:
         std::stringstream resultMessage;
         int numCPUs = HostTools::getCpuCount();
         SynthMarkResult result1;
-        VoiceMarkHarness *harness = new VoiceMarkHarness(mAudioSink, &result1);
+        VoiceMarkHarness *harness = new VoiceMarkHarness(mAudioSink, &result1, mLogTool);
         harness->setTargetCpuLoad(kMaxUtilization);
         harness->setInitialVoiceCount(mNumVoices);
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
@@ -96,8 +98,10 @@ private:
 
         // TODO This is hack way to choose CPUs for BIG.little architectures.
         // TODO Test each CPU or come up with something better.
+        mLogTool.log("Try to find BIG/LITTLE CPUs\n");
         int lowCpu = (1 * numCPUs) / 4;
         mAudioSink->setRequestedCpu(lowCpu);
+        mLogTool.log("Run low VoiceMark with CPU #%d\n", lowCpu);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
         if (err) {
             delete harness;
@@ -105,6 +109,7 @@ private:
         }
 
         double voiceMarkLowIndex = result1.getMeasurement();
+        mLogTool.log("low VoiceMark_%d = %5.1f\n", kMaxUtilizationPercent, voiceMarkLowIndex);
         double voiceMarkHighIndex = voiceMarkLowIndex;
 
         int highCpu = (3 * numCPUs) / 4;
@@ -112,8 +117,10 @@ private:
         // case they are heterogeneous.
         if (lowCpu != highCpu) {
             mAudioSink->setRequestedCpu(highCpu);
+            mLogTool.log("Run high VoiceMark with CPU #%d\n", highCpu);
             harness->runTest(sampleRate, framesPerBurst, numSeconds);
             voiceMarkHighIndex = result1.getMeasurement();
+            mLogTool.log("high VoiceMark_%d = %5.1f\n", kMaxUtilizationPercent, voiceMarkHighIndex);
 
             double averageVoiceMark = 0.5 * (voiceMarkHighIndex + voiceMarkLowIndex);
             double threshold = kHighLowThreshold * averageVoiceMark;
@@ -150,7 +157,7 @@ private:
             resultMessage << "voice.mark." << cpuToBigLittle(highCpu) << " = " << voiceMarkHighIndex << std::endl;
         }
 
-        std::cout << result1.getResultMessage();
+        // std::cout << result1.getResultMessage();
 
         mResult->appendMessage(resultMessage.str());
         delete harness;
@@ -166,20 +173,22 @@ private:
                                double *latencyPtr) {
         std::stringstream resultMessage;
         SynthMarkResult result1;
-        LatencyMarkHarness *harness = new LatencyMarkHarness(mAudioSink, &result1);
+        LatencyMarkHarness *harness = new LatencyMarkHarness(mAudioSink, &result1, mLogTool);
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
         harness->setNumVoices(numVoices);
         harness->setNumVoicesHigh(numVoicesHigh);
         harness->setThreadType(mThreadType);
 
         mAudioSink->setRequestedCpu(cpu);
+        mLogTool.log("Run LatencyMark with CPU #%d, voices = %d / %d\n",
+                     cpu, numVoices, numVoicesHigh);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
         if (err) {
             delete harness;
             return err;
         }
 
-        std::cout << result1.getResultMessage();
+        // std::cout << result1.getResultMessage();
 
         double latencyFrames = result1.getMeasurement();
         std::stringstream suffix;
@@ -189,6 +198,7 @@ private:
         resultMessage << "audio.latency.msec" << suffix.str() << " = " << latencyMillis << std::endl;
         mResult->appendMessage(resultMessage.str());
         *latencyPtr = latencyFrames;
+        mLogTool.log("Got LatencyMark = %5.1f msec\n", latencyMillis);
         delete harness;
         return SYNTHMARK_RESULT_SUCCESS;
     }
@@ -206,6 +216,7 @@ private:
                            int32_t numVoicesMax) {
         std::stringstream message;
 
+        mLogTool.log("\n---- Measure latency for CPU #%d ----\n", cpu);
         int32_t voiceMarkLow = 1 * numVoicesMax / 4;
         int32_t voiceMarkHigh = 3 * numVoicesMax / 4;
 

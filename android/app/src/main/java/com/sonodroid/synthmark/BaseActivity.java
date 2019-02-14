@@ -78,7 +78,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void notificationTestUpdate(int testId, String message) {
-        log("notificationTestShortUpdate " + testId + " m: " + message);
+        log("notificationTestUpdate " + testId + " m: " + message);
     }
 
     public void notificationTestCompleted(int testId) {

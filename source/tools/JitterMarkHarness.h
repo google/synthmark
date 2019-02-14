@@ -36,8 +36,7 @@
  */
 class JitterMarkHarness : public ChangingVoiceHarness {
 public:
-    JitterMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result,
-                      LogTool *logTool = NULL)
+    JitterMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
             : ChangingVoiceHarness(audioSink, result, logTool) {
         mTestName = "JitterMark";
     }
@@ -47,7 +46,7 @@ public:
 
     void onBeginMeasurement() override {
         mResult->setTestName(mTestName);
-        mLogTool->log("---- Measure scheduling jitter ---- #voices = %d\n", getNumVoices());
+        mLogTool.log("---- Measure scheduling jitter ---- #voices = %d\n", getNumVoices());
         setupHistograms();
     }
 

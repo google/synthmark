@@ -39,9 +39,7 @@ constexpr int kMinimumNoteOnCount = 1;
  */
 class VoiceMarkHarness : public TestHarnessBase {
 public:
-    VoiceMarkHarness(AudioSinkBase *audioSink,
-                     SynthMarkResult *result,
-                     LogTool *logTool = NULL)
+    VoiceMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
     : TestHarnessBase(audioSink, result, logTool)
     {
         std::stringstream testName;
@@ -53,14 +51,13 @@ public:
     }
 
     virtual void onBeginMeasurement() override {
-
         mResult->setTestName(mTestName);
-        mLogTool->log("---- Starting %s ----\n", mTestName.c_str());
+        mLogTool.log("---- Starting %s ----\n", mTestName.c_str());
 
         float bufferSizeInMs = (float)
                         (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                         / mAudioSink->getSampleRate();
-        mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
+        mLogTool.log("Buffer size: %.2fms\n", bufferSizeInMs);
         TestHarnessBase::setNumVoices(mInitialVoiceCount);
         mSumVoicesOn = 0;
         mSumVoicesCount = 0;
@@ -76,7 +73,7 @@ public:
             double voicesFraction = mFractionOfCpu * oldNumVoices / cpuLoad;
             int32_t newNumVoices = (int32_t)(voicesFraction + 0.5); // round
             if (newNumVoices > kSynthmarkMaxVoices) {
-                mLogTool->log("measureSynthMark() - numVoices clipped to kSynthmarkMaxVoices\n");
+                mLogTool.log("measureSynthMark() - numVoices clipped to kSynthmarkMaxVoices\n");
                 newNumVoices = kSynthmarkMaxVoices;
             }
 
@@ -95,7 +92,7 @@ public:
                     accepted = true;
                 }
             }
-            mLogTool->log("%2d: %3d voices used %5.3f of CPU, %s\n",
+            mLogTool.log("%2d: %3d voices used %5.3f of CPU, %s\n",
                           mBeatCount, oldNumVoices, cpuLoad,
                           accepted ? "" : " - not used");
             TestHarnessBase::setNumVoices(newNumVoices);

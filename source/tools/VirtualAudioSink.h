@@ -36,7 +36,7 @@ constexpr int kBufferSizeInBursts = 8;
 class VirtualAudioSink : public AudioSinkBase
 {
 public:
-    VirtualAudioSink(LogTool *logTool = NULL)
+    VirtualAudioSink(LogTool &logTool)
     : mLogTool(logTool)
     {}
 
@@ -104,7 +104,7 @@ public:
      * Set the amount of the buffer that will be used. Determines latency.
      */
      int32_t setBufferSizeInFrames(int32_t numFrames) override {
-        // mLogTool->log("VirtualAudioSink::%s(%d) max = %d\n", __func__, numFrames, mMaxBufferCapacityInFrames);
+        // mLogTool.log("VirtualAudioSink::%s(%d) max = %d\n", __func__, numFrames, mMaxBufferCapacityInFrames);
         if (numFrames < 1) {
             numFrames = 1;
         } else if (numFrames > mMaxBufferCapacityInFrames) {
@@ -168,9 +168,7 @@ public:
             }
             int err = mThread->start(threadProcWrapper, this);
             if (err != 0) {
-                if (mLogTool) {
-                    mLogTool->log("ERROR in VirtualAudioSink, thread start() failed, %d\n", err);
-                }
+                mLogTool.log("ERROR in VirtualAudioSink, thread start() failed, %d\n", err);
                 return SYNTHMARK_RESULT_THREAD_FAILURE;
             }
         }
@@ -211,14 +209,14 @@ private:
                             mNanosPerBurst,
                             mNanosPerBurst);
                     if (err == 0) {
-                        mLogTool->log("requestDLBandwidth(%lf)\n", initial_bw);
+                        mLogTool.log("requestDLBandwidth(%lf)\n", initial_bw);
                         fflush(stdout);
                     } else {
-                        mLogTool->log("Error setting SCHED_DEADLINE\n");
+                        mLogTool.log("Error setting SCHED_DEADLINE\n");
                         return -1;
                     }
                     if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
-                        mLogTool->log("Error setting affinity for SCHED_DEADLINE task\n");
+                        mLogTool.log("Error setting affinity for SCHED_DEADLINE task\n");
                         return -1;
                     }
                 } else {
@@ -271,7 +269,7 @@ private:
         if (mThread != NULL) {
             int err = mThread->join();
             if (err != 0) {
-                mLogTool->log("Could not join() callback thread! err = %d\n", err);
+                mLogTool.log("Could not join() callback thread! err = %d\n", err);
             }
             delete mThread;
             mThread = NULL;
@@ -294,10 +292,10 @@ private:
     bool    mUseRealThread = true; // TODO control using new settings object
     int     mThreadPriority = SYNTHMARK_THREAD_PRIORITY_DEFAULT;   // TODO control using new settings object
     int32_t mCallbackLoopResult = 0;
-    HostThread * mThread = NULL;
+    HostThread *mThread = NULL;
     HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
 
-    LogTool    * mLogTool = NULL;
+    LogTool    &mLogTool;
 
     // Advance mFramesConsumed and mNextHardwareReadTimeNanos based on real-time clock.
     void updateHardwareSimulator() {

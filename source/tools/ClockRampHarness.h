@@ -40,8 +40,7 @@
  */
 class ClockRampHarness : public ChangingVoiceHarness {
 public:
-    ClockRampHarness(AudioSinkBase *audioSink, SynthMarkResult *result,
-                      LogTool *logTool = NULL)
+    ClockRampHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
             : ChangingVoiceHarness(audioSink, result, logTool) {
         mTestName = "ClockRamp";
     }
@@ -51,7 +50,7 @@ public:
 
     void onBeginMeasurement() override {
         mResult->setTestName(mTestName);
-        mLogTool->log("---- Measure clock ramp ---- #voices = %d => %d\n",
+        mLogTool.log("---- Measure clock ramp ---- #voices = %d => %d\n",
             getNumVoices(), getNumVoicesHigh());
         setupHistograms();
 
@@ -89,25 +88,25 @@ public:
                     if (mPreviousUtilization > kUtilizationThresholdHigh) {
                         // low voices, -n, too high
                         mState = STATE_TOO_HIGH;
-                        mLogTool->log("LOW => STATE_TOO_HIGH: voices = %d, prevUtilization = %f\n",
+                        mLogTool.log("LOW => STATE_TOO_HIGH: voices = %d, prevUtilization = %f\n",
                                       getNumVoices(), mPreviousUtilization);
                     } else if (highUtilization < kUtilizationThresholdHigh) {
                         // high voices, -N, too low
                         mState = STATE_TOO_LOW;
-                        mLogTool->log("LOW => TOO_LOW: voices = %d, highUtilization = %f\n",
+                        mLogTool.log("LOW => TOO_LOW: voices = %d, highUtilization = %f\n",
                                       mSynth.getActiveVoiceCount(), highUtilization);
                     } else if (utilization > kUtilizationThresholdHigh) {
                         // start a valid measurement
                         mState = STATE_SATURATED;
                         mJumpTimeNanos = mTimer.getLastEntryTime();
-                        mLogTool->log("LOW => SATURATED: voices = %d, utilization = %f\n",
+                        mLogTool.log("LOW => SATURATED: voices = %d, utilization = %f\n",
                                       mSynth.getActiveVoiceCount(), utilization);
                     } else {
                         // Clock must have ramped up immediately! That's good.
                         mState = STATE_HIGH;
                         mRampDurationSum += 0.0;
                         mRampDurationCount++;
-                        mLogTool->log("LOW => HIGH, utilization = %f, immediate ramp up\n",
+                        mLogTool.log("LOW => HIGH, utilization = %f, immediate ramp up\n",
                                       utilization);
                     }
                 }
@@ -126,7 +125,7 @@ public:
                         mRampDurationSum += rampNanos;
                         mRampDurationCount++;
                         int32_t rampMicros = rampNanos / SYNTHMARK_NANOS_PER_MICROSECOND;
-                        mLogTool->log("SATURATED => HIGH, utilization = %f, ramp(us) = %d\n",
+                        mLogTool.log("SATURATED => HIGH, utilization = %f, ramp(us) = %d\n",
                                       utilization, (int)rampMicros);
                     }
                 }
@@ -135,7 +134,7 @@ public:
             case STATE_HIGH:
                 if (mSynth.getActiveVoiceCount() < mPreviousVoiceCount) {
                     mState = STATE_LOW;
-                    mLogTool->log("HIGH => LOW\n");
+                    mLogTool.log("HIGH => LOW\n");
                 }
                 break;
 

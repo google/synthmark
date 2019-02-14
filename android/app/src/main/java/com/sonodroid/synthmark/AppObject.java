@@ -60,7 +60,8 @@ public class AppObject extends Application {
     public native int testRun(long nativeTest);
     public native int testProgress(long nativeTest);
     public native int testStatus(long nativeTest);
-    public native String testResult(long nativeTest);
+    public native boolean testHasLogs(long nativeTest);
+    public native String testReadLog(long nativeTest);
 
     private native int native_getTestCount(long nativeTest);
     private native String native_getTestName(long nativeTest, int testId);
@@ -318,13 +319,10 @@ public class AppObject extends Application {
 
             while (running) {
                 if (mNativeTest != 0) {
-                    int progress = testProgress(mNativeTest);
+                    updateProgressBar();
+                    updateOutputReport();
+
                     int status = testStatus(mNativeTest);
-                    String message = String.format("%d", progress);
-
-                    postNotificationTestShortUpdate(mTestId, message);
-
-
                     if (status != NATIVETEST_STATUS_RUNNING) {
                         running = false;
                     }
@@ -344,9 +342,22 @@ public class AppObject extends Application {
             return "done";
         }
 
+        private void updateProgressBar() {
+            int progress = testProgress(mNativeTest);
+            String message = String.format("%d", progress);
+            postNotificationTestShortUpdate(mTestId, message);
+        }
+
+        private void updateOutputReport() {
+            if (testHasLogs(mNativeTest)) {
+                String log = testReadLog(mNativeTest);
+                postNotificationTestUpdate(mTestId, log);
+            }
+        }
+
         protected void onPostExecute(String result) {
-            log("done with progress");
-            postNotificationTestShortUpdate(mTestId, "Done");
+            log("TestProgressTask.onPostExecute result: " + result);
+            postNotificationTestShortUpdate(mTestId, result);
         }
     }
 
@@ -364,16 +375,13 @@ public class AppObject extends Application {
 
             postNotificationTestUpdate(mTestId, "Test inited");
             testRun(mNativeTest);
-            String result = testResult(mNativeTest);
-            postNotificationTestUpdate(mTestId, result);
             setRunning(false);
 
-            return result;
+            return "done"; // gets passed to onPostExecute()
         }
 
         protected void onPostExecute(String result) {
-            //mTextViewOutput.setText(result);
-            log("onPostExecute result: " + result);
+            log("TestTack.onPostExecute result: " + result);
             postNotificationTestCompleted(mTestId);
             setRunning(false);
         }

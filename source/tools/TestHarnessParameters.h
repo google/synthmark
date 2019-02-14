@@ -18,6 +18,7 @@
 #define ANDROID_TEST_HARNESS_PARAMETERS_H
 
 #include <cstdint>
+#include <thread>
 #include "AudioSinkBase.h"
 #include "BinCounter.h"
 #include "HostTools.h"
@@ -44,24 +45,14 @@ class TestHarnessParameters : public ITestHarness {
 public:
     TestHarnessParameters(AudioSinkBase *audioSink,
                           SynthMarkResult *result,
-                          LogTool *logTool = nullptr)
+                          LogTool &logTool)
     : mAudioSink(audioSink)
     , mResult(result)
     , mLogTool(logTool) {
         setNumVoices(kSynthmarkNumVoicesLatency);
-        if (!logTool) {
-            mLogTool = new LogTool(this);
-        } else {
-            mLogTool = logTool;
-        }
     }
 
-    virtual ~TestHarnessParameters() {
-        if (mLogTool && mLogTool->getOwner() == this) {
-            delete(mLogTool);
-            mLogTool = nullptr;
-        }
-    }
+    virtual ~TestHarnessParameters() = default;
 
     virtual int32_t runTest(int32_t sampleRate,
                                     int32_t framesPerBurst,
@@ -74,8 +65,22 @@ public:
         int32_t result = runTest(sampleRate, framesPerBurst, numSeconds);
         mResult->appendMessage(mAudioSink->dump());
         mResult->appendMessage(TEXT_RESULTS_END "\n");
+        mRunning = false;
         return result;
     };
+
+
+    void launch(int32_t sampleRate,
+                           int32_t framesPerBurst,
+                           int32_t numSeconds) override {
+        mRunning = true;
+        mTestThread = std::thread(&TestHarnessParameters::runCompleteTest, this,
+                sampleRate, framesPerBurst, numSeconds);
+    }
+
+    bool isRunning() override {
+        return mRunning;
+    }
 
     void setNumVoices(int32_t numVoices) override {
         mNumVoices = numVoices;
@@ -134,7 +139,9 @@ protected:
 
     AudioSinkBase   *mAudioSink = nullptr;
     SynthMarkResult *mResult = nullptr;
-    LogTool         *mLogTool = nullptr;
+    LogTool         &mLogTool;
+    std::thread      mTestThread;
+    bool             mRunning;
 
     HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
 };
