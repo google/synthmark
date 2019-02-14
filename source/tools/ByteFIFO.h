@@ -24,9 +24,10 @@
 class ByteFIFO {
 public:
     ByteFIFO(int numBytes)
-        : mSize(numBytes)
+        : mBuffer(new uint8_t[numBytes])
+        , mSize(numBytes)
     {
-        mBuffer = std::make_unique<uint8_t[]>(numBytes);
+        // mBuffer = std::make_unique<uint8_t[]>(numBytes); // requires C++14
     }
 
     int write(const char *src, int32_t len) {
@@ -95,9 +96,9 @@ private:
         return &(mBuffer.get()[getReadPosition()]);
     }
 
-    std::atomic<int64_t>     mWriteCounter{};
-    std::atomic<int64_t>     mReadCounter{};
+    std::atomic<int64_t>       mWriteCounter{};
+    std::atomic<int64_t>       mReadCounter{};
     std::unique_ptr<uint8_t[]> mBuffer;
-    int32_t                  mSize;
+    int32_t                    mSize;
 };
 #endif //ANDROID_CHARFIFO_H
