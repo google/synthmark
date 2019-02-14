@@ -9,7 +9,7 @@ LOCAL_SRC_FILES:= \
     ../../source/tools/HostTools.cpp \
     ../../source/tools/SynthMarkCommand.cpp \
     ../../source/aaudio/AAudioHostThread.cpp
-LOCAL_CFLAGS += -g -std=c++14 -Ofast -Wall -Werror
+LOCAL_CFLAGS += -g -std=c++11 -Ofast -Wall -Werror
 LOCAL_LDLIBS := -laaudio
 LOCAL_MODULE := synthmark
 include $(BUILD_EXECUTABLE)
