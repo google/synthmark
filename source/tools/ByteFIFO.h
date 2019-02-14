@@ -18,6 +18,7 @@
 #define ANDROID_CHARFIFO_H
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 
 class ByteFIFO {
