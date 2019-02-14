@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(SYNTHSOURCE ../../source/)
 
-SET(GCC_COVERAGE_COMPILE_FLAGS -g -std=c++14 -Ofast)
+SET(GCC_COVERAGE_COMPILE_FLAGS -g -std=c++11 -Ofast)
 
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 set(GCC_COVERAGE_COMPILE_FLAGS ${GCC_COVERAGE_COMPILE_FLAGS} -frecord-gcc-switches)
