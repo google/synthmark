@@ -19,11 +19,11 @@
 
 #include <cmath>
 #include <cstdint>
+#include <sstream>
 
 #include "IAudioSinkCallback.h"
 #include "SynthMark.h"
 #include "HostThreadFactory.h"
-
 
 #define SYNTHMARK_THREAD_PRIORITY_DEFAULT   2 // 2nd lowest priority, recommended by timmurray@
 #define SYNTHMARK_CPU_UNSPECIFIED           -1
@@ -158,6 +158,21 @@ public:
     }
 
     virtual void setThreadType(HostThreadFactory::ThreadType mThreadType) {
+    }
+
+    std::string  dump() {
+        std::stringstream resultMessage;
+        resultMessage << "AudioSink" << std::endl;
+        resultMessage << "  frames.per.burst     = " << getFramesPerBurst() << std::endl;
+        resultMessage << "  scheduler            = "
+                         << (wasSchedFifoUsed() ? "SCHED_FIFO" : "unknown") << std::endl;
+        resultMessage << "  buffer.size.frames     = "  << getBufferSizeInFrames() << std::endl;
+        resultMessage << "  buffer.size.bursts     = "
+                         << (getBufferSizeInFrames() / getFramesPerBurst()) << std::endl;
+        resultMessage << "  buffer.capacity.frames = "   << getBufferCapacityInFrames() << std::endl;
+        resultMessage << "  sample.rate            = "   << getSampleRate() << std::endl;
+        resultMessage << "  cpu.affinity           = "   << getActualCpu() << std::endl;
+        return resultMessage.str();
     }
 
 protected:

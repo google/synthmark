@@ -63,6 +63,20 @@ public:
         }
     }
 
+    virtual int32_t runTest(int32_t sampleRate,
+                                    int32_t framesPerBurst,
+                                    int32_t numSeconds) { return SYNTHMARK_RESULT_SUCCESS; };
+
+    int32_t runCompleteTest(int32_t sampleRate,
+                            int32_t framesPerBurst,
+                            int32_t numSeconds) override {
+        mResult->appendMessage(TEXT_RESULTS_BEGIN "\n");
+        int32_t result = runTest(sampleRate, framesPerBurst, numSeconds);
+        mResult->appendMessage(mAudioSink->dump());
+        mResult->appendMessage(TEXT_RESULTS_END "\n");
+        return result;
+    };
+
     void setNumVoices(int32_t numVoices) override {
         mNumVoices = numVoices;
     }

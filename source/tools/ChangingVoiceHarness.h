@@ -74,8 +74,7 @@ public:
                 }
             }
             if (isVerbose()) {
-                printf("%s() returns %d\n", __func__, lastVoices);
-                fflush(stdout);
+                mLogTool->log("%s() returns %d\n", __func__, lastVoices);
             }
             return lastVoices;
         } else {

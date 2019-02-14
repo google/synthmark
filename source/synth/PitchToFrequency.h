@@ -78,7 +78,6 @@ public:
 
             lastInput = pitch;
             lastOutput = value;
-            //printf("pitch = %f, index = %d, frequency = %f\n", pitch, index, value);
         }
         return lastOutput;
     }
