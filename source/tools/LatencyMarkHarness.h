@@ -37,8 +37,7 @@
  */
 class StopOnGlitchHarness : public ChangingVoiceHarness {
 public:
-    StopOnGlitchHarness(AudioSinkBase *audioSink, SynthMarkResult *result,
-                      LogTool *logTool = NULL)
+    StopOnGlitchHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
             : ChangingVoiceHarness(audioSink, result, logTool) {
         mTestName = "StopOnGlitch";
     }
@@ -60,9 +59,7 @@ public:
  */
 class LatencyMarkHarness : public TestHarnessParameters {
 public:
-    LatencyMarkHarness(AudioSinkBase *audioSink,
-                       SynthMarkResult *result,
-                       LogTool *logTool = nullptr)
+    LatencyMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
     : TestHarnessParameters(audioSink, result, logTool) {
         resetBinarySearch();
     }
@@ -100,7 +97,7 @@ public:
         for (int i=1; i<200; i++) {
             int latency = testSearch(i);
             if (latency != i) {
-                mLogTool->log("ERROR expected %d, got %d\n", i, latency);
+                mLogTool.log("ERROR expected %d, got %d\n", i, latency);
                 return 1;
             }
         }
@@ -113,24 +110,24 @@ public:
         int32_t bursts = getNextBurstsToTry(true); // assume zero latency glitches
         while (bursts > 0) {
             int32_t numSeconds = (mState == STATE_VERIFY) ? maxSeconds : std::min(maxSeconds, 10);
-            mLogTool->log("LatencyMark: try #%d for %d seconds with bursts = %d -----------\n",
+            mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d -----------\n",
                           testCount++, numSeconds, bursts);
             fflush(stdout);
             int32_t err = measureOnce(sampleRate, framesPerBurst, numSeconds);
             if (err < 0) {
-                mLogTool->log("LatencyMark: %s returning err = %d -----------\n",  __func__, err);
+                mLogTool.log("LatencyMark: %s returning err = %d -----------\n",  __func__, err);
                 return err;
             }
             bool glitched = (mAudioSink->getUnderrunCount() > 0);
             if (!glitched) {
-                mLogTool->log("LatencyMark: no glitches\n");
+                mLogTool.log("LatencyMark: no glitches\n");
             }
             bursts = getNextBurstsToTry(glitched);
             if (bursts != 0) {
                 int32_t desiredSizeInFrames = bursts * getFramesPerBurst();
                 int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
                 if (actualSize < desiredSizeInFrames) {
-                    mLogTool->log("ERROR - at maximum buffer size and still glitching\n");
+                    mLogTool.log("ERROR - at maximum buffer size and still glitching\n");
                     bursts = 0;
                 }
             }
@@ -145,7 +142,7 @@ public:
         std::stringstream resultMessage;
         SynthMarkResult result1;
         mAudioSink->setUnderrunCount(0);
-        StopOnGlitchHarness harness(mAudioSink, &result1);
+        StopOnGlitchHarness harness(mAudioSink, &result1, mLogTool);
         harness.setNumVoices(getNumVoices());
         harness.setNumVoicesHigh(getNumVoicesHigh());
         harness.setVoicesMode(getVoicesMode());
@@ -157,7 +154,7 @@ public:
         if (mAudioSink->getUnderrunCount() > 0) {
             // Record when the glitch occurred.
             float glitchTime = ((float) harness.getFrameCount() / mAudioSink->getSampleRate());
-            mLogTool->log("LatencyMark: detected glitch at %5.2f seconds\n", glitchTime);
+            mLogTool.log("LatencyMark: detected glitch at %5.2f seconds\n", glitchTime);
             fflush(stdout);
         }
 
@@ -185,11 +182,11 @@ public:
         resetBinarySearch();
         int32_t bursts = getNextBurstsToTry(true); // assume zero latency glitches
         while (bursts > 0) {
-            mLogTool->log("%2d, ", bursts);
+            mLogTool.log("%2d, ", bursts);
             bool glitched = (bursts < target);
             bursts = getNextBurstsToTry(glitched);
         }
-        mLogTool->log("\n");
+        mLogTool.log("\n");
         fflush(stdout);
         return mLowestGoodBursts;
     }

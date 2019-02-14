@@ -31,6 +31,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -57,6 +58,7 @@ public class MainActivity extends BaseActivity {
     private Button mButtonTest;
     private Button mButtonShare;
     private Button mButtonSettings;
+    private ScrollView mScrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +72,7 @@ public class MainActivity extends BaseActivity {
         // Lock to portrait to avoid onCreate being called more than once
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        mScrollView = (ScrollView) findViewById(R.id.activity_main);
         mTextViewDeviceInfo = (TextView) findViewById(R.id.textViewDeviceInfo);
         mTextViewDeviceInfo.setText(AppObject.getDeviceInfo());
 
@@ -162,7 +165,12 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void notificationTestUpdate(int testId, String message) {
-        mTextViewOutput.append(message + "\n");
+        mTextViewOutput.append(message);
+        mScrollView.post(new Runnable() {
+            public void run() {
+                mScrollView.fullScroll(mScrollView.FOCUS_DOWN);
+            }
+        });
     }
 
     @Override

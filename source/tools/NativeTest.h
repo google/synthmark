@@ -89,24 +89,15 @@ static constexpr int kParamsDefaultIndexFramesPerBurst = 5; // 4->64, 5->96
 
 class NativeTestUnit {
 public:
-    NativeTestUnit(std::string title, LogTool *logTool = NULL) :
-    mTitle(title), mParams(title) {
-        if (!logTool) {
-            mLogTool = new LogTool(this);
-        } else {
-            mLogTool = logTool;
-        }
-    }
+    NativeTestUnit(std::string title, LogTool &logTool)
+            : mTitle(title)
+            , mParams(title)
+            , mLogTool(logTool)
+    {}
+
     virtual int init() = 0;
     virtual int run() = 0;
     virtual int finish() = 0;
-
-    ~NativeTestUnit() {
-        if (mLogTool && mLogTool->getOwner() == this) {
-            delete(mLogTool);
-            mLogTool = NULL;
-        }
-    }
 
     std::string getTestName() {
         return mTitle;
@@ -123,17 +114,25 @@ public:
         mHostThreadFactory = factory;
     }
 
+    virtual bool hasLogs() {
+        return mLogTool.hasLogs();
+    }
+
+    virtual std::string readLog() {
+        return mLogTool.readLog();
+    }
+
 protected:
     int mCurrentStatus;
-    LogTool *mLogTool;
+    LogTool    &mLogTool;
     std::string mTitle;
-    ParamGroup mParams;
+    ParamGroup  mParams;
     HostThreadFactory *mHostThreadFactory = NULL;
 };
 
 class CommonNativeTestUnit : public NativeTestUnit {
 public:
-    CommonNativeTestUnit(std::string title, LogTool *logTool = NULL)
+    CommonNativeTestUnit(std::string title, LogTool &logTool)
             : NativeTestUnit(title, logTool) {
 
     }
@@ -179,6 +178,7 @@ public:
     }
 
     int run(ITestHarness &harness, VirtualAudioSink &audioSink) {
+
         audioSink.setHostThread(mHostThreadFactory->createThread(
                 HostThreadFactory::ThreadType::Audio));
 
@@ -194,7 +194,7 @@ public:
         int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
         audioSink.setRequestedCpu(CoreAffinity);
 #endif
-        mLogTool->log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
+        mLogTool.log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
 
         harness.setDelayNoteOnSeconds(noteOnDelay);
         harness.setThreadType(HostThreadFactory::ThreadType::Audio);
@@ -205,7 +205,7 @@ public:
         std::istringstream f(mResult.getResultMessage());
         std::string line;
         while (std::getline(f, line)) {
-            mLogTool->log((line + "\n").c_str());
+            mLogTool.log((line + "\n").c_str());
         }
 
         return SYNTHMARK_RESULT_SUCCESS;
@@ -214,6 +214,7 @@ public:
     int finish() override {
         return SYNTHMARK_RESULT_SUCCESS;
     }
+
 
 protected:
 
@@ -226,7 +227,7 @@ protected:
 
 class TestVoiceMark : public CommonNativeTestUnit {
 public:
-    TestVoiceMark(LogTool *logTool = NULL) : CommonNativeTestUnit("VoiceMark", logTool) {
+    TestVoiceMark(LogTool &logTool) : CommonNativeTestUnit("VoiceMark", logTool) {
 
     }
 
@@ -258,7 +259,7 @@ protected:
 
 class TestUtilizationMark : public CommonNativeTestUnit {
 public:
-    TestUtilizationMark(LogTool *logTool = NULL) : CommonNativeTestUnit("UtilizationMark", logTool) {
+    TestUtilizationMark(LogTool &logTool) : CommonNativeTestUnit("UtilizationMark", logTool) {
     }
 
     int init() override {
@@ -292,7 +293,7 @@ protected:
 
 class ChangingVoiceTestUnit : public CommonNativeTestUnit {
 public:
-    ChangingVoiceTestUnit(std::string title, LogTool *logTool = NULL)
+    ChangingVoiceTestUnit(std::string title, LogTool &logTool)
             : CommonNativeTestUnit(title, logTool) {
     }
 
@@ -335,7 +336,7 @@ protected:
 
 class TestLatencyMark : public ChangingVoiceTestUnit {
 public:
-    TestLatencyMark(LogTool *logTool = NULL)
+    TestLatencyMark(LogTool &logTool)
             : ChangingVoiceTestUnit("LatencyMark", logTool) {
 
     }
@@ -351,7 +352,7 @@ protected:
 
 class TestJitterMark : public ChangingVoiceTestUnit {
 public:
-    TestJitterMark(LogTool *logTool = NULL)
+    TestJitterMark(LogTool &logTool)
             : ChangingVoiceTestUnit("JitterMark", logTool) {
 
     }
@@ -367,7 +368,7 @@ protected:
 
 class TestClockRamp : public ChangingVoiceTestUnit {
 public:
-    TestClockRamp(LogTool *logTool = NULL)
+    TestClockRamp(LogTool &logTool)
             : ChangingVoiceTestUnit("ClockRamp", logTool) {
 
     }
@@ -383,7 +384,7 @@ protected:
 
 class TestAutomatedSuite : public CommonNativeTestUnit {
 public:
-    TestAutomatedSuite(LogTool *logTool = NULL) : CommonNativeTestUnit("AutomatedSuite", logTool) {
+    TestAutomatedSuite(LogTool &logTool) : CommonNativeTestUnit("AutomatedSuite", logTool) {
     }
 
     int init() override {
@@ -410,14 +411,13 @@ class NativeTest {
 public:
     NativeTest()
             : mCurrentStatus(NATIVETEST_STATUS_UNDEFINED)
-            , mTestVoiceMark(&mLog)
-            , mTestLatencyMark(&mLog)
-            , mTestJitterMark(&mLog)
-            , mTestUtilizationMark(&mLog)
-            , mTestClockRamp(&mLog)
-            , mTestAutomatedSuite(&mLog)
+            , mTestVoiceMark(mLog)
+            , mTestLatencyMark(mLog)
+            , mTestJitterMark(mLog)
+            , mTestUtilizationMark(mLog)
+            , mTestClockRamp(mLog)
+            , mTestAutomatedSuite(mLog)
     {
-        mLog.setStream(&mStream);
         initTests();
         setHostThreadFactory(&mHostThreadFactoryOwned);
     }
@@ -441,8 +441,6 @@ public:
         mCurrentStatus = NATIVETEST_STATUS_READY;
         mCurrentTest = testId;
 
-        mStream.str("");
-        mStream.clear();
         return NATIVETEST_SUCCESS;
     }
 
@@ -470,10 +468,6 @@ public:
 
     int getStatus() {
         return mCurrentStatus;
-    }
-
-    std::string getResult() {
-        return mStream.str();
     }
 
     int closeTest() {
@@ -529,6 +523,24 @@ public:
         return count;
     }
 
+    bool hasLogs() {
+        NativeTestUnit *pTestUnit = getNativeTestUnit(mCurrentTest);
+        if (pTestUnit != NULL) {
+            return pTestUnit->hasLogs();
+        } else {
+            return false;
+        }
+    }
+
+    std::string readLog() {
+        NativeTestUnit *pTestUnit = getNativeTestUnit(mCurrentTest);
+        if (pTestUnit != NULL) {
+            return pTestUnit->readLog();
+        } else {
+            return std::string("[nolog]");
+        }
+    }
+
 private:
     NativeTestUnit * getNativeTestUnit(int testId) {
         NativeTestUnit *pTestUnit = NULL;
@@ -554,7 +566,6 @@ private:
     TestAutomatedSuite   mTestAutomatedSuite;
 
     LogTool              mLog;
-    std::stringstream    mStream;
     HostThreadFactory    mHostThreadFactoryOwned;
     HostThreadFactory   *mHostThreadFactory = NULL;
 };

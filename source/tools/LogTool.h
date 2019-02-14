@@ -20,54 +20,32 @@
 #include <cstdarg>
 #include <cstdio>
 #include <iostream>
+#include "ByteFIFO.h"
 
-
-#define LOGTOOL_BUFFER_SIZE (10 * 1024) //max single log that can be added at once
+#define LOGTOOL_BUFFER_SIZE (1024) //max log line size
+#define LOGTOOL_FIFO_SIZE (16 * 1024) // FIFO for storing messages until the foreground reads them
 
 class LogTool
 {
 public:
-    LogTool(void * owner = NULL, std::ostream *os = NULL)
-        : mEnabled(true)
-        , mOwner(owner)
-        , mOStream(os)
+    LogTool()
+        : mFIFO(LOGTOOL_FIFO_SIZE)
         , mVar1(0)
     {
     }
     virtual ~LogTool() {}
 
     virtual int32_t log(const char* format, ...) {
-        if (!mEnabled)
-            return 0;
-        int32_t r = 0;
         va_list args;
         va_start(args, format);
-        if (mOStream) {
-            r = vsnprintf(mBuffer, LOGTOOL_BUFFER_SIZE, format, args);
-            if (r > 0) {
-                mOStream->write(mBuffer, r);
-            }
-        } else {
-            r = std::vprintf(format, args);
-        }
+        int numWritten = vsnprintf(mBuffer, LOGTOOL_BUFFER_SIZE, format, args);
         va_end(args);
-        return r;
-    }
 
-    void * getOwner() {
-        return mOwner;
-    }
-
-    void setStream(std::ostream * os) {
-        mOStream = os;
-    }
-
-    void setEnabled(bool enabled) {
-        mEnabled = enabled;
-    }
-
-    bool getEnabled() {
-        return mEnabled;
+        if (numWritten > 0) {
+            // If the buffer is full then logs will be lost.
+            mFIFO.write(mBuffer, numWritten); // returns immediately
+        }
+        return numWritten;
     }
 
     void setVar1(int value) {
@@ -78,10 +56,16 @@ public:
         return mVar1;
     }
 
+    bool hasLogs() {
+        return mFIFO.getAvailableToRead() > 0;
+    }
+
+    std::string readLog() {
+        return mFIFO.readLog();
+    }
+
 private:
-    bool          mEnabled;
-    void         *mOwner;
-    std::ostream *mOStream;
+    ByteFIFO      mFIFO;
     char          mBuffer[LOGTOOL_BUFFER_SIZE + 1];
     int           mVar1;    //user assigned variable.
 };

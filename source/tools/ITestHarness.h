@@ -34,6 +34,13 @@ public:
                                     int32_t numSeconds) = 0;
 
     virtual void setThreadType(HostThreadFactory::ThreadType mThreadType) = 0;
+
+    virtual void launch(int32_t sampleRate,
+                   int32_t framesPerBurst,
+                   int32_t numSeconds) = 0;
+
+    virtual bool isRunning() = 0;
+
 };
 
 #endif //SYNTHMARK_ITEST_HARNESS_H

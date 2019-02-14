@@ -64,11 +64,17 @@ Java_com_sonodroid_synthmark_AppObject_testStatus(
     jobject obj __unused,
     jlong nativeTest);
 
+JNIEXPORT jboolean JNICALL
+Java_com_sonodroid_synthmark_AppObject_testHasLogs(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest);
+
 JNIEXPORT jstring JNICALL
-Java_com_sonodroid_synthmark_AppObject_testResult(
-    JNIEnv* env,
-    jobject obj __unused,
-    jlong nativeTest);
+Java_com_sonodroid_synthmark_AppObject_testReadLog(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest);
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1getTestCount(

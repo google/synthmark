@@ -36,9 +36,7 @@
  */
 class UtilizationMarkHarness : public TestHarnessBase {
 public:
-    UtilizationMarkHarness(AudioSinkBase *audioSink,
-                     SynthMarkResult *result,
-                     LogTool *logTool = NULL)
+    UtilizationMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
             : TestHarnessBase(audioSink, result, logTool)
     {
         std::stringstream testName;
@@ -52,18 +50,18 @@ public:
     virtual void onBeginMeasurement() override {
 
         mResult->setTestName(mTestName);
-        mLogTool->log("---- Starting %s ----\n", mTestName.c_str());
+        mLogTool.log("---- Starting %s ----\n", mTestName.c_str());
 
         float bufferSizeInMs = (float)
                                (mAudioSink->getBufferSizeInFrames() * SYNTHMARK_MILLIS_PER_SECOND)
                                / mAudioSink->getSampleRate();
-        mLogTool->log("Buffer size: %.2fms\n", bufferSizeInMs);
+        mLogTool.log("Buffer size: %.2fms\n", bufferSizeInMs);
         mBeatCount = 0;
     }
 
     void reportUtilization() {
         mFractionOfCpu = mTimer.getDutyCycle();
-        mLogTool->log("%2d: %3d voices used %5.3f of CPU\n", mBeatCount, getNumVoices(), mFractionOfCpu);
+        mLogTool.log("%2d: %3d voices used %5.3f of CPU\n", mBeatCount, getNumVoices(), mFractionOfCpu);
     }
 
     virtual int32_t onBeforeNoteOn() override {

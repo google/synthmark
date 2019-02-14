@@ -25,9 +25,7 @@
 class UtilizationSeriesHarness : public TestHarnessParameters {
 
 public:
-    UtilizationSeriesHarness(AudioSinkBase *audioSink,
-                       SynthMarkResult *result,
-                       LogTool *logTool = nullptr)
+    UtilizationSeriesHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
             : TestHarnessParameters(audioSink, result, logTool) {}
 
     virtual ~UtilizationSeriesHarness() {}
@@ -54,7 +52,7 @@ public:
         // Iterate over a range of voice counts.
         int32_t numVoicesBegin = getNumVoices();
         int32_t numVoicesEnd = getNumVoicesHigh();
-        mLogTool->log("max voices for series = %d\n", numVoicesEnd);
+        mLogTool.log("max voices for series = %d\n", numVoicesEnd);
         int32_t range = numVoicesEnd - numVoicesBegin;
         const int kNumSteps = 20;
         for (int i = 0; i < kNumSteps; i++) {
@@ -81,7 +79,7 @@ public:
                              int32_t *maxVoicesPtr) {
         std::stringstream resultMessage;
         SynthMarkResult result1;
-        VoiceMarkHarness *harness = new VoiceMarkHarness(mAudioSink, &result1);
+        VoiceMarkHarness *harness = new VoiceMarkHarness(mAudioSink, &result1, mLogTool);
         harness->setTargetCpuLoad(fractionUtilization);
         harness->setInitialVoiceCount(getNumVoices());
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
@@ -108,7 +106,9 @@ public:
                                double *utilizationPtr) {
         std::stringstream resultMessage;
         SynthMarkResult result1;
-        UtilizationMarkHarness *harness = new UtilizationMarkHarness(mAudioSink, &result1);
+        UtilizationMarkHarness *harness = new UtilizationMarkHarness(mAudioSink,
+                                                                     &result1,
+                                                                     mLogTool);
         harness->setNumVoices(numVoices);
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
         harness->setThreadType(mThreadType);

@@ -27,9 +27,7 @@
 class ChangingVoiceHarness : public TestHarnessBase {
 
 public:
-    ChangingVoiceHarness(AudioSinkBase *audioSink,
-            SynthMarkResult *result,
-            LogTool *logTool = nullptr)
+    ChangingVoiceHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
     : TestHarnessBase(audioSink, result, logTool)
     {
         // Constant seed to obtain a fixed pattern of pseudo-random voices
@@ -74,7 +72,7 @@ public:
                 }
             }
             if (isVerbose()) {
-                mLogTool->log("%s() returns %d\n", __func__, lastVoices);
+                mLogTool.log("%s() returns %d\n", __func__, lastVoices);
             }
             return lastVoices;
         } else {

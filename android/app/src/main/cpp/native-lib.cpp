@@ -115,18 +115,29 @@ Java_com_sonodroid_synthmark_AppObject_testStatus(
     return NATIVETEST_STATUS_ERROR;
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_sonodroid_synthmark_AppObject_testHasLogs(
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest) {
+    NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
+    if (pNativeTest != NULL) {
+        return pNativeTest->hasLogs();
+    }
+    return false;
+}
+
 JNIEXPORT jstring JNICALL
-Java_com_sonodroid_synthmark_AppObject_testResult(
+Java_com_sonodroid_synthmark_AppObject_testReadLog(
     JNIEnv* env,
     jobject obj __unused,
     jlong nativeTest) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
     if (pNativeTest != NULL) {
-        std::string result = pNativeTest->getResult();
-        return env->NewStringUTF(result.c_str());
+        std::string log = pNativeTest->readLog();
+        return env->NewStringUTF(log.c_str());
     }
-    return NULL;
+    return env->NewStringUTF("[native closed]");
 }
 
 

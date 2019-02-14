@@ -45,7 +45,7 @@ class TestHarnessBase : public TestHarnessParameters, public IAudioSinkCallback 
 public:
     TestHarnessBase(AudioSinkBase *audioSink,
                     SynthMarkResult *result,
-                    LogTool *logTool = nullptr)
+                    LogTool &logTool)
     : TestHarnessParameters(audioSink, result, logTool)
     , mSynth()
     , mTimer()
@@ -90,7 +90,7 @@ public:
     // This is called by the AudioSink in a loop.
     virtual IAudioSinkCallback::Result onRenderAudio(float *buffer,
                                                      int32_t numFrames) override {
-        // mLogTool->log("onRenderAudio() callback called\n");
+        // mLogTool.log("onRenderAudio() callback called\n");
         int32_t result;
         if (mFrameCounter >= mFramesNeeded) {
             return IAudioSinkCallback::Result::Finished;
@@ -108,7 +108,7 @@ public:
                 } else {
                     result = onBeforeNoteOn();
                     if (result < 0) {
-                        mLogTool->log("%s() onBeforeNoteOn() returned %d\n", __func__, result);
+                        mLogTool.log("%s() onBeforeNoteOn() returned %d\n", __func__, result);
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
                     }
@@ -117,7 +117,7 @@ public:
                                                                       kSynthmarkMaxVoices);
                     result = mSynth.notesOn(currentNumVoices);
                     if (result < 0) {
-                        mLogTool->log("%s() allNotesOn() returned %d\n", __func__, result);
+                        mLogTool.log("%s() allNotesOn() returned %d\n", __func__, result);
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
                     }
@@ -129,7 +129,7 @@ public:
         }
 
         // Gather timing information.
-        // mLogTool->log("onRenderAudio() call the synthesizer\n");
+        // mLogTool.log("onRenderAudio() call the synthesizer\n");
         // Calculate time when we ideally should have woken up.
         int64_t fullFramePosition = mAudioSink->getFramesWritten()
                                     - mAudioSink->getBufferSizeInFrames()
@@ -142,7 +142,7 @@ public:
         mCpuAnalyzer.recordCpu(); // at end so we have less affect on timing
 
         mFrameCounter += numFrames;
-        mLogTool->setVar1(mFrameCounter);
+        mLogTool.setVar1(mFrameCounter);
 
         return IAudioSinkCallback::Result::Continue;
     }
@@ -160,7 +160,7 @@ public:
         int32_t result; // Used to store the results of various operations during the test
         mFramesNeeded = (int)(mSampleRate * seconds);
         mFrameCounter = 0;
-        mLogTool->setVar1(mFrameCounter);
+        mLogTool.setVar1(mFrameCounter);
 
         // Variables for turning notes on and off.
         mAreNotesOn = false;
@@ -181,7 +181,7 @@ public:
         // Run the test or wait for it to finish.
         result = mAudioSink->runCallbackLoop();
         if (result < 0) {
-            mLogTool->log("ERROR runCallbackLoop() failed, returned %d\n", result);
+            mLogTool.log("ERROR runCallbackLoop() failed, returned %d\n", result);
             mResult->setResultCode(result);
             return result;
         }
@@ -219,24 +219,24 @@ public:
                  int32_t framesPerRender,
                  int32_t framesPerBurst) {
         if (sampleRate < 8000) {
-            mLogTool->log("ERROR in open, sampleRate too low = %d < 8000\n", sampleRate);
+            mLogTool.log("ERROR in open, sampleRate too low = %d < 8000\n", sampleRate);
             return -1;
         }
         if (samplesPerFrame != 2) {
-            mLogTool->log("ERROR in open, samplesPerFrame = %d != 2\n", samplesPerFrame);
+            mLogTool.log("ERROR in open, samplesPerFrame = %d != 2\n", samplesPerFrame);
             return -1;
         }
         if (framesPerRender < 1) {
-            mLogTool->log("ERROR in open, framesPerRender too low = %d < 1\n", framesPerRender);
+            mLogTool.log("ERROR in open, framesPerRender too low = %d < 1\n", framesPerRender);
             return -1;
         }
         if (framesPerRender > kSynthmarkFramesPerRender) {
-            mLogTool->log("ERROR in open, framesPerRender = %d > %d\n",
+            mLogTool.log("ERROR in open, framesPerRender = %d > %d\n",
                           framesPerRender, kSynthmarkFramesPerRender);
             return -1;
         }
         if (framesPerBurst < 8) {
-            mLogTool->log("ERROR in open, framesPerBurst = %d < 8\n", framesPerRender);
+            mLogTool.log("ERROR in open, framesPerBurst = %d < 8\n", framesPerRender);
             return -1;
         }
         mSampleRate = sampleRate;
