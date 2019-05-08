@@ -12,11 +12,6 @@ Instructions for building the app or the command line executable.
 
 ## Command Line Interface
 
-### Building the Command for Running on Linux
-
-    cd synthmark
-    make -f linux/Makefile
-
 ### Building the Command for Running on Android
 
 If you have not already, then install the NDK support for Android Studio.
@@ -40,3 +35,8 @@ The “jni/Application.mk” file determines the target architecture, eg. “arm
     adb root
     adb remount
     adb push libs/arm64-v8a/synthmark   /system/bin/.
+
+### Building the Command for Running on Linux
+
+    cd synthmark
+    make -f linux/Makefile
