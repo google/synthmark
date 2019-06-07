@@ -34,7 +34,8 @@
 // #define SYNTHMARK_MINOR_VERSION        17  /* Add -N to JitterMark. */
 // #define SYNTHMARK_MINOR_VERSION        18  /* Add "-tc", ClockRamp test. Add harness to Android app. */
 // #define SYNTHMARK_MINOR_VERSION        19  /* Add -w1 for SCHED_DEADLINE. */
-#define SYNTHMARK_MINOR_VERSION        20  /* Optimize search for LatencyMark. */
+// #define SYNTHMARK_MINOR_VERSION        20  /* Optimize search for LatencyMark. */
+#define SYNTHMARK_MINOR_VERSION        21  /* Fix intermittent hang on STOP */
 
 // This may be increased without invalidating the benchmark.
 constexpr int kSynthmarkMaxVoices   = 512;

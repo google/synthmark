@@ -21,9 +21,17 @@
 #include "AAudioHostThread.h"
 
 void AAudioHostThread::callHostThread() {
-    std::lock_guard<std::mutex> lock(mDoneLock);
-    (*mProcedure)(mArgument); // This should take a long time.
-    mDone = true; // Let join() know we are done.
+    //printf("%s() enter >>>>>>>>> mDone = %d\n", __func__, mDone);
+    // The callback returns AAUDIO_CALLBACK_RESULT_CONTINUE instead
+    // of AAUDIO_CALLBACK_RESULT_STOP because a race condition
+    // was causing a hang. So we may get called more than once.
+    // So check mDone to prevent mProcedure from running more than once.
+    if (!mDone) {
+        std::lock_guard<std::mutex> lock(mDoneLock);
+        (*mProcedure)(mArgument); // This should take a long time.
+        mDone = true; // Let join() know we are done.
+    }
+    //printf("%s() exit <<<<<<<<<<", __func__);
 }
 
 static aaudio_data_callback_result_t sm_aaudio_data_callback(
@@ -33,7 +41,8 @@ static aaudio_data_callback_result_t sm_aaudio_data_callback(
         int32_t numFrames __unused) {
     AAudioHostThread *hostThread = (AAudioHostThread *) userData;
     hostThread->callHostThread();
-    return AAUDIO_CALLBACK_RESULT_STOP;
+    // Note: returning STOP caused an intermittent hang in AAudioStream_close()!
+    return AAUDIO_CALLBACK_RESULT_CONTINUE;
 }
 
 /** Start the thread and call the specified proc. */
