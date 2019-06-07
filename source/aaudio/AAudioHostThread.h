@@ -45,8 +45,8 @@ public:
 
 private:
     AAudioStream       *mAaudioStream = nullptr;
-    std::mutex          mDoneLock; // Use a mutex so we can sleep on it.
-    volatile bool       mDone = false;
+    std::mutex          mDoneLock; // Use a mutex so we can sleep on it while join()ing.
+    std::atomic<bool>   mDone{false};
 };
 
 #endif // __ANDROID__
