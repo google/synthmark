@@ -57,7 +57,7 @@ def getFrequencies(cpuIndex):
 def collectAverageCurrent():
     time.sleep(cutoffSecond) # Wait for synthmark to settle
     measureCommand = [monsoonPath, "--samples", str(measureSamples), "--hz", str(measureHz)]
-    # Muting the stderr of the Monsoon bc it is noisy
+    # Muting the stderr of the Monsoon because it is noisy
     with open(os.devnull, 'w') as nullFile:
         monsoonOutput = subprocess.check_output(measureCommand, stderr = nullFile).strip()
 
@@ -131,7 +131,7 @@ def measureCurrent(cpuIndex, numVoices, frequency):
 # @return Both the stdout and stderr of the commands run
 def adbCommand(stringArgs):
     command = ["adb", "shell"] + stringArgs
-    # We mute stderr of the monsoon bc it is very noisy
+    # We mute stderr of the monsoon because it is very noisy
     with open(os.devnull, 'w') as nullFile:
         subprocess.call([monsoonPath, "--usbpassthrough", "on"], stderr = nullFile)
         subprocess.call(["adb", "wait-for-device"])

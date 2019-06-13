@@ -4,7 +4,9 @@ while running SynthMark.
 ### Requirements
 * phone with battery replacement cables
 * Monsoon power monitor device to measure the current
-
+* `monsoon.py` script. This script also requires `absl-py` and `pyserial`
+The monsoon script does not live in this repository currently due to licensing,
+acquire internally and place in the current directory.
 ### Setup
 Plug the battery replacement leads into the correct power supply ports of the
 monsoon. Then, plug the phone into the USB-A port on the front of the device,
@@ -16,13 +18,15 @@ to a wall outlet, and the usb on the back also to the system running the script.
 This usb connection is responsible for collecting data from the Monsoon itself.
 
 ### Power Parameters
-In order to start the phone, it needs to be supplied with 4.3V from the Monsoon
-(use the `voltage` flag). The phone will draw as much current as required, however
+In order to start pixel phones, it needs to be supplied with 4.3V from the Monsoon
+(use the `voltage` flag). Make sure to check the appropriate voltage supply for the
+device which you are measuring. The phone will draw as much current as required, however
 set the `maxcurrent` and `current` to 8. In order for the phone to start it will
 probably need to be connected via USB to an AC power source, but can be disconnected
 after boot. Make sure the phone has usb debugging turned on with, root access and
-verity disabled. If using USB, be sure to turn of passthrough with the `usbpassthrough`
-flag prior to takign measurements.
+verity disabled. If using USB, be sure to turn off passthrough with the `usbpassthrough`
+flag prior to taking measurements. The `autopower.py` script will manage this
+for you.
 
 ### Description
 The script will run synthmark with the specified number of voices on the
