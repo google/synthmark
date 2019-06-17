@@ -106,8 +106,8 @@ public:
 
     int32_t searchForLowestLatency(int32_t sampleRate, int32_t framesPerBurst, int32_t maxSeconds) {
         int32_t testCount = 1;
-        resetBinarySearch();
         int32_t bursts = getNextBurstsToTry(true); // assume zero latency glitches
+
         while (bursts > 0) {
             int32_t numSeconds = (mState == STATE_VERIFY) ? maxSeconds : std::min(maxSeconds, 10);
             mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d -----------\n",
