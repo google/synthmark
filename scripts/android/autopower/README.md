@@ -1,26 +1,51 @@
 The "autopower.py" script measures the current used by an Android device
 while running SynthMark.
 
-Required
-
+### Requirements
 * phone with battery replacement cables
 * Monsoon power monitor device to measure the current
-* script called "monsoon.py" to control the Monsoon device
+* `monsoon.py` script. This script also requires `absl-py` and `pyserial`
+The monsoon script does not live in this repository currently due to licensing,
+acquire internally and place in the current directory.
+### Setup
+Plug the battery replacement leads into the correct power supply ports of the
+monsoon. Then, plug the phone into the USB-A port on the front of the device,
+and connect the USB B port on the front to the system runnning the script. This
+will allow the system running the script to control the device over USB via adb,
+while passing through the power monitor will prevent power leakage from the USB
+port to retain accurate readings. Connect the power at the back of the monsoon
+to a wall outlet, and the usb on the back also to the system running the script.
+This usb connection is responsible for collecting data from the Monsoon itself.
 
-Note that there are many scripts called "monsoon.py" on the web.
-You need the one that has a main function and takes commands such as "usbpassthrough" and "samples".
+### Power Parameters
+In order to start pixel phones, it needs to be supplied with 4.3V from the Monsoon
+(use the `voltage` flag). Make sure to check the appropriate voltage supply for the
+device which you are measuring. The phone will draw as much current as required, however
+set the `maxcurrent` and `current` to 8. In order for the phone to start it will
+probably need to be connected via USB to an AC power source, but can be disconnected
+after boot. Make sure the phone has usb debugging turned on with, root access and
+verity disabled. If using USB, be sure to turn off passthrough with the `usbpassthrough`
+flag prior to taking measurements. The `autopower.py` script will manage this
+for you.
 
-You need to assign the path of your monsoon.py to [monsoonPath] for use by autopower.py.
+### Description
+The script will run synthmark with the specified number of voices on the
+specified cpu while using the monsoon.py script in this directory to measure
+currents. Parameters for monsoon can be found at the beginning of autoscript
+(e.g. test duration, polling frequency, burst size etc.). Autopower will then
+run Synthmark and measure current on all of the available frequencies of the
+specified CPU until the CPU utilization hits 90 percent (the frequency cutoff
+varies based on the processor and number of voices used). A CSV of the frequency
+and output, in addition to the Utilization amounts are output by the script,
+shown below.
 
-For example:
-
-monsoonPath = "/home/.../.../.../monsoon.py"
+### Sample Command
 
 sample execute command and result as below:
        autopower.py [#cpu_index][#number of voice]
 
-terminal commnad :
-~$ python autopower.py 1 10
+terminal command :
+~$ ./autopower.py 1 10
 
 
 output :
