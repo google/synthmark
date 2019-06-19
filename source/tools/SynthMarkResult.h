@@ -52,6 +52,11 @@ public:
     {
     }
 
+    void reset() {
+        mMeasurement = 0.0;
+        mResultMessage.clear();
+    }
+
     std::string getTestName() {
         return mTestName;
     }

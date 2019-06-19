@@ -16,28 +16,33 @@
 
 package com.sonodroid.synthmark;
 
+import android.Manifest;
 import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
-import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.lang.reflect.Array;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,6 +52,10 @@ import java.util.List;
 
 
 public class MainActivity extends BaseActivity {
+    private static final String KEY_TEST_NAME = "test";
+    private static final String KEY_FILE_NAME = "file";
+    private static final int MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 1001;
+
     private TextView mTextViewDeviceInfo, mTextViewOutput;
     private View.OnClickListener mButtonListener;
     private Switch mSwitchFakeTouches;
@@ -60,11 +69,15 @@ public class MainActivity extends BaseActivity {
     private Button mButtonSettings;
     private ScrollView mScrollView;
 
+    private boolean mTestRunningByIntent;
+    private String mResultFileName;
+    private Bundle mBundleFromIntent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setLogTag("MainActivity");
+        setLogTag("SynthMark");
 
         // Keep the screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -125,6 +138,7 @@ public class MainActivity extends BaseActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 log("Selected " + position);
                 getApp().setCurrentTestId(position);
+                logParams();
             }
 
             @Override
@@ -134,6 +148,8 @@ public class MainActivity extends BaseActivity {
         });
 
         mButtonSettings = (Button) findViewById(R.id.buttonSettings);
+
+        saveIntentBundleForLaterProcessing(getIntent());
     }
 
     @TargetApi(Build.VERSION_CODES.N)
@@ -142,7 +158,113 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    public void onNewIntent(Intent intent) {
+        log("onNewIntent()");
+        saveIntentBundleForLaterProcessing(intent);
+    }
+
+    // Sample command
+    // adb shell am start -n com.sonodroid.synthmark/.MainActivity --es test jitter \
+    //       --ei core_affinity 1  --es file /sdcard/test20190611.txt
+    //
+    // Required parameters:
+    //   -es test = { voice, util, jitter, latency, auto }
+    //   -es file = full path for resulting file
+    // Other optional parameters defined in NativeTest.h
+    //   "sample_rate"
+    //   "samples_per_frame"
+    //   "frames_per_render"
+    //   "frames_per_burst"
+    //   "num_seconds"
+    //   "note_on_delay"
+    //   "target_cpu_load"
+    //   "num_voices"
+    //   "num_voices_high"
+    //   "core_affinity"
+    //
+    // This will get processed during onResume.
+    private void saveIntentBundleForLaterProcessing(Intent intent) {
+        mBundleFromIntent = intent.getExtras();
+    }
+
+    private void processBundleFromIntent() {
+        if (mBundleFromIntent == null) {
+            return;
+        }
+        if (mTestRunningByIntent) {
+            log("Previous test still running.");
+            return;
+        }
+
+        // Dump key values for debugging.
+        for (String key: mBundleFromIntent.keySet()) {
+            log("Intent: " + key + " => " + mBundleFromIntent.get(key));
+        }
+
+        mResultFileName = null;
+        if (mBundleFromIntent.containsKey(KEY_TEST_NAME)) {
+            String testName = mBundleFromIntent.getString(KEY_TEST_NAME);
+            int testId = extractTestId(testName);
+            if (testId >= 0) {
+                getApp().setCurrentTestId(testId);
+                extractParametersFromBundle(mBundleFromIntent);
+                mResultFileName = mBundleFromIntent.getString(KEY_FILE_NAME);
+                mTestRunningByIntent = true;
+
+                // Run the test using the parameters from the bundle.
+                getApp().startTest(testId);
+            }
+        }
+        mBundleFromIntent = null;
+    }
+
+    private int extractTestId(String testName) {
+        testName = testName.toLowerCase();
+        // Match "test" name to start of official Name.
+        // So "test jitter" will match "JitterMark"
+        int testId = -1;
+        int testCount = getApp().getTestCount();
+        for (int i = 0; i < testCount; i++) {
+            String name = getApp().getTestName(i);
+            log("Test: " + i + " =" + name);
+            if (name.toLowerCase().startsWith(testName)) {
+                testId = i;
+                log("Test: matched " + testId);
+                break;
+            }
+        }
+        return testId;
+    }
+
+    private void extractParametersFromBundle(Bundle b) {
+        List<Param> paramList = getApp().getParamsForTest();
+        for (Param param : paramList) {
+            String desc = param.getDescription();
+            log("Param: " + desc);
+            String name = param.getName();
+            log("    name = " + name);
+            if (b.containsKey(name)) {
+                Object value = b.get(name);
+                log("    value = " + value);
+                param.setValueByObject(value);
+            }
+        }
+    }
+
+    void logParams() {
+        final int currentTestId = getApp().getCurrentTestId();
+        List<Param> paramList = getApp().getParamsForTest(currentTestId);
+
+        for (Param param : paramList) {
+            String desc = param.getDescription();
+            log("Param: " + desc);
+            log("    name = " + param.getName());
+        }
+    }
+
+    @Override
     public void notificationTestStarted(int testId) {
+        super.notificationTestStarted(testId);
 
         if (mSwitchFakeTouches.isChecked()){
             mKeyGenerator.start();
@@ -165,6 +287,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void notificationTestUpdate(int testId, String message) {
+        super.notificationTestUpdate(testId, message);
         mTextViewOutput.append(message);
         mScrollView.post(new Runnable() {
             public void run() {
@@ -174,7 +297,14 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    public void notificationTestShortUpdate(int testId, String message) {
+        super.notificationTestShortUpdate(testId, message);
+        mTextViewShortUpdate.setText(message);
+    }
+
+    @Override
     public void notificationTestCompleted(int testId) {
+        super.notificationTestCompleted(testId);
         mKeyGenerator.stop();
         mTextViewOutput.append("Finished test " + getApp().getTestName(testId) + "\n");
         mProgressBarRunning.setVisibility(View.INVISIBLE);
@@ -184,11 +314,80 @@ public class MainActivity extends BaseActivity {
         mSpinnerTest.setEnabled(true);
         mButtonTest.setEnabled(true);
         mButtonShare.setEnabled(true);
+
+        maybeWriteTestResult();
+    }
+
+    private void maybeWriteTestResult() {
+        if (!mTestRunningByIntent || mResultFileName == null) return;
+        writeTestResultIfPermitted();
+    }
+
+    void writeTestResultIfPermitted() {
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
+        } else {
+            // Permission has already been granted
+            writeTestResult();
+        }
     }
 
     @Override
-    public void notificationTestShortUpdate(int testId, String message) {
-        mTextViewShortUpdate.setText(message);
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions,
+                                           int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    writeTestResult();
+                } else {
+                    showToast("Writing external storage needed for test results.");
+                }
+                return;
+            }
+        }
+    }
+
+    private void writeTestInBackground() {
+        new Thread() {
+            public void run() {
+                writeTestResult();
+            }
+        }.start();
+    }
+
+    // Run this in a background thread.
+    private void writeTestResult() {
+        File resultFile = new File(mResultFileName);
+        String resultString = mTextViewOutput.getText().toString();
+        Writer writer = null;
+        try {
+            writer = new OutputStreamWriter(new FileOutputStream(resultFile));
+            writer.write(resultString);
+        } catch (
+                IOException e) {
+            e.printStackTrace();
+            showErrorToast(" writing result file. " + e.getMessage());
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        mTestRunningByIntent = false;
+        mResultFileName = null;
     }
 
     public void onSettingsClicked(View view) {
@@ -223,7 +422,6 @@ public class MainActivity extends BaseActivity {
     }
 
     public void onWindowFocusChanged(boolean hasFocus){
-
         if (!hasFocus && getApp().getRunning()){
             mTextViewOutput.append("" +
                     "WARNING: Window lost focus during test - may affect test result.\n");
@@ -231,13 +429,34 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    public void onPause(){
+    @Override
+    public void onResume(){
+        super.onResume();
+        processBundleFromIntent();
+    }
 
+    @Override
+    public void onPause(){
         if (getApp().getRunning()){
             mTextViewOutput.append(
                     "WARNING: Activity paused during test - may affect test result.\n");
             mKeyGenerator.stop();
         }
         super.onPause();
+    }
+
+    protected void showErrorToast(String message) {
+        showToast("Error: " + message);
+    }
+
+    protected void showToast(final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this,
+                        message,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

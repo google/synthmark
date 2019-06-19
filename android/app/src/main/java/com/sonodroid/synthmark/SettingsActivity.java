@@ -161,7 +161,6 @@ public class SettingsActivity extends BaseActivity {
             LinearLayout layoutBottom = new LinearLayout(this);
             layoutBottom.setOrientation(LinearLayout.HORIZONTAL);
 
-
             TextView tvTitle = new TextView(this);
             tvTitle.setText(desc);
 
