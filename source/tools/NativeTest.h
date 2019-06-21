@@ -179,6 +179,7 @@ public:
 
     int run(ITestHarness &harness, VirtualAudioSink &audioSink) {
 
+        mResult.reset();
         audioSink.setHostThread(mHostThreadFactory->createThread(
                 HostThreadFactory::ThreadType::Audio));
 

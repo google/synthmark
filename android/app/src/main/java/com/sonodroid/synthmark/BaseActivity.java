@@ -40,12 +40,14 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        log("onPause() UNregister Broadcast receiver for notification");
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        log("onResume() Register Broadcast receiver for notification");
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver,
                 new IntentFilter(AppObject.INTENT_NOTIFICATION));
     }
@@ -73,26 +75,26 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void notificationTestStarted(int testId) {
-        log("notificationTestStarted " + testId);
-
+        log("notificationTestStarted(" + testId + ")");
     }
 
     public void notificationTestUpdate(int testId, String message) {
-        log("notificationTestUpdate " + testId + " m: " + message);
+        log("notificationTestUpdate(" + testId + ",...)");
     }
 
     public void notificationTestCompleted(int testId) {
-        log("notificationTestCompleted " + testId);
+        log("notificationTestCompleted(" + testId + ")");
     }
 
     public void notificationTestShortUpdate(int testId, String message) {
-        log("notificationTestShortUpdate " + testId + " m: " + message);
+        // log("notificationTestShortUpdate(" + testId + ", " + message + ")");
     }
 
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int type = intent.getIntExtra(AppObject.INTENT_NOTIFICATION_TYPE, -1);
+            log("BroadcastReceiver: type = " + type);
 
             switch(type) {
                 case AppObject.NOTIFICATION_TEST_STARTED: {

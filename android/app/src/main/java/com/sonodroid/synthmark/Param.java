@@ -67,6 +67,10 @@ public class Param {
         return getApp().getParamListDefaultIndex(mTestId, mParamId);
     }
 
+    public String getName() {
+        return getApp().getParamName(mTestId, mParamId);
+    }
+
     public String getParamNameFromList(int index) {
         return getApp().getParamListNameFromIndex(mTestId, mParamId, index);
     }
@@ -134,6 +138,14 @@ public class Param {
             getApp().setParamIntValue(mTestId, mParamId, value.intValue());
         } else if (mType == AppObject.PARAM_FLOAT) {
             getApp().setParamFloatValue(mTestId, mParamId, value.floatValue());
+        }
+    }
+
+    public void setValueByObject(Object value) {
+        if (mType == AppObject.PARAM_INTEGER) {
+            getApp().setParamIntValue(mTestId, mParamId, ((Integer)value).intValue());
+        } else if (mType == AppObject.PARAM_FLOAT) {
+            getApp().setParamFloatValue(mTestId, mParamId, ((Float)value).floatValue());
         }
     }
 

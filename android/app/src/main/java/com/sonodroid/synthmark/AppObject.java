@@ -36,7 +36,7 @@ import java.util.List;
 public class AppObject extends Application {
     public final static String TAG = "SynthMark";
 
-    private final static int PROGRESS_REFRESH_RATE_MS = 300;
+    private final static int PROGRESS_REFRESH_RATE_MS = 200;
     private final static int PROGRESS_WARM_UP_WAIT = 300;
 
     private final static int NATIVETEST_STATUS_RUNNING = 2; //from NativeTest.h
@@ -212,6 +212,10 @@ public class AppObject extends Application {
         return paramList;
     }
 
+    List<Param> getParamsForTest() {
+        return getParamsForTest(getCurrentTestId());
+    }
+
     @Override
     protected void finalize() throws Throwable {
         testClose(mNativeTest);
@@ -263,8 +267,11 @@ public class AppObject extends Application {
             info.append("\n");
         }
 
-        String boostInfo = readFile(SCHEDTUNE_BOOST_FILE_NAME);
-        info.append("schedtune.boost: " + boostInfo.trim() + "\n");
+        String boostInfo = readFile(SCHEDTUNE_BOOST_FILE_NAME).trim();
+        if (boostInfo.length() == 0) {
+            boostInfo = "----";
+        }
+        info.append("schedtune.boost: " + boostInfo + "\n");
 
         return info.toString();
     }
@@ -320,17 +327,20 @@ public class AppObject extends Application {
             while (running) {
                 if (mNativeTest != 0) {
                     updateProgressBar();
-                    updateOutputReport();
 
                     int status = testStatus(mNativeTest);
                     if (status != NATIVETEST_STATUS_RUNNING) {
                         running = false;
                     }
+
                     try {
                         Thread.sleep(PROGRESS_REFRESH_RATE_MS);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+
+
+                    updateOutputReport();
                 } else {
                     break;
                 }
@@ -358,6 +368,7 @@ public class AppObject extends Application {
         protected void onPostExecute(String result) {
             log("TestProgressTask.onPostExecute result: " + result);
             postNotificationTestShortUpdate(mTestId, result);
+            postNotificationTestCompleted(mTestId);
         }
     }
 
@@ -373,7 +384,7 @@ public class AppObject extends Application {
             log("Started running test... ["+mTestId +"]");
             testInit(mNativeTest, mTestId);
 
-            postNotificationTestUpdate(mTestId, "Test inited");
+            postNotificationTestUpdate(mTestId, "Test initialized\n");
             testRun(mNativeTest);
             setRunning(false);
 
@@ -381,8 +392,7 @@ public class AppObject extends Application {
         }
 
         protected void onPostExecute(String result) {
-            log("TestTack.onPostExecute result: " + result);
-            postNotificationTestCompleted(mTestId);
+            log("TestTask.onPostExecute result: " + result);
             setRunning(false);
         }
     }
@@ -425,7 +435,8 @@ public class AppObject extends Application {
     }
 
     public void postNotificationTestUpdate(int testId, String message) {
-        log("test update");
+        int end = Math.min(message.length(), 40);
+        log("Post test update: #" + message.length() + ", " + message.substring(0, end));
         Intent intent = new Intent(AppObject.INTENT_NOTIFICATION);
         intent.putExtra(INTENT_NOTIFICATION_TYPE, NOTIFICATION_TEST_UPDATE);
         intent.putExtra(NOTIFICATION_KEY_TEST_ID, testId);
@@ -434,7 +445,7 @@ public class AppObject extends Application {
     }
 
     public void postNotificationTestCompleted(int testId) {
-        log("Test ended");
+        log("Post test completed");
         Intent intent = new Intent(AppObject.INTENT_NOTIFICATION);
         intent.putExtra(INTENT_NOTIFICATION_TYPE, NOTIFICATION_TEST_COMPLETED);
         intent.putExtra(NOTIFICATION_KEY_TEST_ID, testId);
