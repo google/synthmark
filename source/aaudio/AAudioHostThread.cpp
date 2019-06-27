@@ -42,6 +42,11 @@ static aaudio_data_callback_result_t sm_aaudio_data_callback(
     AAudioHostThread *hostThread = (AAudioHostThread *) userData;
     hostThread->callHostThread();
     // Note: returning STOP caused an intermittent hang in AAudioStream_close()!
+    int32_t numChannels = AAudioStream_getChannelCount(stream);
+    if (numChannels > 0) {
+        size_t numBytes = sizeof(int16_t) * numChannels * numFrames;
+        memset(audioData, 0, numBytes); // play silence to prevent pop
+    }
     return AAUDIO_CALLBACK_RESULT_CONTINUE;
 }
 
@@ -62,6 +67,7 @@ int AAudioHostThread::start(host_thread_proc_t proc, void *arg) {
     // Request stream properties.
     AAudioStreamBuilder_setDataCallback(aaudioBuilder, sm_aaudio_data_callback, this);
     AAudioStreamBuilder_setPerformanceMode(aaudioBuilder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+    AAudioStreamBuilder_setFormat(aaudioBuilder, AAUDIO_FORMAT_PCM_I16);
 
     // Create an AAudioStream using the Builder.
     result = AAudioStreamBuilder_openStream(aaudioBuilder, &mAaudioStream);
