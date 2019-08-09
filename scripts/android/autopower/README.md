@@ -1,3 +1,5 @@
+# How to Measure Frequency vs Current
+
 The "autopower.py" script measures the current used by an Android device
 while running SynthMark.
 
