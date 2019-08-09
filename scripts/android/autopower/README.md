@@ -4,13 +4,12 @@ while running SynthMark.
 ### Requirements
 * phone with battery replacement cables
 * Monsoon power monitor device to measure the current
-* `monsoon.py` script. This script also requires `absl-py` and `pyserial`
-The monsoon script does not live in this repository currently due to licensing,
-acquire internally and place in the current directory.
+* The `monsoon.py` script requires `absl-py` and `pyserial`
+
 ### Setup
 Plug the battery replacement leads into the correct power supply ports of the
 monsoon. Then, plug the phone into the USB-A port on the front of the device,
-and connect the USB B port on the front to the system runnning the script. This
+and connect the USB B port on the front to the system running the script. This
 will allow the system running the script to control the device over USB via adb,
 while passing through the power monitor will prevent power leakage from the USB
 port to retain accurate readings. Connect the power at the back of the monsoon
