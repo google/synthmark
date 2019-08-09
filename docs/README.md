@@ -12,3 +12,4 @@ SynthMark can be used either as an Android App or as a command line program.
 * [How to Build](HowToBuild.md)
 * [How to Run from an Android Intent](HowToRunAndroidIntent.md)
 * [How to Run from Command Line](HowToRunCommand.md)
+* [How to Measure Frequency vs Current](/scripts/android/autopower/README.md) using a Monsoon meter
