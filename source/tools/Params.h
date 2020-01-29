@@ -216,8 +216,11 @@ public:
     }
 
 protected:
-    ParamBase(const std::string &name, const std::string &description, int type, int holdType) :
-    mName(name), mDescription(description), mType(type), mHoldType(holdType) {
+    ParamBase(const std::string &name, const std::string &description, int type, int holdType)
+            : mDescription(description)
+            , mName(name)
+            , mType(type)
+            , mHoldType(holdType) {
     }
 
 private:

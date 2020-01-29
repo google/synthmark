@@ -35,7 +35,17 @@
 // #define SYNTHMARK_MINOR_VERSION        18  /* Add "-tc", ClockRamp test. Add harness to Android app. */
 // #define SYNTHMARK_MINOR_VERSION        19  /* Add -w1 for SCHED_DEADLINE. */
 // #define SYNTHMARK_MINOR_VERSION        20  /* Optimize search for LatencyMark. */
-#define SYNTHMARK_MINOR_VERSION        21  /* Fix intermittent hang on STOP */
+// #define SYNTHMARK_MINOR_VERSION        21  /* Fix intermittent hang on STOP */
+#define SYNTHMARK_MINOR_VERSION        22  /* Add CDD Summary to Auto Test */
+
+
+#define SYNTHMARK_STRINGIFY(x) #x
+#define SYNTHMARK_TOSTRING(x) SYNTHMARK_STRINGIFY(x)
+
+// Type: String literal. See below for description.
+#define SYNTHMARK_VERSION_TEXT \
+        SYNTHMARK_TOSTRING(SYNTHMARK_MAJOR_VERSION) "." \
+        SYNTHMARK_TOSTRING(SYNTHMARK_MINOR_VERSION)
 
 // This may be increased without invalidating the benchmark.
 constexpr int kSynthmarkMaxVoices   = 512;
@@ -56,9 +66,11 @@ constexpr int64_t SYNTHMARK_NANOS_PER_SECOND       = 1000 * 1000 * 1000;
 
 typedef float synth_float_t;
 
-#define TEXT_CSV_BEGIN      "CSV_BEGIN"
-#define TEXT_CSV_END        "CSV_END"
-#define TEXT_RESULTS_BEGIN  "RESULTS_BEGIN"
-#define TEXT_RESULTS_END    "RESULTS_END"
+#define TEXT_CSV_BEGIN         "CSV_BEGIN"
+#define TEXT_CSV_END           "CSV_END"
+#define TEXT_RESULTS_BEGIN     "RESULTS_BEGIN"
+#define TEXT_RESULTS_END       "RESULTS_END"
+#define TEXT_CDD_SUMMARY_BEGIN "CDD_SUMMARY_BEGIN"
+#define TEXT_CDD_SUMMARY_END   "CDD_SUMMARY_END"
 
 #endif // SYNTHMARK_SYNTHMARK_H

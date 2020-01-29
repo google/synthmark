@@ -27,9 +27,6 @@
 #include "tools/VoiceMarkHarness.h"
 #include "TestHarnessParameters.h"
 
-constexpr double kHighLowThreshold = 0.1; // Difference between CPUs to consider them BIG-little.
-constexpr double kMaxUtilization = 0.9; // Maximum load that we will push the CPU to.
-constexpr int    kMaxUtilizationPercent = (int)(kMaxUtilization * 100); // as a percentage
 
 /**
  * Run an automated test, analyze the results and print a report.
@@ -64,25 +61,83 @@ public:
         return "Automated Test Suite";
     }
 
+    double framesToMillis(double frames) {
+        return frames * SYNTHMARK_MILLIS_PER_SECOND / getSampleRate();
+    }
+
     int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
+        mLogTool.log("\nSynthMark Version " SYNTHMARK_VERSION_TEXT "\n");
+
         mLogTool.log("\n-------- CPU Performance ------------\n");
         int32_t err = measureLowHighCpuPerformance(sampleRate, framesPerBurst, 10);
         if (err) return err;
 
         mLogTool.log("\n-------- LATENCY ------------\n");
         // Test both sizes of CPU if needed. BIG or little
+        LatencyResult result;
+
+        double latencyMarkFixedLittleFrames = 999999.0; // prevent compiler warnings
+        double latencyMarkDynamicLittleFrames = 999999.0; // prevent compiler warnings
+
         if (mHaveBigLittle) {
-            err = measureLatency(sampleRate, framesPerBurst, numSeconds,
+            result = measureLatency(sampleRate, framesPerBurst, numSeconds,
                                  mLittleCpu, mVoiceMarkLittle);
-            if (err) return err;
+            if (result.err) return result.err;
+            latencyMarkFixedLittleFrames = result.lightLatencyFrames;
+            latencyMarkDynamicLittleFrames = result.mixedLatencyFrames;
+
         }
-        err = measureLatency(sampleRate, framesPerBurst, numSeconds,
+        result = measureLatency(sampleRate, framesPerBurst, numSeconds,
                              mBigCpu, mVoiceMarkBig);
+        err = result.err;
+        // If we don't have a LITTLE CPU then use the BIG CPU.
+        if (!mHaveBigLittle) {
+            latencyMarkFixedLittleFrames = result.lightLatencyFrames;
+            latencyMarkDynamicLittleFrames = result.mixedLatencyFrames;
+        }
+
+        printSummaryCDD(latencyMarkFixedLittleFrames, latencyMarkDynamicLittleFrames);
+
         return err;
     }
 
 
 private:
+
+    struct LatencyResult {
+        int err = 0;
+        double lightLatencyFrames = 999999;
+        double heavyLatencyFrames = 999999;
+        double mixedLatencyFrames = 999999;
+    };
+
+// Key text for CDD report.
+#define kKeyVoiceMark90          "voicemark.90"
+#define kKeyLatencyFixedLittle   "latencymark.fixed.little"
+#define kKeyLatencyDynamicLittle "latencymark.dynamic.little"
+
+    static constexpr double kHighLowThreshold = 0.1; // Difference between CPUs to consider them BIG-little.
+    static constexpr double kMaxUtilization = 0.9; // Maximum load that we will push the CPU to.
+    static constexpr int    kMaxUtilizationPercent = (int)(kMaxUtilization * 100); // as a percentage
+
+    // These names must match the names in the Android CDD.
+    void printSummaryCDD(double latencyMarkFixedLittleFrames,
+                         double latencyMarkDynamicLittleFrames) {
+        std::stringstream resultMessage;
+        resultMessage << TEXT_CDD_SUMMARY_BEGIN << " -------" << std::endl;
+
+        resultMessage << kKeyVoiceMark90 << " = " << mVoiceMarkBig << std::endl;
+
+        int latencyMillis = (int)framesToMillis(latencyMarkFixedLittleFrames);
+        resultMessage << kKeyLatencyFixedLittle << " = " << latencyMillis << std::endl;
+
+        latencyMillis = (int)framesToMillis(latencyMarkDynamicLittleFrames);
+        resultMessage << kKeyLatencyDynamicLittle << " = " << latencyMillis << std::endl;
+
+        resultMessage << TEXT_CDD_SUMMARY_END << " ---------" << std::endl;
+        resultMessage << std::endl;
+        mResult->appendMessage(resultMessage.str());
+    }
 
     virtual int32_t measureLowHighCpuPerformance(int32_t sampleRate,
                                                  int32_t framesPerBurst,
@@ -194,7 +249,7 @@ private:
         std::stringstream suffix;
         suffix << "." << cpu << "." << numVoices << "." << numVoicesHigh;
         resultMessage << "audio.latency.frames" << suffix.str() << " = " << latencyFrames << std::endl;
-        double latencyMillis = latencyFrames * SYNTHMARK_MILLIS_PER_SECOND / sampleRate;
+        double latencyMillis = framesToMillis(latencyFrames);
         resultMessage << "audio.latency.msec" << suffix.str() << " = " << latencyMillis << std::endl;
         mResult->appendMessage(resultMessage.str());
         *latencyPtr = latencyFrames;
@@ -209,43 +264,41 @@ private:
         else return "cpux";
     }
 
-    int32_t measureLatency(int32_t sampleRate,
+    LatencyResult measureLatency(int32_t sampleRate,
                            int32_t framesPerBurst,
                            int32_t numSeconds,
                            int cpu,
                            int32_t numVoicesMax) {
         std::stringstream message;
+        LatencyResult result;
 
         mLogTool.log("\n---- Measure latency for CPU #%d ----\n", cpu);
         int32_t voiceMarkLow = 1 * numVoicesMax / 4;
         int32_t voiceMarkHigh = 3 * numVoicesMax / 4;
 
         // Test latency with a low number of voices.
-        double lightLatency;
-        int32_t err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                         cpu, voiceMarkLow, voiceMarkLow, &lightLatency);
-        if (err) return err;
+        result.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
+                                         cpu, voiceMarkLow, voiceMarkLow, &result.lightLatencyFrames);
+        if (result.err) return result;
         message << "# Latency in frames with a steady light CPU load.\n";
-        message << "latency.light." << cpuToBigLittle(cpu) << " = " << lightLatency << std::endl;
+        message << "latency.light." << cpuToBigLittle(cpu) << " = " << result.lightLatencyFrames << std::endl;
 
         // Test latency with a high number of voices.
-        double heavyLatency;
-        err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                 cpu, voiceMarkHigh, voiceMarkHigh, &heavyLatency);
-        if (err) return err;
+        result.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
+                                 cpu, voiceMarkHigh, voiceMarkHigh, &result.heavyLatencyFrames);
+        if (result.err) return result;
         message << "# Latency in frames with a steady heavy CPU load.\n";
-        message << "latency.heavy." << cpuToBigLittle(cpu) << " = " << heavyLatency << std::endl;
+        message << "latency.heavy." << cpuToBigLittle(cpu) << " = " << result.heavyLatencyFrames << std::endl;
 
         // Alternate low to high to stress the CPU governor.
-        double mixedLatency;
-        err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                 cpu, voiceMarkLow, voiceMarkHigh, &mixedLatency);
-        if (err) return err;
+        result.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
+                                 cpu, voiceMarkLow, voiceMarkHigh, &result.mixedLatencyFrames);
+        if (result.err) return result;
         message << "# Latency in frames when alternating between light and heavy CPU load.\n";
-        message << "latency.mixed." << cpuToBigLittle(cpu) << " = " << mixedLatency << std::endl;
+        message << "latency.mixed." << cpuToBigLittle(cpu) << " = " << result.mixedLatencyFrames << std::endl;
 
         // Analysis
-        double mixedOverHigh = mixedLatency / heavyLatency;
+        double mixedOverHigh = result.mixedLatencyFrames / result.heavyLatencyFrames;
         message << "latency.mixed.over.heavy." << cpuToBigLittle(cpu)
                 << " = " << mixedOverHigh << std::endl;
         if (mixedOverHigh > 1.1) {
@@ -256,13 +309,13 @@ private:
         }
         message << std::endl;
         mResult->appendMessage(message.str());
-        return err;
+        return result;
     }
 
 private:
 
     int              mBigCpu = 0;  // A CPU index in fast half of CPUs available.
-    double           mVoiceMarkBig = 0.0;
+    double           mVoiceMarkBig = 0.0;  // for CDD voicemark.90
 
     int              mLittleCpu = 0; // A CPU index in slow half of CPUs available.
     double           mVoiceMarkLittle = 0.0;

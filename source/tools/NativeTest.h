@@ -57,12 +57,12 @@
 #define DEFAULT_CORE_AFFINITIES_LABELS {"UNSPECIFIED", "0", "1", "2", "3", "4", "5", "6", "7"}
 
 typedef enum {
-    NATIVETEST_ID_VOICEMARK       = 0,
-    NATIVETEST_ID_LATENCYMARK     = 1,
+    NATIVETEST_ID_AUTOMATED       = 0,
+    NATIVETEST_ID_CLOCKRAMP       = 1,
     NATIVETEST_ID_JITTERMARK      = 2,
-    NATIVETEST_ID_UTILIZATIONMARK = 3,
-    NATIVETEST_ID_CLOCKRAMP       = 4,
-    NATIVETEST_ID_AUTOMATED       = 5,
+    NATIVETEST_ID_LATENCYMARK     = 3,
+    NATIVETEST_ID_UTILIZATIONMARK = 4,
+    NATIVETEST_ID_VOICEMARK       = 5,
 
     NATIVETEST_ID_COUNT           = 6,
 } native_test_t;
@@ -124,9 +124,9 @@ public:
 
 protected:
     int mCurrentStatus;
-    LogTool    &mLogTool;
     std::string mTitle;
     ParamGroup  mParams;
+    LogTool    &mLogTool;
     HostThreadFactory *mHostThreadFactory = NULL;
 };
 
@@ -177,15 +177,15 @@ public:
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
-    int run(ITestHarness &harness, VirtualAudioSink &audioSink) {
+    int runTestHarness(ITestHarness &harness, VirtualAudioSink &audioSink) {
 
         mResult.reset();
         audioSink.setHostThread(mHostThreadFactory->createThread(
                 HostThreadFactory::ThreadType::Audio));
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
-        int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME); // IGNORED!
-        int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER); // IGNORED!
+        // int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME); // IGNORED!
+        // int32_t framesPerRender = mParams.getValueFromInt(PARAMS_FRAMES_PER_RENDER); // IGNORED!
         int32_t framesPerBurst = mParams.getValueFromInt(PARAMS_FRAMES_PER_BURST);
 
         int32_t noteOnDelay = mParams.getValueFromInt(PARAMS_NOTE_ON_DELAY);
@@ -252,7 +252,7 @@ public:
         float targetCpuLoad = mParams.getValueFromFloat(PARAMS_TARGET_CPU_LOAD);
         harness.setTargetCpuLoad(targetCpuLoad);
 
-        return CommonNativeTestUnit::run(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
     }
 
 protected:
@@ -286,7 +286,7 @@ public:
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
         harness.setNumVoices(numVoices);
 
-        return CommonNativeTestUnit::run(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
     }
 
 protected:
@@ -321,7 +321,7 @@ public:
         return err;
     }
 
-    int run(TestHarnessBase &harness, VirtualAudioSink &audioSink) {
+    int runTestHarness(TestHarnessBase &harness, VirtualAudioSink &audioSink) {
 
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
         harness.setNumVoices(numVoices);
@@ -329,7 +329,7 @@ public:
         int32_t numVoicesHigh = mParams.getValueFromInt(PARAMS_NUMB_VOICES_HIGH);
         harness.setNumVoicesHigh(numVoicesHigh);
 
-        return CommonNativeTestUnit::run(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
     }
 
 protected:
@@ -346,7 +346,7 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         LatencyMarkHarness harness(&audioSink, &mResult, mLogTool);
 
-        return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
+        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness, audioSink);
     }
 protected:
 };
@@ -362,7 +362,7 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         JitterMarkHarness harness(&audioSink, &mResult, mLogTool);
 
-        return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
+        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness, audioSink);
     }
 protected:
 };
@@ -378,7 +378,7 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         ClockRampHarness harness(&audioSink, &mResult, mLogTool);
 
-        return ChangingVoiceTestUnit::run((TestHarnessBase &) harness, audioSink);
+        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness, audioSink);
     }
 protected:
 };
@@ -401,7 +401,7 @@ public:
         VirtualAudioSink audioSink(mLogTool);
         AutomatedTestSuite harness(&audioSink, &mResult, mLogTool);
 
-        return CommonNativeTestUnit::run(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
     }
 
 protected:
