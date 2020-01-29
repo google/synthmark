@@ -76,8 +76,8 @@ public:
         // Test both sizes of CPU if needed. BIG or little
         LatencyResult result;
 
-        double latencyMarkFixedLittleFrames;
-        double latencyMarkDynamicLittleFrames;
+        double latencyMarkFixedLittleFrames = 999999.0; // prevent compiler warnings
+        double latencyMarkDynamicLittleFrames = 999999.0; // prevent compiler warnings
 
         if (mHaveBigLittle) {
             result = measureLatency(sampleRate, framesPerBurst, numSeconds,
