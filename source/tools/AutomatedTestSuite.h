@@ -111,10 +111,10 @@ private:
         double mixedLatencyFrames = 999999;
     };
 
-    // Key text for CDD report.
-    static constexpr char *kKeyVoiceMark90 = "voicemark.90";
-    static constexpr char *kKeyLatencyFixedLittle = "latencymark.fixed.little";
-    static constexpr char *kKeyLatencyDynamicLittle = "latencymark.dynamic.little";
+// Key text for CDD report.
+#define kKeyVoiceMark90          "voicemark.90"
+#define kKeyLatencyFixedLittle   "latencymark.fixed.little"
+#define kKeyLatencyDynamicLittle "latencymark.dynamic.little"
 
     static constexpr double kHighLowThreshold = 0.1; // Difference between CPUs to consider them BIG-little.
     static constexpr double kMaxUtilization = 0.9; // Maximum load that we will push the CPU to.
