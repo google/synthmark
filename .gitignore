@@ -6,4 +6,5 @@ synthmark.app
 .externalNativeBuild/
 .idea
 build
+.cxx/
 
