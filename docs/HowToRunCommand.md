@@ -15,7 +15,8 @@ If you run with the -h option you will get some “help” information:
     SynthMark V1.16
     SynthMark version 1.16
     synthmark -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate} -s{seconds} -b{burstSize} -c{cpuAffinity}
-        -t{test}, v=voice, l=latency, j=jitter, u=utilization, s=series, default is v
+        -t{test}, v=voice, l=latency, j=jitter, u=utilization, s=series, 
+                  s=series_util, c=clock_ramp, a=automated, default is v
         -n{numVoices} to render, default = 8
         -N{numVoices} to render for toggling high load, LatencyMark only
         -m{voicesMode} algorithm to choose the number of voices in the range
