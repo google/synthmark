@@ -1,4 +1,4 @@
-[Docs home](docs/README.md)
+[Docs home](README.md)
 
 # How to Run for Android CDD
 
