@@ -212,11 +212,11 @@ private:
                         mLogTool.log("requestDLBandwidth(%lf)\n", initial_bw);
                         fflush(stdout);
                     } else {
-                        mLogTool.log("Error setting SCHED_DEADLINE\n");
+                        mLogTool.log("ERROR setting SCHED_DEADLINE\n");
                         return -1;
                     }
                     if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
-                        mLogTool.log("Error setting affinity for SCHED_DEADLINE task\n");
+                        mLogTool.log("ERROR setting affinity for SCHED_DEADLINE task\n");
                         return -1;
                     }
                 } else {
@@ -227,7 +227,7 @@ private:
                     if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
                         err = mThread->setCpuAffinity(getRequestedCpu());
                         if (err) {
-                            result = err;
+                            mLogTool.log("WARNING setCpuAffinity() returned %d\n", err);
                         } else {
                             setActualCpu(getRequestedCpu());
                         }
@@ -252,6 +252,7 @@ private:
                 }
             }
         }
+
         mCallbackLoopResult = result;
         return result;
     }

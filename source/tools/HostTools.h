@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
+#include <cerrno>
 #include <memory.h>
 #include <pthread.h>
 #include <sched.h>
@@ -143,7 +144,7 @@ public:
      *
      * WARNING: This call may not be permitted unless you are running as root!
      *
-     * @return 0 on success, -1 on error
+     * @return 0 on success or a negative errno
      */
     virtual int promote(int priority) {
 #if defined(__APPLE__)
@@ -152,22 +153,26 @@ public:
         struct sched_param sp;
         memset(&sp, 0, sizeof(sp));
         sp.sched_priority = priority;
-        int result = sched_setscheduler((pid_t) 0, SCHED_FIFO, &sp);
-        return result;
+        int err = sched_setscheduler((pid_t) 0, SCHED_FIFO, &sp);
+        return err == 0 ? 0 : -errno;
 #endif
     }
 
-    virtual int setCpuAffinity(int cpuIndex){
+    /**
+     * @param cpuIndex
+     * @return 0 on success or a negative errno
+     */
+    virtual int setCpuAffinity(int cpuIndex) {
 #if defined(__APPLE__)
         return -1;
 #else
         cpu_set_t cpu_set;
         CPU_ZERO(&cpu_set);
         CPU_SET(cpuIndex, &cpu_set);
-        return sched_setaffinity((pid_t) 0, sizeof(cpu_set_t), &cpu_set);
+        int err = sched_setaffinity((pid_t) 0, sizeof(cpu_set_t), &cpu_set);
+        return err == 0 ? 0 : -errno;
 #endif
     }
-
 
     static int getCpu() {
 #if defined(__APPLE__)
