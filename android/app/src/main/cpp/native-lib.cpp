@@ -23,38 +23,23 @@
 
 #include "tools/NativeTest.h"
 
-#include "OpenSLHostThread.h"
-
-#define USE_OPENSL_THREAD 1
-
-#if USE_OPENSL_THREAD
-// We need OpenSL to give us a thread with SCHED_FIFO.
-// We use a factory so that we can inject OpenSL code into portable SynthMark code.
-OpenSLHostThreadFactory sOpenSLHostThreadFactory;
-#endif /* USE_OPENSL_THREAD */
-
 JNIEXPORT jlong JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1create(
     JNIEnv* env,
     jobject obj) {
 
     NativeTest * pNativeTest = new NativeTest();
-    return (long) pNativeTest;
+    return (jlong) pNativeTest;
 }
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_testInit(
-    JNIEnv* env,
-    jobject obj,
-    jlong nativeTest,
-    jint testId) {
-
+        JNIEnv* env,
+        jobject obj,
+        jlong nativeTest,
+        jint testId) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
     if (pNativeTest != NULL) {
-#if USE_OPENSL_THREAD
-        pNativeTest->setHostThreadFactory(&sOpenSLHostThreadFactory);
-#endif /* USE_OPENSL_THREAD */
         return pNativeTest->init(testId);
     }
     return NATIVETEST_ERROR;
@@ -62,11 +47,10 @@ Java_com_sonodroid_synthmark_AppObject_testInit(
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_testClose(
-    JNIEnv* env __unused,
-    jobject obj __unused,
-    jlong nativeTest) {
+        JNIEnv* env __unused,
+        jobject obj __unused,
+        jlong nativeTest) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
     if (pNativeTest != NULL) {
         int status = pNativeTest->closeTest();
         delete(pNativeTest);
@@ -77,12 +61,10 @@ Java_com_sonodroid_synthmark_AppObject_testClose(
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_testRun(
-    JNIEnv* env __unused,
-    jobject obj __unused,
-    jlong nativeTest) {
-
+        JNIEnv* env __unused,
+        jobject obj __unused,
+        jlong nativeTest) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
     if (pNativeTest != NULL) {
         return pNativeTest->run();
     }
@@ -91,11 +73,10 @@ Java_com_sonodroid_synthmark_AppObject_testRun(
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_testProgress(
-    JNIEnv* env __unused,
-    jobject obj __unused,
-    jlong nativeTest) {
+        JNIEnv* env __unused,
+        jobject obj __unused,
+        jlong nativeTest) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
     if (pNativeTest != NULL) {
         return pNativeTest->getProgress();
     }
@@ -104,11 +85,10 @@ Java_com_sonodroid_synthmark_AppObject_testProgress(
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_testStatus(
-    JNIEnv* env __unused,
-    jobject obj __unused,
-    jlong nativeTest) {
+        JNIEnv* env __unused,
+        jobject obj __unused,
+        jlong nativeTest) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
     if (pNativeTest != NULL) {
         return pNativeTest->getStatus();
     }
@@ -129,9 +109,9 @@ Java_com_sonodroid_synthmark_AppObject_testHasLogs(
 
 JNIEXPORT jstring JNICALL
 Java_com_sonodroid_synthmark_AppObject_testReadLog(
-    JNIEnv* env,
-    jobject obj __unused,
-    jlong nativeTest) {
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
     if (pNativeTest != NULL) {
         std::string log = pNativeTest->readLog();
@@ -140,47 +120,39 @@ Java_com_sonodroid_synthmark_AppObject_testReadLog(
     return env->NewStringUTF("[native closed]");
 }
 
-
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1getTestCount(
-    JNIEnv* env,
-    jobject obj __unused,
-    jlong nativeTest) {
-
-    int count = 0;
-
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
+    int count = 0;
     if (pNativeTest != NULL) {
         count = pNativeTest->getTestCount();
     }
-
     return count;
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1getTestName(
-    JNIEnv* env,
-    jobject obj __unused,
-    jlong nativeTest,
-    jint testId) {
-
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId) {
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
-
     if (pNativeTest != NULL) {
         std::string name = pNativeTest->getTestName(testId);;
         return env->NewStringUTF(name.c_str());
     }
-
     return NULL;
 }
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1getParamCount(
-    JNIEnv* env,
-    jobject obj __unused,
-    jlong nativeTest,
-    jint testId) {
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId) {
     int count = 0;
     NativeTest * pNativeTest = (NativeTest*) (size_t) nativeTest;
     if (pNativeTest != NULL) {
@@ -209,12 +181,11 @@ ParamBase * helperGetParamBase(NativeTest *pNativeTest, int testId, int paramInd
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1getParamType(
-    JNIEnv* env,
-    jobject obj __unused,
-    jlong nativeTest,
-    jint testId,
-    jint paramIndex) {
-
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex) {
     ParamBase * pBase = helperGetParamBase((NativeTest*) (size_t) nativeTest, testId, paramIndex);
     if (pBase != NULL) {
         return pBase->getType();
@@ -224,11 +195,11 @@ Java_com_sonodroid_synthmark_AppObject_native_1getParamType(
 
 JNIEXPORT jint JNICALL
 Java_com_sonodroid_synthmark_AppObject_native_1getParamHoldType(
-    JNIEnv* env,
-    jobject obj __unused,
-    jlong nativeTest,
-    jint testId,
-    jint paramIndex) {
+        JNIEnv* env,
+        jobject obj __unused,
+        jlong nativeTest,
+        jint testId,
+        jint paramIndex) {
     ParamBase * pBase = helperGetParamBase((NativeTest*) (size_t) nativeTest, testId, paramIndex);
     if (pBase != NULL) {
         return pBase->getHoldType();
@@ -525,5 +496,4 @@ Java_com_sonodroid_synthmark_AppObject_native_1setParamFloatValue(
         return NATIVETEST_SUCCESS;
     }
     return NATIVETEST_ERROR;
-
 }
