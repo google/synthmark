@@ -217,6 +217,7 @@ private:
                     }
                     if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
                         mLogTool.log("ERROR setting affinity for SCHED_DEADLINE task\n");
+                        setActualCpu(SYNTHMARK_CPU_UNSPECIFIED);
                         return -1;
                     }
                 } else {
@@ -228,9 +229,12 @@ private:
                         err = mThread->setCpuAffinity(getRequestedCpu());
                         if (err) {
                             mLogTool.log("WARNING setCpuAffinity() returned %d\n", err);
+                            setActualCpu(SYNTHMARK_CPU_UNSPECIFIED);
                         } else {
                             setActualCpu(getRequestedCpu());
                         }
+                    } else {
+                        setActualCpu(SYNTHMARK_CPU_UNSPECIFIED);
                     }
                 }
             }
