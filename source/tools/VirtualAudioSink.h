@@ -28,7 +28,7 @@
 #include "SynthMark.h"
 #include "SynthMarkResult.h"
 
-constexpr int kMaxBufferCapacityInBursts = 128;
+constexpr int kMaxBufferCapacityInBursts = 512;
 
 // Use 2 for double buffered
 constexpr int kBufferSizeInBursts = 8;

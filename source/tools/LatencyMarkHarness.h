@@ -31,6 +31,7 @@
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
 
+#define BURSTS_OVER_RANGE 99999
 
 /**
  * Measure the wakeup time and render time for each wakeup period.
@@ -68,29 +69,42 @@ public:
         return "LatencyMark";
     }
 
-// Run the benchmark.
+    // Run the benchmark.
     int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
-        // int32_t sizeFrames = testSearchSeries();
+        std::stringstream resultMessage;
         if (mInitialBursts > 0) {
             resetLinearSearch();
         } else {
             resetBinarySearch();
         }
-        int32_t sizeFrames = searchForLowestLatency(sampleRate, framesPerBurst, numSeconds);
+        int32_t result = searchForLowestLatencyInBursts(sampleRate, framesPerBurst, numSeconds);
+        if (result < 0) {
+            resultMessage << "ERROR in latency search = " << result << std::endl;
+            mResult->appendMessage(resultMessage.str());
+            mResult->setResultCode(SYNTHMARK_RESULT_UNRECOVERABLE_ERROR);
+            mResult->setMeasurement(0);
+            return result;
+        } else if (result >= BURSTS_OVER_RANGE) {
+            resultMessage << "ERROR - latency was too high to measure" << std::endl;
+            mResult->appendMessage(resultMessage.str());
+            mResult->setResultCode(SYNTHMARK_RESULT_OUT_OF_RANGE);
+            mResult->setMeasurement(0);
+            return SYNTHMARK_RESULT_OUT_OF_RANGE;
+        }
 
+        int32_t latencyBursts = result;
+        int32_t sizeFrames = latencyBursts * framesPerBurst;
         double latencyMsec = 1000.0 * sizeFrames / getSampleRate();
 
-        std::stringstream resultMessage;
         resultMessage << "frames.per.burst     = " << getFramesPerBurst() << std::endl;
         resultMessage << "# Latency values apply only to the top level buffer." << std::endl;
-        resultMessage << "audio.latency.bursts = " << mLowestGoodBursts << std::endl;
+        resultMessage << "audio.latency.bursts = " << latencyBursts << std::endl;
         resultMessage << "audio.latency.frames = " << sizeFrames << std::endl;
         resultMessage << "audio.latency.msec   = " << latencyMsec << std::endl;
-
         mResult->appendMessage(resultMessage.str());
         mResult->setResultCode(SYNTHMARK_RESULT_SUCCESS);
         mResult->setMeasurement((double) sizeFrames);
-        return 0; // TODO?
+        return 0;
     }
 
     int32_t testSearchSeries() {
@@ -104,19 +118,26 @@ public:
         return 0;
     }
 
-    int32_t searchForLowestLatency(int32_t sampleRate, int32_t framesPerBurst, int32_t maxSeconds) {
+    /**
+     *
+     * @param sampleRate
+     * @param framesPerBurst
+     * @param maxSeconds
+     * @return latency in bursts or a negative error code or BURSTS_OVER_RANGE
+     */
+    int32_t searchForLowestLatencyInBursts(int32_t sampleRate, int32_t framesPerBurst, int32_t maxSeconds) {
         int32_t testCount = 1;
         resetBinarySearch();
-        int32_t bursts = getNextBurstsToTry(true); // assume zero latency glitches
+        int32_t bursts = getNextBurstsToTry(true); // assume glitches at zero latency
 
         while (bursts > 0) {
             int32_t numSeconds = (mState == STATE_VERIFY) ? maxSeconds : std::min(maxSeconds, 10);
-            mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d -----------\n",
+            mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d ----\n",
                           testCount++, numSeconds, bursts);
             fflush(stdout);
             int32_t err = measureOnce(sampleRate, framesPerBurst, numSeconds);
             if (err < 0) {
-                mLogTool.log("LatencyMark: %s returning err = %d -----------\n",  __func__, err);
+                mLogTool.log("LatencyMark: %s returning err = %d ----\n",  __func__, err);
                 return err;
             }
             bool glitched = (mAudioSink->getUnderrunCount() > 0);
@@ -134,7 +155,7 @@ public:
             }
         }
 
-        return mLowestGoodBursts * getFramesPerBurst();
+        return mLowestGoodBursts;
     }
 
     int32_t measureOnce(int32_t sampleRate,
@@ -174,7 +195,7 @@ public:
     void resetBinarySearch() {
         mCurrentBursts = 0;
         mHighestBadBursts = 0;
-        mLowestGoodBursts = 0;
+        mLowestGoodBursts = BURSTS_OVER_RANGE;
         mPowerOf2 = 1;
         mState = STATE_RAMP_UP;
     }

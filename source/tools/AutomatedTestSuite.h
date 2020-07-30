@@ -90,7 +90,7 @@ public:
         result = measureLatency(sampleRate, framesPerBurst, numSeconds,
                              mBigCpu, mVoiceMarkBig);
         err = result.err;
-        // If we don't have a LITTLE CPU then use the BIG CPU.
+        // If we don't have a LITTLE CPU then just use the BIG CPU.
         if (!mHaveBigLittle) {
             latencyMarkFixedLittleFrames = result.lightLatencyFrames;
             latencyMarkDynamicLittleFrames = result.mixedLatencyFrames;
@@ -129,10 +129,18 @@ private:
         resultMessage << kKeyVoiceMark90 << " = " << mVoiceMarkBig << std::endl;
 
         int latencyMillis = (int)framesToMillis(latencyMarkFixedLittleFrames);
-        resultMessage << kKeyLatencyFixedLittle << " = " << latencyMillis << std::endl;
+        if (latencyMillis <= 0) {
+            resultMessage << "# " << kKeyLatencyFixedLittle << " could not be measured!" << std::endl;
+        } else {
+            resultMessage << kKeyLatencyFixedLittle << " = " << latencyMillis << std::endl;
+        }
 
         latencyMillis = (int)framesToMillis(latencyMarkDynamicLittleFrames);
-        resultMessage << kKeyLatencyDynamicLittle << " = " << latencyMillis << std::endl;
+        if (latencyMillis <= 0) {
+            resultMessage << "# " << kKeyLatencyDynamicLittle << " could not be measured!" << std::endl;
+        } else {
+            resultMessage << kKeyLatencyDynamicLittle << " = " << latencyMillis << std::endl;
+        }
 
         resultMessage << TEXT_CDD_SUMMARY_END << " ---------" << std::endl;
         resultMessage << std::endl;
@@ -239,6 +247,7 @@ private:
                      cpu, numVoices, numVoicesHigh);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
         if (err) {
+            *latencyPtr = 0.0;
             delete harness;
             return err;
         }
