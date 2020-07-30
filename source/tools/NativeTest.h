@@ -53,9 +53,6 @@
 #define DEFAULT_TEST_TARGET_CPU_LOADS {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, \
     0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}
 
-#define DEFAULT_CORE_AFFINITIES {-1, 0, 1, 2, 3, 4, 5, 6, 7}
-#define DEFAULT_CORE_AFFINITIES_LABELS {"UNSPECIFIED", "0", "1", "2", "3", "4", "5", "6", "7"}
-
 typedef enum {
     NATIVETEST_ID_AUTOMATED       = 0,
     NATIVETEST_ID_CLOCKRAMP       = 1,
@@ -167,8 +164,16 @@ public:
         mParams.addParam(&paramNumSeconds);
 
 #ifndef __APPLE__
-        std::vector<int> vCoreAffinity = DEFAULT_CORE_AFFINITIES;
-        std::vector<std::string> vCoreAffinityLabels = DEFAULT_CORE_AFFINITIES_LABELS;
+        // Build Core Affinity slider dynamically based on number of CPUs.
+        int cpuCount = HostTools::getCpuCount();
+        std::vector<int> vCoreAffinity;
+        std::vector<std::string> vCoreAffinityLabels;
+        vCoreAffinity.push_back(-1);
+        vCoreAffinityLabels.push_back("UNSPECIFIED");
+        for (int cpu = 0; cpu < cpuCount; cpu++) {
+            vCoreAffinity.push_back(cpu);
+            vCoreAffinityLabels.push_back(std::to_string(cpu));
+        }
         ParamInteger paramCoreAffinity(PARAMS_CORE_AFFINITY, "Core Affinity", &vCoreAffinity, 0,
                                        &vCoreAffinityLabels);
         mParams.addParam(&paramCoreAffinity);
