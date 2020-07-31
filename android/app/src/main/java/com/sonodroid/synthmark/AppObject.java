@@ -427,7 +427,7 @@ public class AppObject extends Application {
     public static final String NOTIFICATION_KEY_MESSAGE = "Message";
 
     public void postNotificationTestStarted(int testId) {
-        log("Post test started");
+        // log("Post test started");
         Intent intent = new Intent(AppObject.INTENT_NOTIFICATION);
         intent.putExtra(INTENT_NOTIFICATION_TYPE, NOTIFICATION_TEST_STARTED);
         intent.putExtra(NOTIFICATION_KEY_TEST_ID, testId);
@@ -436,7 +436,7 @@ public class AppObject extends Application {
 
     public void postNotificationTestUpdate(int testId, String message) {
         int end = Math.min(message.length(), 40);
-        log("Post test update: #" + message.length() + ", " + message.substring(0, end));
+        // log("Post test update: #" + message.length() + ", " + message.substring(0, end));
         Intent intent = new Intent(AppObject.INTENT_NOTIFICATION);
         intent.putExtra(INTENT_NOTIFICATION_TYPE, NOTIFICATION_TEST_UPDATE);
         intent.putExtra(NOTIFICATION_KEY_TEST_ID, testId);
@@ -445,7 +445,7 @@ public class AppObject extends Application {
     }
 
     public void postNotificationTestCompleted(int testId) {
-        log("Post test completed");
+        // log("Post test completed");
         Intent intent = new Intent(AppObject.INTENT_NOTIFICATION);
         intent.putExtra(INTENT_NOTIFICATION_TYPE, NOTIFICATION_TEST_COMPLETED);
         intent.putExtra(NOTIFICATION_KEY_TEST_ID, testId);

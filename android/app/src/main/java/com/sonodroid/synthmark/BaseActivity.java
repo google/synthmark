@@ -79,7 +79,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void notificationTestUpdate(int testId, String message) {
-        log("notificationTestUpdate(" + testId + ",...)");
+        log("notificationTestUpdate(" + testId + ", \"" + message + "\")");
     }
 
     public void notificationTestCompleted(int testId) {
@@ -87,15 +87,13 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void notificationTestShortUpdate(int testId, String message) {
-        // log("notificationTestShortUpdate(" + testId + ", " + message + ")");
+        // log("notificationTestShortUpdate(" + testId + ", \"" + message + "\")");
     }
 
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int type = intent.getIntExtra(AppObject.INTENT_NOTIFICATION_TYPE, -1);
-            log("BroadcastReceiver: type = " + type);
-
             switch(type) {
                 case AppObject.NOTIFICATION_TEST_STARTED: {
                     int testId = intent.getIntExtra(AppObject.NOTIFICATION_KEY_TEST_ID, -1);
@@ -122,8 +120,6 @@ public class BaseActivity extends AppCompatActivity {
                     notificationTestShortUpdate(testId, message);
                 }
                 break;
-
-
             }
         }
     };
