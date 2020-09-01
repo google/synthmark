@@ -2,10 +2,12 @@
 
 # How to Run for Android CDD
 
+## IMPORTANT: The Android CDD says to use a specific commit of SynthMark. But there have been important fixes made in SynthMark since that commit. Please use the latest version of SynthMark.
+
 ## Running SynthMark as an App
 
 1. Change the device Settings so the Display will stay on for a long time.
-1. Build the latest SynthMark app using the instructions in [HowToBuild.md](docs/HowToBuild.md).
+1. Build the **latest** SynthMark app using the instructions in [HowToBuild.md](docs/HowToBuild.md).
 1. Make sure that "AutomatedSuite" appears in the menu above the "RUN TEST" button.
 1. Press the "RUN TEST" button.
 1. Wait several minutes. The LatencyMark tests can take a while.
