@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -247,7 +248,7 @@ public class AppObject extends Application {
             return "";
         }
     }
-
+    
     public static String getDeviceInfo(){
 
         StringBuffer info = new StringBuffer();
@@ -259,10 +260,16 @@ public class AppObject extends Application {
         info.append("CPU cores: " + Runtime.getRuntime().availableProcessors() + "\n");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
-            int[] exclusiveCoreIds = android.os.Process.getExclusiveCores();
-            info.append("Exclusive cores IDs: ");
-            for (int id : exclusiveCoreIds) {
-                info.append(id + ", ");
+            try {
+                int[] exclusiveCoreIds = android.os.Process.getExclusiveCores();
+                info.append("Exclusive cores IDs: ");
+                for (int id : exclusiveCoreIds) {
+                    info.append(id + ", ");
+                }
+            } catch(Exception e) {
+                String message = "getExclusiveCores() CRASHED!";
+                Log.e(TAG, message, e);
+                info.append(message);
             }
             info.append("\n");
         }
@@ -315,7 +322,7 @@ public class AppObject extends Application {
             // Acquire a wakelock
             PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
             PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
-                    PowerManager.PARTIAL_WAKE_LOCK, "SynthMarkWakeLock");
+                    PowerManager.PARTIAL_WAKE_LOCK, "SynthMark:WakeLock");
             wakeLock.acquire();
 
             try {
