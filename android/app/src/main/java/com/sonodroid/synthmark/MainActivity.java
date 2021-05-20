@@ -87,7 +87,6 @@ public class MainActivity extends BaseActivity {
 
         mScrollView = (ScrollView) findViewById(R.id.activity_main);
         mTextViewDeviceInfo = (TextView) findViewById(R.id.textViewDeviceInfo);
-        mTextViewDeviceInfo.setText(AppObject.getDeviceInfo());
 
         mTextViewOutput = (TextView) findViewById(R.id.textViewOutput);
         mProgressBarRunning = (ProgressBar) findViewById(R.id.progressBarRunning);
@@ -432,6 +431,7 @@ public class MainActivity extends BaseActivity {
     @Override
     public void onResume(){
         super.onResume();
+        mTextViewDeviceInfo.setText(AppObject.getDeviceInfo());
         processBundleFromIntent();
     }
 
