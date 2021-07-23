@@ -11,4 +11,5 @@
     <string name="test_4">Utilization</string>
     <string name="test_results_title">Test results</string>
     <string name="short_update">0</string>
+    <string name="status_label">Status:</string>
 </resources>
