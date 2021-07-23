@@ -60,7 +60,6 @@ public class MainActivity extends BaseActivity {
     private View.OnClickListener mButtonListener;
     private Switch mSwitchFakeTouches;
     private FakeKeyGenerator mKeyGenerator;
-    private ProgressBar mProgressBarRunning;
     private TextView mTextViewShortUpdate;
 
     private Spinner mSpinnerTest;
@@ -89,7 +88,6 @@ public class MainActivity extends BaseActivity {
         mTextViewDeviceInfo = (TextView) findViewById(R.id.textViewDeviceInfo);
 
         mTextViewOutput = (TextView) findViewById(R.id.textViewOutput);
-        mProgressBarRunning = (ProgressBar) findViewById(R.id.progressBarRunning);
         mTextViewShortUpdate = (TextView) findViewById(R.id.textViewShortUpdate);
 
         mSwitchFakeTouches = (Switch) findViewById(R.id.switchFakeTouches);
@@ -275,7 +273,8 @@ public class MainActivity extends BaseActivity {
                 "Fake touches: " +
                 (mSwitchFakeTouches.isChecked() ? "On" : "Off") +
                 "\n");
-        mProgressBarRunning.setVisibility(View.VISIBLE);
+
+        mTextViewShortUpdate.setText("run");
 
         //disable stuff
         mButtonSettings.setEnabled(false);
@@ -306,7 +305,6 @@ public class MainActivity extends BaseActivity {
         super.notificationTestCompleted(testId);
         mKeyGenerator.stop();
         mTextViewOutput.append("Finished test " + getApp().getTestName(testId) + "\n");
-        mProgressBarRunning.setVisibility(View.INVISIBLE);
 
         //enable stuff
         mButtonSettings.setEnabled(true);

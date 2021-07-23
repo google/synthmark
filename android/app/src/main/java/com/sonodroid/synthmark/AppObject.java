@@ -37,7 +37,7 @@ import java.util.List;
 public class AppObject extends Application {
     public final static String TAG = "SynthMark";
 
-    private final static int PROGRESS_REFRESH_RATE_MS = 200;
+    private final static int PROGRESS_REFRESH_RATE_MS = 300;
     private final static int PROGRESS_WARM_UP_WAIT = 300;
 
     private final static int NATIVETEST_STATUS_RUNNING = 2; //from NativeTest.h
@@ -253,6 +253,7 @@ public class AppObject extends Application {
 
         StringBuffer info = new StringBuffer();
 
+        info.append("SynthMark: " + BuildConfig.VERSION_NAME + "\n");
         info.append("Manufacturer: " + Build.MANUFACTURER + "\n");
         info.append("Model: " + Build.MODEL + "\n");
         info.append("ABI: " + Build.SUPPORTED_ABIS[0] + "\n");
@@ -333,7 +334,7 @@ public class AppObject extends Application {
 
             while (running) {
                 if (mNativeTest != 0) {
-                    updateProgressBar();
+                    // Limit the amount of progress display because it revs up the CPU.
 
                     int status = testStatus(mNativeTest);
                     if (status != NATIVETEST_STATUS_RUNNING) {
@@ -346,7 +347,6 @@ public class AppObject extends Application {
                         e.printStackTrace();
                     }
 
-
                     updateOutputReport();
                 } else {
                     break;
@@ -357,12 +357,6 @@ public class AppObject extends Application {
             wakeLock.release();
 
             return "done";
-        }
-
-        private void updateProgressBar() {
-            int progress = testProgress(mNativeTest);
-            String message = String.format("%d", progress);
-            postNotificationTestShortUpdate(mTestId, message);
         }
 
         private void updateOutputReport() {
