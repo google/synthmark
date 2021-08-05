@@ -35,6 +35,7 @@
 #include "tools/UtilizationSeriesHarness.h"
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
+#include "tools/UtilClampController.h"
 
 constexpr char kDefaultTestCode         = 'v';
 constexpr int  kDefaultSeconds          = 10;
@@ -324,6 +325,20 @@ int synthmark_command_main(int argc, char **argv)
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 
+    /* Checking UtilClampController methods*/
+    UtilClampController myUtil;
+    if(myUtil.isUtilClampSupported()){
+        if (myUtil.setUtilClampMin(1024)==0) {
+            printf("Clamping value set on %d\n", myUtil.getUtilClampMin());
+        }
+        else{
+            printf("Error on setting clamping value\n");
+        }
+    }
+    else{
+        printf("UtilClamp not supported\n");
+    }
+
     // Run the benchmark, poll for logs and print them.
     harness->launch(sampleRate, framesPerBurst, numSeconds);
     do {
@@ -340,6 +355,15 @@ int synthmark_command_main(int argc, char **argv)
     if (logTool.hasLogs()) {
         std::cout << logTool.readLog();
         fflush(stdout);
+    }
+
+    /* Checking UtilClampController methods*/
+    if (myUtil.setUtilClampMin(0)==0) {
+        printf("Clamping value set on %d\n", myUtil.getUtilClampMin());
+        myUtil.setUtilClampDefault();
+    }
+    else{
+        printf("Error on setting clamping value\n");
     }
 
     // Print the test results.
