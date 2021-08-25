@@ -27,6 +27,7 @@
 #include "LogTool.h"
 #include "SynthMark.h"
 #include "SynthMarkResult.h"
+#include "UtilClampAudioBehavior.h"
 
 constexpr int kMaxBufferCapacityInBursts = 512;
 
@@ -242,11 +243,17 @@ private:
             // Write in a loop until the callback says we are done.
             IAudioSinkCallback::Result callbackResult
                     = IAudioSinkCallback::Result::Continue;
+            UtilClampAudioBehavior behavior;
+            // init UtilClampBehavior
+            behavior.UtilClampBehavior(mSampleRate, 1024);
             while (callbackResult == IAudioSinkCallback::Result::Continue
                    && result == SYNTHMARK_RESULT_SUCCESS) {
 
+                int64_t beginCallback = HostTools::getNanoTime();
                 // Call the synthesizer to render the audio data.
                 callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
+                int64_t endCallback = HostTools::getNanoTime();
+                behavior.processTiming(beginCallback, endCallback, mFramesPerBurst);
 
                 if (callbackResult == IAudioSinkCallback::Result::Continue) {
                     // Output the audio using a blocking write.

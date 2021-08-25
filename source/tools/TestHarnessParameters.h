@@ -31,7 +31,7 @@
 #include "tools/TimingAnalyzer.h"
 #include "tools/TestHarnessBase.h"
 #include "HostThreadFactory.h"
-
+#include "UtilClampController.h"
 
 enum VoicesMode {
     VOICES_UNDEFINED,
@@ -76,6 +76,13 @@ public:
         mRunning = true;
         mTestThread = std::thread(&TestHarnessParameters::runCompleteTest, this,
                 sampleRate, framesPerBurst, numSeconds);
+        UtilClampController myUtil;
+        if (myUtil.isUtilClampSupported()) {
+            myUtil.setUtilClampMin(1024);
+            printf("Clamping value set on %d\n", myUtil.getUtilClampMin());
+        } else {
+            printf("Clamping value not supported\n");
+        }
     }
 
     bool isRunning() override {
