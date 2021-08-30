@@ -29,50 +29,23 @@ class UtilClampController {
 
 public:
 
-    int16_t util_supported = -1;
-
-    struct sched_attr util_default = {
-            .size = sizeof(struct sched_attr),
-            .sched_policy = SCHED_NORMAL,
-    };
-
-    /* struct used to set Utilclamp values*/
-#if USE_SCHED_FIFO
-    struct sched_attr util_set = {
-            .size = sizeof(struct sched_attr),
-            .sched_policy = SCHED_FIFO,
-            .sched_flags = SCHED_FLAG_UTIL_CLAMP,
-            .sched_priority = 99,
-            .sched_util_min = 0,
-            .sched_util_max = 1024,
-    };
-#else
-    struct sched_attr util_set = {
-                .size = sizeof(struct sched_attr),
-                .sched_policy = SCHED_NORMAL,
-                .sched_util_min = 0,
-                .sched_util_max = 1024,
-        };
-#endif
-
-    /* struct used to get value from sched_attr*/
-    struct sched_attr util_get;
-
     inline bool isUtilClampSupported() {
-        if (util_supported == -1) {
+        if (mUtilSupported == -1) {
             if (syscall(SYS_sched_setattr, 0, &util_set, 0) != 0) {
-                util_supported = 0;
-            } else if (syscall(SYS_sched_setattr, 0, &util_default, 0) != 0) {
-                util_supported = 0;
+                mUtilSupported = 0;
+                return mUtilSupported;
+            }
+            if (syscall(SYS_sched_setattr, 0, &util_default, 0) != 0) {
+                mUtilSupported = 0;
             } else {
-                util_supported = 1;
+                mUtilSupported = 1;
             }
         }
 
-        return util_supported;
+        return mUtilSupported;
     }
 
-    inline int setUtilClampMin(int clamp_value) {
+    inline int setUtilClampMin(uint32_t clamp_value) {
         util_set.sched_util_min = clamp_value;
         return syscall(SYS_sched_setattr, 0, &util_set, 0);
     }
@@ -102,6 +75,36 @@ public:
         }
     }
 
+private:
+
+    int16_t mUtilSupported = -1;
+
+    struct sched_attr util_default = {
+            .size = sizeof(struct sched_attr),
+            .sched_policy = SCHED_NORMAL,
+    };
+
+    /* struct used to set Utilclamp values*/
+    #if USE_SCHED_FIFO
+        struct sched_attr util_set = {
+                .size = sizeof(struct sched_attr),
+                .sched_policy = SCHED_FIFO,
+                .sched_flags = SCHED_FLAG_UTIL_CLAMP,
+                .sched_priority = 99,
+                .sched_util_min = 0,
+                .sched_util_max = 1024,
+        };
+    #else
+        struct sched_attr util_set = {
+                    .size = sizeof(struct sched_attr),
+                    .sched_policy = SCHED_NORMAL,
+                    .sched_util_min = 0,
+                    .sched_util_max = 1024,
+            };
+    #endif
+
+        /* struct used to get value from sched_attr*/
+        struct sched_attr util_get;
 };
 
 #endif //ANDROID_UTILCLAMPCONTROLLER_H

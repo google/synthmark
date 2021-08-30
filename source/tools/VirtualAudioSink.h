@@ -28,6 +28,7 @@
 #include "SynthMark.h"
 #include "SynthMarkResult.h"
 #include "UtilClampAudioBehavior.h"
+#include "UtilClampController.h"
 
 constexpr int kMaxBufferCapacityInBursts = 512;
 
@@ -78,6 +79,12 @@ public:
         mNextHardwareReadTimeNanos = 0;
         mFramesConsumed = 0;
         mStartTimeNanos = 0;
+
+        if (Controller.isUtilClampSupported()) {
+            mSampleRate = sampleRate;
+            Controller.setUtilClampMin(1024);
+            mCurrentUtilClamp = Controller.getUtilClampMin();
+        }
         return result;
     }
 
@@ -245,7 +252,9 @@ private:
                     = IAudioSinkCallback::Result::Continue;
             UtilClampAudioBehavior behavior;
             // init UtilClampBehavior
-            behavior.UtilClampBehavior(mSampleRate, 1024);
+            if (Controller.isUtilClampSupported()) {
+                behavior.UtilClampBehavior(mSampleRate, HostTools::getNanoTime(), mCurrentUtilClamp);
+            }
             while (callbackResult == IAudioSinkCallback::Result::Continue
                    && result == SYNTHMARK_RESULT_SUCCESS) {
 
@@ -253,7 +262,15 @@ private:
                 // Call the synthesizer to render the audio data.
                 callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
                 int64_t endCallback = HostTools::getNanoTime();
-                behavior.processTiming(beginCallback, endCallback, mFramesPerBurst);
+
+                if (Controller.isUtilClampSupported()) {
+                    int suggestedUtilClamp = behavior.processTiming(beginCallback, endCallback,
+                                                                    mFramesPerBurst);
+                    if (suggestedUtilClamp != mCurrentUtilClamp) {
+                        Controller.setUtilClampMin(suggestedUtilClamp);
+                        mCurrentUtilClamp = Controller.getUtilClampMin();
+                    }
+                }
 
                 if (callbackResult == IAudioSinkCallback::Result::Continue) {
                     // Output the audio using a blocking write.
@@ -306,6 +323,9 @@ private:
     int32_t mCallbackLoopResult = 0;
     HostThread *mThread = NULL;
     HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
+
+    UtilClampController Controller;
+    int mCurrentUtilClamp = 0;
 
     LogTool    &mLogTool;
 

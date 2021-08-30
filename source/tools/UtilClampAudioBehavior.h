@@ -17,101 +17,65 @@
 #ifndef ANDROID_UTILCLAMPAUDIOBEHAVIOR_H
 #define ANDROID_UTILCLAMPAUDIOBEHAVIOR_H
 
-
-#include "LogTool.h"
-#include "UtilClampController.h"
 #include "AudioSinkBase.h"
-#include <ctime>
 
-constexpr int kDecreaseMargin = 450;     // usecs to hysteresis down
-constexpr int kIncreaseMargin = 210;     // usecs to hysteresis up
-constexpr int kIncreaseStepUclamp = 300; // uclamp step value to increase
-constexpr int kDecreaseStepUclamp = 30;  // uclamp step value to decrease
-constexpr int kMaxUclamp = 1024;         // max uclamp value that can be reach
-constexpr int kMinUclamp = 0;            // min uclamp value that can be reach
-constexpr int kDecreaseInterval = 50000; // usecs to wait before decreasing again
-constexpr int kIncreaseInterval = 0;     // usecs to wait before increasing again
-constexpr int kStartInterval = 300000;   // usecs to wait before starting (time at max uclamp)
+constexpr int64_t kSecondsToNanos = 1000000000;
+
+constexpr int16_t kMaxUclamp = 1024;                 // max uclamp value that can be reach
+constexpr int16_t kMinUclamp = 0;                    // min uclamp value that can be reach
+constexpr int16_t kIncreaseStepUclamp = kMaxUclamp;  // uclamp step value to increase
+constexpr int16_t kDecreaseStepUclamp = 30;          // uclamp step value to decrease
+constexpr int64_t kStartIntervalNanos = 300000000;   // nsecs to wait before starting (time at max uclamp)
+
+constexpr double kLowUtilization = 0.50;
+constexpr double kHighUtilization = 0.95;
 
 class UtilClampAudioBehavior {
 
 public:
 
-    void UtilClampBehavior(int32_t sampleRate, int16_t start_uclamp) {
-
-        if (Controller.isUtilClampSupported()) {
-            mSampleRate = sampleRate;
-            Controller.setUtilClampMin(start_uclamp);
-            currUtilClamp = Controller.getUtilClampMin();
-            startTime = getMicroTime();
-        }
+    void UtilClampBehavior(int64_t sampleRate, int64_t startUclampNanos, int32_t startUclampValue) {
+        mSampleRate = sampleRate;
+        mStartTimeNanos = startUclampNanos;
+        mCurrUtilClamp = startUclampValue;
     }
 
-    int64_t processTiming(
-            int64_t beginNanos,     // when the app callback began
-            int64_t finishNanos,    // when the app callback finished
-            int32_t numFrames       // the number of frames processed by the callback
+    int32_t processTiming(
+            int64_t callbackBeginNanos,     // when the app callback began
+            int64_t callbackFinishNanos,    // when the app callback finished
+            int64_t numFrames               // the number of frames processed by the callback
     ) {
 
-        if (!Controller.isUtilClampSupported()) {
-            return -1;
+        if ((callbackFinishNanos - mStartTimeNanos) < kStartIntervalNanos) {
+            return mCurrUtilClamp;
         }
 
-        if ((getMicroTime() - startTime) < kStartInterval) {
-            return currUtilClamp;
-        }
+        int64_t callbackDurationNanos  = callbackFinishNanos - callbackBeginNanos;
+        int64_t audioDurationNanos = (numFrames * kSecondsToNanos) / mSampleRate;
 
-        int64_t callbackDuration  = (finishNanos - beginNanos) / 1000; // nsecs to usecs
-        int64_t maxBearableDuration = (numFrames * 1000) / (mSampleRate / 1000);  // usecs
-
-        if (callbackDuration < (maxBearableDuration - kDecreaseMargin) &&
-                (getMicroTime() - lastUclampChange) > kDecreaseInterval) {
-            lastUclampChange = getMicroTime();
+        if (callbackDurationNanos < (int64_t)(audioDurationNanos * kLowUtilization)) {
             decreaseUtilClamp();
-        } else if (callbackDuration > (maxBearableDuration + kIncreaseMargin) &&
-                    (getMicroTime() - lastUclampChange) > kIncreaseInterval) {
-            lastUclampChange = getMicroTime();
+        } else if (callbackDurationNanos > (int64_t)(audioDurationNanos * kHighUtilization)) {
             increaseUtilClamp();
         }
 
-        return currUtilClamp;
+        return mCurrUtilClamp;
     }
 
 private:
 
-    UtilClampController Controller;
-    uint32_t mSampleRate = 48000;
-    int16_t currUtilClamp = -1;
-    uint64_t lastUclampChange = 0;
-    uint64_t startTime = 0;
-
-    uint64_t getMicroTime(){
-        struct timespec res;
-        int result = clock_gettime(CLOCK_MONOTONIC, &res);
-        if (result < 0) {
-            return result;
-        }
-        return (res.tv_sec * 1000000) + (res.tv_nsec / 1000);
-    }
+    int64_t mSampleRate = 48000;
+    int16_t mCurrUtilClamp = 0;
+    int64_t mStartTimeNanos = 0;
 
     void decreaseUtilClamp() {
-        if (currUtilClamp > (kDecreaseStepUclamp + kMinUclamp)){
-            currUtilClamp -= kDecreaseStepUclamp;
-        } else if (currUtilClamp != kMinUclamp) {
-            currUtilClamp = kMinUclamp;
-        }
-        Controller.setUtilClampMin(currUtilClamp);
-        currUtilClamp = Controller.getUtilClampMin();
+        int16_t suggestedUtilClamp = mCurrUtilClamp - kDecreaseStepUclamp;
+        mCurrUtilClamp = std::max(suggestedUtilClamp, kMinUclamp);
     }
 
     void increaseUtilClamp(){
-        if (currUtilClamp < (kMaxUclamp - kIncreaseStepUclamp)){
-            currUtilClamp += kIncreaseStepUclamp;
-        } else if (currUtilClamp != kMaxUclamp) {
-            currUtilClamp = kMaxUclamp;
-        }
-        Controller.setUtilClampMin(currUtilClamp);
-        currUtilClamp = Controller.getUtilClampMin();
+        int16_t suggestedUtilClamp = mCurrUtilClamp + kIncreaseStepUclamp;
+        mCurrUtilClamp = std::min(suggestedUtilClamp, kMaxUclamp);
     }
 
 };
