@@ -51,25 +51,27 @@ static void usage(const char *name) {
     printf("    -t{test}, v=voice, l=latency, j=jitter, u=utilization"
            ", s=series_util, c=clock_ramp, a=automated, default is %c\n",
            kDefaultTestCode);
-    printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
-    printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
-    printf("    -m{voicesMode} algorithm to choose the number of voices in the range\n"
-           "      [-n, -N]. This value can be 'l' for a linear increment, 'r' for a\n"
-           "      random choice, or 's' to switch between -n and -N. default = s\n");
-    printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
-           kDefaultNoteOnDelay);
-    printf("    -w{workloadHintsEnabled} 0 = no (default), 1 = give workload hints to scheduler\n");
-    printf("    -p{percentCPU} target load, default = %d\n", kDefaultPercentCpu);
-    printf("    -r{sampleRate} should be typical, 44100, 48000, etc. default is %d\n",
-           kSynthmarkSampleRate);
-    printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
-           kDefaultSeconds);
+
+    printf("    -a{enable} 0 for normal thread, 1 for audio callback, default = 1\n");
     printf("    -b{burstSize} frames read by virtual hardware at one time, default = %d\n",
            kDefaultFramesPerBurst);
     printf("    -B{bursts} initial buffer size in bursts, default = %d\n",
            kDefaultBufferSizeBursts);
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
-    printf("    -a{enable} 0 for normal thread, 1 for audio callback, default = 1\n");
+    printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
+           kDefaultNoteOnDelay);
+    printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
+    printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
+    printf("    -m{voicesMode} algorithm to choose the number of voices in the range\n"
+           "      [-n, -N]. This value can be 'l' for a linear increment, 'r' for a\n"
+           "      random choice, or 's' to switch between -n and -N. default = s\n");
+    printf("    -p{percentCPU} target load, default = %d\n", kDefaultPercentCpu);
+    printf("    -r{sampleRate} should be typical, 44100, 48000, etc. default is %d\n",
+           kSynthmarkSampleRate);
+    printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
+           kDefaultSeconds);
+    printf("    -u{utilClampEnabled} 0 = no (default), 1 = use utilClamp for dynamic workloads\n");
+    printf("    -w{workloadHintsEnabled} 0 = no (default), 1 = give workload hints to scheduler\n");
 }
 
 #define TEXT_ERROR "ERROR: "
@@ -102,6 +104,7 @@ int synthmark_command_main(int argc, char **argv)
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
     bool    useAudioThread = true;
+    bool    utilClampEnabled = false;
     bool    workloadHintsEnabled = false;
     int32_t bufferSizeBursts = kDefaultBufferSizeBursts;
     VoicesMode voicesMode = VOICES_UNDEFINED;
@@ -168,6 +171,11 @@ int synthmark_command_main(int argc, char **argv)
                     break;
                 case 't':
                     testCode = arg[2];
+                    break;
+                case 'u':
+                    temp = stringToPositiveInteger(&arg[2], "-u");
+                    if (temp < 0) return 1;
+                    utilClampEnabled = (temp > 0);
                     break;
                 case 'w':
                     temp = stringToPositiveInteger(&arg[2], "-w");
@@ -307,6 +315,8 @@ int synthmark_command_main(int argc, char **argv)
                            : HostThreadFactory::ThreadType::Default);
     HostCpuManager::setWorkloadHintsEnabled(workloadHintsEnabled);
 
+    audioSink.setUtilClampEnabled(utilClampEnabled);
+
     // Print specified parameters.
     printf("  test.name            = %s\n",  harness->getName());
     printf("  num.voices           = %6d\n", numVoices);
@@ -320,6 +330,7 @@ int synthmark_command_main(int argc, char **argv)
     printf("  cpu.affinity         = %6d\n", cpuAffinity);
     printf("  cpu.count            = %6d\n", HostTools::getCpuCount());
     printf("  audio.thread         = %6d\n", (useAudioThread ? 1 : 0));
+    printf("  util.clamp           = %6d\n", (utilClampEnabled ? 1 : 0));
     printf("  workload.hints       = %6d\n", (workloadHintsEnabled ? 1 : 0));
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);

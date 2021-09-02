@@ -190,6 +190,14 @@ public:
         mThreadType = threadType;
     }
 
+    bool isUtilClampEnabled() const {
+        return mUtilClampEnabled;
+    }
+
+    void setUtilClampEnabled(bool utilClampEnabled) {
+        mUtilClampEnabled = utilClampEnabled;
+    }
+
 private:
 
     /**
@@ -252,7 +260,7 @@ private:
             int currentUtilClamp = 0;
 
             // init UtilClampBehavior
-            if (utilClampController.isUtilClampSupported()) {
+            if (mUtilClampEnabled && utilClampController.isUtilClampSupported()) {
                 originalUtilClamp = utilClampController.getUtilClampMin();
                 currentUtilClamp = originalUtilClamp;
                 behavior.UtilClampBehavior(mSampleRate, HostTools::getNanoTime(), currentUtilClamp);
@@ -265,7 +273,7 @@ private:
                 callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
                 int64_t endCallback = HostTools::getNanoTime();
 
-                if (utilClampController.isUtilClampSupported()) {
+                if (mUtilClampEnabled && utilClampController.isUtilClampSupported()) {
                     int suggestedUtilClamp = behavior.processTiming(beginCallback, endCallback,
                                                                     mFramesPerBurst);
                     if (suggestedUtilClamp != currentUtilClamp) {
@@ -282,7 +290,7 @@ private:
                 }
             }
             // Restore original value.
-            if (utilClampController.isUtilClampSupported()) {
+            if (mUtilClampEnabled && utilClampController.isUtilClampSupported()) {
                 utilClampController.setUtilClampMin(originalUtilClamp);
             }
         }
@@ -329,6 +337,9 @@ private:
     int32_t mCallbackLoopResult = 0;
     HostThread *mThread = NULL;
     HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
+    bool    mUtilClampEnabled = false;
+
+private:
 
     LogTool    &mLogTool;
 
