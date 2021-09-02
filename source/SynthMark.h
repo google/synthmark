@@ -48,7 +48,7 @@
         SYNTHMARK_TOSTRING(SYNTHMARK_MINOR_VERSION)
 
 // This may be increased without invalidating the benchmark.
-constexpr int kSynthmarkMaxVoices   = 512;
+constexpr int kSynthmarkMaxVoices   = 1024;
 
 constexpr int kSynthmarkNumVoicesLatency  = 10;
 

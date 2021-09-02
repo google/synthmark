@@ -348,4 +348,3 @@ int synthmark_command_main(int argc, char **argv)
 
     return result.getResultCode();
 }
-

@@ -31,6 +31,10 @@ struct sched_attr {
     uint64_t sched_runtime;
     uint64_t sched_deadline;
     uint64_t sched_period;
+
+    //UtilClamp value
+    uint32_t sched_util_min;
+    uint32_t sched_util_max;
 };
 
 inline int sched_setattr(pid_t pid,

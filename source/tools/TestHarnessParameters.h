@@ -31,7 +31,7 @@
 #include "tools/TimingAnalyzer.h"
 #include "tools/TestHarnessBase.h"
 #include "HostThreadFactory.h"
-
+#include "UtilClampController.h"
 
 enum VoicesMode {
     VOICES_UNDEFINED,
