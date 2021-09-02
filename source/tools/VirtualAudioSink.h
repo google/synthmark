@@ -80,11 +80,6 @@ public:
         mFramesConsumed = 0;
         mStartTimeNanos = 0;
 
-        if (Controller.isUtilClampSupported()) {
-            mSampleRate = sampleRate;
-            Controller.setUtilClampMin(1024);
-            mCurrentUtilClamp = Controller.getUtilClampMin();
-        }
         return result;
     }
 
@@ -250,10 +245,17 @@ private:
             // Write in a loop until the callback says we are done.
             IAudioSinkCallback::Result callbackResult
                     = IAudioSinkCallback::Result::Continue;
+
+            UtilClampController utilClampController;
             UtilClampAudioBehavior behavior;
+            int originalUtilClamp = 0;
+            int currentUtilClamp = 0;
+
             // init UtilClampBehavior
-            if (Controller.isUtilClampSupported()) {
-                behavior.UtilClampBehavior(mSampleRate, HostTools::getNanoTime(), mCurrentUtilClamp);
+            if (utilClampController.isUtilClampSupported()) {
+                originalUtilClamp = utilClampController.getUtilClampMin();
+                currentUtilClamp = originalUtilClamp;
+                behavior.UtilClampBehavior(mSampleRate, HostTools::getNanoTime(), currentUtilClamp);
             }
             while (callbackResult == IAudioSinkCallback::Result::Continue
                    && result == SYNTHMARK_RESULT_SUCCESS) {
@@ -263,12 +265,12 @@ private:
                 callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
                 int64_t endCallback = HostTools::getNanoTime();
 
-                if (Controller.isUtilClampSupported()) {
+                if (utilClampController.isUtilClampSupported()) {
                     int suggestedUtilClamp = behavior.processTiming(beginCallback, endCallback,
                                                                     mFramesPerBurst);
-                    if (suggestedUtilClamp != mCurrentUtilClamp) {
-                        Controller.setUtilClampMin(suggestedUtilClamp);
-                        mCurrentUtilClamp = Controller.getUtilClampMin();
+                    if (suggestedUtilClamp != currentUtilClamp) {
+                        utilClampController.setUtilClampMin(suggestedUtilClamp);
+                        currentUtilClamp = utilClampController.getUtilClampMin();
                     }
                 }
 
@@ -278,6 +280,10 @@ private:
                 } else if (callbackResult != IAudioSinkCallback::Result::Finished) {
                     result = callbackResult;
                 }
+            }
+            // Restore original value.
+            if (utilClampController.isUtilClampSupported()) {
+                utilClampController.setUtilClampMin(originalUtilClamp);
             }
         }
 
@@ -323,9 +329,6 @@ private:
     int32_t mCallbackLoopResult = 0;
     HostThread *mThread = NULL;
     HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
-
-    UtilClampController Controller;
-    int mCurrentUtilClamp = 0;
 
     LogTool    &mLogTool;
 
