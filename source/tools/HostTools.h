@@ -105,6 +105,7 @@ public:
         return get_nprocs();
 #endif
     }
+
 };
 
 typedef void * host_thread_proc_t(void *arg);
@@ -379,9 +380,15 @@ class HostCpuManager
 {
 public:
 
+    enum : int32_t {
+        WORKLOAD_HINTS_OFF = 0,
+        WORKLOAD_HINTS_ON = 1,
+        WORKLOAD_HINTS_ON_LOGGED = 2
+    };
+
     static HostCpuManagerBase *getInstance() {
         if (mInstance == nullptr) {
-            if (mWorkloadHintsEnabled) {
+            if (areWorkloadHintsEnabled()) {
                 mInstance = new CustomHostCpuManager();
             } else {
                 mInstance = new HostCpuManagerStub();
@@ -390,18 +397,23 @@ public:
         return mInstance;
     }
 
-    static bool areWorkloadHintsEnabled() {
-        return mWorkloadHintsEnabled;
+    static int32_t getWorkloadHintsLevel() {
+        return mWorkloadHintsLevel;
     }
 
-    static void setWorkloadHintsEnabled(bool deadlineSchedulerEnabled) {
-        mWorkloadHintsEnabled = deadlineSchedulerEnabled;
+    static void setWorkloadHintsLevel(int32_t level) {
+        mWorkloadHintsLevel = level;
+    }
+
+    static bool areWorkloadHintsEnabled() {
+        return mWorkloadHintsLevel == WORKLOAD_HINTS_ON
+               || mWorkloadHintsLevel == WORKLOAD_HINTS_ON_LOGGED;
     }
 
 private:
     HostCpuManager() {}
     static HostCpuManagerBase *mInstance;
-    static bool                mWorkloadHintsEnabled;
+    static int32_t             mWorkloadHintsLevel;
 
 };
 

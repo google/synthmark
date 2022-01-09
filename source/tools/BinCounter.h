@@ -19,7 +19,9 @@
 
 #include <cstdint>
 
-
+/**
+ * Gather histogram data.
+ */
 class BinCounter
 {
 public:
@@ -48,15 +50,7 @@ public:
         mBins[binIndex] += 1;
         mLastMarkers[binIndex] = mIndex++;
     }
-/* TODO remove
-    void reset() {
-        mIndex = 0;
-        delete[] mBins;
-        mBins = NULL;
-        delete[] mLastMarkers;
-        mLastMarkers = NULL;
-    }
-*/
+
     int32_t getNumBins() const {
         return mNumBins;
     }

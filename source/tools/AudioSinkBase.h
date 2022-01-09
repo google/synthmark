@@ -39,6 +39,12 @@ public:
     AudioSinkBase() {}
     virtual ~AudioSinkBase() {}
 
+    enum : int32_t {
+        UTIL_CLAMP_OFF = 0,
+        UTIL_CLAMP_ON = 1,
+        UTIL_CLAMP_ON_LOGGED = 2
+    };
+
     virtual int32_t initialize() {
         return 0;
     }
@@ -153,6 +159,23 @@ public:
         mRequestedCpu = cpuAffinity;
     }
 
+    int32_t getUtilClampLevel() {
+        return mUtilClampLevel;
+    }
+
+    void setUtilClampLevel(int32_t level) {
+        mUtilClampLevel = level;
+    }
+
+    bool isUtilClampEnabled() {
+        return mUtilClampLevel == UTIL_CLAMP_ON
+               || mUtilClampLevel == UTIL_CLAMP_ON_LOGGED;
+    }
+
+    bool isUtilClampLoggingEnabled() {
+        return mUtilClampLevel == UTIL_CLAMP_ON_LOGGED;
+    }
+
     virtual HostThreadFactory::ThreadType getThreadType() const {
         return HostThreadFactory::ThreadType::Default;
     }
@@ -192,6 +215,8 @@ private:
     volatile bool  mSchedFifoUsed = false;
     int            mRequestedCpu = SYNTHMARK_CPU_UNSPECIFIED;
     int            mActualCpu = SYNTHMARK_CPU_UNSPECIFIED;
+
+    int32_t        mUtilClampLevel = UTIL_CLAMP_OFF;
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H

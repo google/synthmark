@@ -70,7 +70,8 @@ static void usage(const char *name) {
            kSynthmarkSampleRate);
     printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
            kDefaultSeconds);
-    printf("    -u{utilClampEnabled} 0 = no (default), 1 = use utilClamp for dynamic workloads\n");
+    printf("    -u{utilClampLevel} 0 = off (default), 1 = on, 2 = on verbose\n");
+    printf("           Using utilClamp helps the scheduler adapt to dynamic workloads.\n");
     printf("    -w{workloadHintsEnabled} 0 = no (default), 1 = give workload hints to scheduler\n");
 }
 
@@ -104,8 +105,8 @@ int synthmark_command_main(int argc, char **argv)
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
     bool    useAudioThread = true;
-    bool    utilClampEnabled = false;
-    bool    workloadHintsEnabled = false;
+    int32_t utilClampLevel = AudioSinkBase::UTIL_CLAMP_OFF;
+    int32_t workloadHintsLevel = HostCpuManager::WORKLOAD_HINTS_OFF;
     int32_t bufferSizeBursts = kDefaultBufferSizeBursts;
     VoicesMode voicesMode = VOICES_UNDEFINED;
     char testCode = kDefaultTestCode;
@@ -173,14 +174,12 @@ int synthmark_command_main(int argc, char **argv)
                     testCode = arg[2];
                     break;
                 case 'u':
-                    temp = stringToPositiveInteger(&arg[2], "-u");
-                    if (temp < 0) return 1;
-                    utilClampEnabled = (temp > 0);
+                    utilClampLevel = stringToPositiveInteger(&arg[2], "-u");
+                    if (utilClampLevel < 0) return 1;
                     break;
                 case 'w':
-                    temp = stringToPositiveInteger(&arg[2], "-w");
-                    if (temp < 0) return 1;
-                    workloadHintsEnabled = (temp > 0);
+                    workloadHintsLevel = stringToPositiveInteger(&arg[2], "-w");
+                    if (workloadHintsLevel < 0) return 1;
                     break;
 
                 case 'h': // help
@@ -313,9 +312,9 @@ int synthmark_command_main(int argc, char **argv)
     harness->setThreadType(useAudioThread
                            ? HostThreadFactory::ThreadType::Audio
                            : HostThreadFactory::ThreadType::Default);
-    HostCpuManager::setWorkloadHintsEnabled(workloadHintsEnabled);
+    HostCpuManager::setWorkloadHintsLevel(workloadHintsLevel);
 
-    audioSink.setUtilClampEnabled(utilClampEnabled);
+    audioSink.setUtilClampLevel(utilClampLevel);
 
     // Print specified parameters.
     printf("  test.name            = %s\n",  harness->getName());
@@ -330,8 +329,8 @@ int synthmark_command_main(int argc, char **argv)
     printf("  cpu.affinity         = %6d\n", cpuAffinity);
     printf("  cpu.count            = %6d\n", HostTools::getCpuCount());
     printf("  audio.thread         = %6d\n", (useAudioThread ? 1 : 0));
-    printf("  util.clamp           = %6d\n", (utilClampEnabled ? 1 : 0));
-    printf("  workload.hints       = %6d\n", (workloadHintsEnabled ? 1 : 0));
+    printf("  util.clamp           = %6d\n", utilClampLevel);
+    printf("  workload.hints       = %6d\n", workloadHintsLevel);
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
     fflush(stdout);
 

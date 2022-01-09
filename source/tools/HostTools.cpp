@@ -16,5 +16,6 @@
 
 #include "HostTools.h"
 
-HostCpuManagerBase *HostCpuManager::mInstance                 = nullptr;
-bool                HostCpuManager::mWorkloadHintsEnabled = false;
+HostCpuManagerBase *HostCpuManager::mInstance           = nullptr;
+int32_t             HostCpuManager::mWorkloadHintsLevel = HostCpuManager::WORKLOAD_HINTS_OFF;
+
