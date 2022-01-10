@@ -39,6 +39,12 @@ public:
     AudioSinkBase() {}
     virtual ~AudioSinkBase() {}
 
+    enum : int32_t {
+        UTIL_CLAMP_OFF = 0,
+        UTIL_CLAMP_ON = 1,
+        UTIL_CLAMP_ON_LOGGED = 2
+    };
+
     virtual int32_t initialize() {
         return 0;
     }
@@ -111,13 +117,6 @@ public:
         return mFramesPerBurst;
     }
 
-    void setSchedFifoUsed(bool schedFifoUsed) {
-        mSchedFifoUsed = schedFifoUsed;
-    }
-    bool wasSchedFifoUsed() {
-        return mSchedFifoUsed;
-    }
-
     void setFramesWritten(int32_t framesWritten) {
         mFramesWritten = framesWritten;
     }
@@ -153,6 +152,23 @@ public:
         mRequestedCpu = cpuAffinity;
     }
 
+    int32_t getUtilClampLevel() {
+        return mUtilClampLevel;
+    }
+
+    void setUtilClampLevel(int32_t level) {
+        mUtilClampLevel = level;
+    }
+
+    bool isUtilClampEnabled() {
+        return mUtilClampLevel == UTIL_CLAMP_ON
+               || mUtilClampLevel == UTIL_CLAMP_ON_LOGGED;
+    }
+
+    bool isUtilClampLoggingEnabled() {
+        return mUtilClampLevel == UTIL_CLAMP_ON_LOGGED;
+    }
+
     virtual HostThreadFactory::ThreadType getThreadType() const {
         return HostThreadFactory::ThreadType::Default;
     }
@@ -160,12 +176,35 @@ public:
     virtual void setThreadType(HostThreadFactory::ThreadType mThreadType) {
     }
 
+    bool isSchedFifoEnabled() const {
+        return mSchedFifoEnabled;
+    }
+
+    void setSchedFifoEnabled(bool enabled) {
+        mSchedFifoEnabled = enabled;
+    }
+
+    static const char *schedulerToString(int scheduler) {
+        switch(scheduler) {
+            case SCHED_FIFO:
+                return "SCHED_FIFO";
+            case SCHED_OTHER:
+                return "SCHED_OTHER";
+            case SCHED_DEADLINE:
+                return "SCHED_DEADLINE";
+            case SCHED_RR:
+                return "SCHED_RR";
+            default:
+                return "unknown";
+        }
+    }
+
     std::string  dump() {
         std::stringstream resultMessage;
-        resultMessage << "AudioSink" << std::endl;
-        resultMessage << "  frames.per.burst     = " << getFramesPerBurst() << std::endl;
-        resultMessage << "  scheduler            = "
-                         << (wasSchedFifoUsed() ? "SCHED_FIFO" : "unknown") << std::endl;
+        resultMessage << "AudioSink:" << std::endl;
+        resultMessage << "  frames.per.burst       = " << getFramesPerBurst() << std::endl;
+        resultMessage << "  scheduler              = "
+                         << schedulerToString(mSchedulerUsed) << std::endl;
         resultMessage << "  buffer.size.frames     = "  << getBufferSizeInFrames() << std::endl;
         resultMessage << "  buffer.size.bursts     = "
                          << (getBufferSizeInFrames() / getFramesPerBurst()) << std::endl;
@@ -185,13 +224,16 @@ protected:
     int32_t       mSamplesPerFrame = 1;
     int32_t       mFramesPerBurst = 0;
     int32_t       mUnderrunCount = 0;
+    // set in callback loop
+    int           mSchedulerUsed = -1;
 
 private:
     IAudioSinkCallback *mCallback = NULL;
     int64_t        mFramesWritten = 0;
-    volatile bool  mSchedFifoUsed = false;
     int            mRequestedCpu = SYNTHMARK_CPU_UNSPECIFIED;
     int            mActualCpu = SYNTHMARK_CPU_UNSPECIFIED;
+    bool           mSchedFifoEnabled = true;
+    int32_t        mUtilClampLevel = UTIL_CLAMP_OFF;
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H

@@ -190,26 +190,18 @@ public:
         mThreadType = threadType;
     }
 
-    bool isUtilClampEnabled() const {
-        return mUtilClampEnabled;
-    }
-
-    void setUtilClampEnabled(bool utilClampEnabled) {
-        mUtilClampEnabled = utilClampEnabled;
-    }
-
 private:
 
-    /**
+
+/**
      * Call the callback in a loop until it is finished or an error occurs.
      * Data from the callback will be passed to the write() method.
      */
     int32_t innerCallbackLoop() {
         assert(mFramesPerBurst > 0); // set in open
-
+        int lastCpu = -1;
         int32_t result = SYNTHMARK_RESULT_SUCCESS;
         IAudioSinkCallback *callback = getCallback();
-        setSchedFifoUsed(false);
         if (callback != NULL) {
             if (mUseRealThread) {
                 if (HostCpuManager::areWorkloadHintsEnabled()) {
@@ -232,9 +224,12 @@ private:
                         return -1;
                     }
                 } else {
-                    int err = mThread->promote(mThreadPriority);
-                    if (err == 0) {
-                        setSchedFifoUsed(true);
+                    int err;
+                    if (isSchedFifoEnabled()) {
+                        err = mThread->promote(mThreadPriority);
+                        if (err != 0) {
+                            mLogTool.log("ERROR promoting thread\n");
+                        }
                     }
                     if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
                         err = mThread->setCpuAffinity(getRequestedCpu());
@@ -250,6 +245,8 @@ private:
                 }
             }
 
+            mSchedulerUsed = sched_getscheduler(0);
+
             // Write in a loop until the callback says we are done.
             IAudioSinkCallback::Result callbackResult
                     = IAudioSinkCallback::Result::Continue;
@@ -258,12 +255,25 @@ private:
             UtilClampAudioBehavior behavior;
             int originalUtilClamp = 0;
             int currentUtilClamp = 0;
+            constexpr int32_t kUtilClampQuanta = 10;
+            int64_t targetDurationNanos = (mFramesPerBurst * 1e9) / getSampleRate();
 
             // init UtilClampBehavior
-            if (mUtilClampEnabled && utilClampController.isUtilClampSupported()) {
-                originalUtilClamp = utilClampController.getUtilClampMin();
-                currentUtilClamp = originalUtilClamp;
-                behavior.UtilClampBehavior(mSampleRate, HostTools::getNanoTime(), currentUtilClamp);
+            if (isUtilClampEnabled()) {
+                if (utilClampController.isSupported()) {
+                    originalUtilClamp = utilClampController.getMin();
+                    currentUtilClamp = originalUtilClamp;
+                    mLogTool.log("utilClamp active\n");
+                    if (isUtilClampLoggingEnabled()) {
+                        mLogTool.log("burst, suggestedMin, actualMin, util\%, cpu\n");
+                    }
+                    behavior.setup(utilClampController.getMin(),
+                                   utilClampController.getMax(),
+                                   targetDurationNanos);
+                } else {
+                    mLogTool.log("WARNING utilClamp not supported\n");
+                    setUtilClampLevel(UTIL_CLAMP_OFF);
+                }
             }
             while (callbackResult == IAudioSinkCallback::Result::Continue
                    && result == SYNTHMARK_RESULT_SUCCESS) {
@@ -272,14 +282,24 @@ private:
                 // Call the synthesizer to render the audio data.
                 callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
                 int64_t endCallback = HostTools::getNanoTime();
-
-                if (mUtilClampEnabled && utilClampController.isUtilClampSupported()) {
-                    int suggestedUtilClamp = behavior.processTiming(beginCallback, endCallback,
-                                                                    mFramesPerBurst);
-                    if (suggestedUtilClamp != currentUtilClamp) {
-                        utilClampController.setUtilClampMin(suggestedUtilClamp);
-                        currentUtilClamp = utilClampController.getUtilClampMin();
+                int64_t actualDurationNanos = endCallback - beginCallback;
+                if (isUtilClampEnabled()) {
+                    bool utilClampChanged = false;
+                    int cpu = HostThread::getCpu(); // query before changing util_clamp
+                    int suggestedUtilClamp = behavior.processTiming(actualDurationNanos);
+                    if (abs(suggestedUtilClamp - currentUtilClamp) >= kUtilClampQuanta) {
+                        utilClampController.setMin(suggestedUtilClamp);
+                        utilClampChanged = true;
+                        currentUtilClamp = utilClampController.getMin();
                     }
+                    if (isUtilClampLoggingEnabled() && (utilClampChanged || cpu != lastCpu)) {
+                        double realTime = behavior.calculateFractionRealTime(actualDurationNanos);
+                        mLogTool.log("%4d, %5.1f, %d\n",
+                                     currentUtilClamp,
+                                     realTime * 100,
+                                     cpu);
+                    }
+                    lastCpu = cpu;
                 }
 
                 if (callbackResult == IAudioSinkCallback::Result::Continue) {
@@ -290,8 +310,8 @@ private:
                 }
             }
             // Restore original value.
-            if (mUtilClampEnabled && utilClampController.isUtilClampSupported()) {
-                utilClampController.setUtilClampMin(originalUtilClamp);
+            if (isUtilClampEnabled() && utilClampController.isSupported()) {
+                utilClampController.setMin(originalUtilClamp);
             }
         }
 
@@ -337,9 +357,6 @@ private:
     int32_t mCallbackLoopResult = 0;
     HostThread *mThread = NULL;
     HostThreadFactory::ThreadType mThreadType = HostThreadFactory::ThreadType::Audio;
-    bool    mUtilClampEnabled = false;
-
-private:
 
     LogTool    &mLogTool;
 

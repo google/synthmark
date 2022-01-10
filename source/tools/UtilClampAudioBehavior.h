@@ -14,70 +14,110 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_UTILCLAMPAUDIOBEHAVIOR_H
-#define ANDROID_UTILCLAMPAUDIOBEHAVIOR_H
+#ifndef ANDROID_UTIL_CLAMP_AUDIO_BEHAVIOR_H
+#define ANDROID_UTIL_CLAMP_AUDIO_BEHAVIOR_H
 
-#include "AudioSinkBase.h"
-
-constexpr int64_t kSecondsToNanos = 1000000000;
-
-constexpr int16_t kMaxUclamp = 1024;                 // max uclamp value that can be reach
-constexpr int16_t kMinUclamp = 0;                    // min uclamp value that can be reach
-constexpr int16_t kIncreaseStepUclamp = kMaxUclamp;  // uclamp step value to increase
-constexpr int16_t kDecreaseStepUclamp = 30;          // uclamp step value to decrease
-constexpr int64_t kStartIntervalNanos = 300000000;   // nsecs to wait before starting (time at max uclamp)
-
-constexpr double kLowUtilization = 0.50;
-constexpr double kHighUtilization = 0.95;
+#include <stdint.h>
 
 class UtilClampAudioBehavior {
-
 public:
-
-    void UtilClampBehavior(int64_t sampleRate, int64_t startUclampNanos, int32_t startUclampValue) {
-        mSampleRate = sampleRate;
-        mStartTimeNanos = startUclampNanos;
-        mCurrUtilClamp = startUclampValue;
+    void setup(int32_t minValue,
+               int32_t maxValue,
+               int64_t targetDurationNanos) {
+        mMinValue = minValue;
+        mMaxValue = maxValue;
+        mTargetDurationNanos = targetDurationNanos;
     }
 
-    int32_t processTiming(
-            int64_t callbackBeginNanos,     // when the app callback began
-            int64_t callbackFinishNanos,    // when the app callback finished
-            int64_t numFrames               // the number of frames processed by the callback
-    ) {
+    int32_t processTiming(int64_t actualDurationNanos) {
+        const int64_t nowNanos = HostTools::getNanoTime();
+        if (actualDurationNanos >= (int64_t)(mTargetDurationNanos * kBumpUtilization)) {
+            bumpUtilClamp(nowNanos);
+        } else if (actualDurationNanos > (int64_t)(mTargetDurationNanos * kHighUtilization)) {
+            increaseUtilClamp(nowNanos);
+        } else if (actualDurationNanos < (int64_t)(mTargetDurationNanos * kLowUtilization)) {
+            decreaseUtilClamp(nowNanos);
+        } // else do not change current value
+        mLastProcessTime = nowNanos;
+        return convertToClamp(mCurrent);
+    }
 
-        if ((callbackFinishNanos - mStartTimeNanos) < kStartIntervalNanos) {
-            return mCurrUtilClamp;
-        }
+    double calculateFractionRealTime(int64_t actualDurationNanos) const {
+        return ((double)actualDurationNanos) / mTargetDurationNanos;
+    }
 
-        int64_t callbackDurationNanos  = callbackFinishNanos - callbackBeginNanos;
-        int64_t audioDurationNanos = (numFrames * kSecondsToNanos) / mSampleRate;
+    int32_t getMin() const {
+        return mMinValue;
+    }
 
-        if (callbackDurationNanos < (int64_t)(audioDurationNanos * kLowUtilization)) {
-            decreaseUtilClamp();
-        } else if (callbackDurationNanos > (int64_t)(audioDurationNanos * kHighUtilization)) {
-            increaseUtilClamp();
-        }
+    int32_t getMax() const {
+        return mMaxValue;
+    }
 
-        return mCurrUtilClamp;
+    /**
+     * @return fractional utilization that will trigger a bump in frequency.
+     */
+    double getBumpUtilization() {
+        return kBumpUtilization;
     }
 
 private:
+    static constexpr int64_t kMillisToNanos = 1e6;
 
-    int64_t mSampleRate = 48000;
-    int16_t mCurrUtilClamp = 0;
-    int64_t mStartTimeNanos = 0;
+    // Time it takes for the CPU clock frequency to rise in response to
+    // a bump in sched_util_min. Based on measurement of Pixel 6.
+    static constexpr int64_t kBumpResponseTimeNanos = 4 * kMillisToNanos;
+    static constexpr double  kBumpUtilization = 0.99;  // bump if over this
+    static constexpr double  kHighUtilization = 0.85;  // high hysteresis threshold
+    static constexpr double  kLowUtilization  = 0.60;  // low hysteresis threshold
+    static constexpr double  kLowerFraction   = 0.2;   // lower = bump_target * this
+    static constexpr double  kBumpIncrement   = 0.1;
+    static constexpr double  kLowerDefault    = 0.0;
+    static constexpr double  kRisePerSecond   = 3.0;
+    static constexpr double  kFallPerSecond   = 0.2;
 
-    void decreaseUtilClamp() {
-        int16_t suggestedUtilClamp = mCurrUtilClamp - kDecreaseStepUclamp;
-        mCurrUtilClamp = std::max(suggestedUtilClamp, kMinUclamp);
+    int64_t mTargetDurationNanos = 0;
+    int64_t mLastProcessTime = 0;
+    int64_t mLastBumpTime = 0;
+    int32_t mMinValue = 0;    // original value determined by scheduler
+    int32_t mMaxValue = 1024; // original value determined by scheduler
+
+    double  mLower = kLowerDefault; // bottom of active fractional range
+    double  mCurrent = 0.0;   // current fractional value
+
+    int32_t convertToClamp(float value) const {
+        return ((int32_t) (value * (mMaxValue - mMinValue))) + mMinValue;
     }
 
-    void increaseUtilClamp(){
-        int16_t suggestedUtilClamp = mCurrUtilClamp + kIncreaseStepUclamp;
-        mCurrUtilClamp = std::min(suggestedUtilClamp, kMaxUclamp);
+    bool shouldHaveRespondedToBumpByNow(int64_t nowNanos) const {
+        return nowNanos > (mLastBumpTime + kBumpResponseTimeNanos);
     }
 
+    void bumpUtilClamp(int64_t nowNanos) {
+        if (shouldHaveRespondedToBumpByNow(nowNanos)) {
+            mCurrent = std::min(1.0, mCurrent + kBumpIncrement);
+            mLower = mCurrent * kLowerFraction;
+            mLastBumpTime = nowNanos;
+        } // else wait for CPU to respond to the last bump
+    }
+
+    // Slowly fall down.
+    void decreaseUtilClamp(int64_t nowNanos) {
+        const double elapsedSeconds = (nowNanos - mLastProcessTime) * 1.0e-9;
+        if (elapsedSeconds > 0.0) {
+            mCurrent -= kFallPerSecond * elapsedSeconds;
+            mCurrent = std::max(mLower, mCurrent);
+        }
+    }
+
+    // Slowly rise up.
+    void increaseUtilClamp(int64_t nowNanos) {
+        const double elapsedSeconds = (nowNanos - mLastProcessTime) * 1.0e-9;
+        if (elapsedSeconds > 0.0) {
+            mCurrent += kRisePerSecond * elapsedSeconds;
+            mCurrent = std::min(1.0, mCurrent);
+        }
+    }
 };
 
-#endif //ANDROID_UTILCLAMPAUDIOBEHAVIOR_H
+#endif //ANDROID_UTIL_CLAMP_AUDIO_BEHAVIOR_H

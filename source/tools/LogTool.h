@@ -23,7 +23,7 @@
 #include "ByteFIFO.h"
 
 #define LOGTOOL_BUFFER_SIZE (1024) //max log line size
-#define LOGTOOL_FIFO_SIZE (16 * 1024) // FIFO for storing messages until the foreground reads them
+#define LOGTOOL_FIFO_SIZE (32 * 1024) // FIFO for storing messages until the foreground reads them
 
 class LogTool
 {
@@ -36,9 +36,13 @@ public:
     virtual ~LogTool() {}
 
     virtual int32_t log(const char* format, ...) {
+        int numWritten = snprintf(mBuffer, LOGTOOL_BUFFER_SIZE, "%8d, ", mVar1);
         va_list args;
         va_start(args, format);
-        int numWritten = vsnprintf(mBuffer, LOGTOOL_BUFFER_SIZE, format, args);
+        numWritten += vsnprintf(&mBuffer[numWritten],
+                                LOGTOOL_BUFFER_SIZE - numWritten,
+                                format,
+                                args);
         va_end(args);
 
         if (numWritten > 0) {
@@ -66,7 +70,7 @@ public:
 
 private:
     ByteFIFO      mFIFO;
-    char          mBuffer[LOGTOOL_BUFFER_SIZE + 1];
+    char          mBuffer[LOGTOOL_BUFFER_SIZE + 1]; // for writing
     int           mVar1;    //user assigned variable.
 };
 

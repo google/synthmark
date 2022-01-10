@@ -141,8 +141,10 @@ public:
 
         mCpuAnalyzer.recordCpu(); // at end so we have less affect on timing
 
+        mLogTool.setVar1(mBurstCounter);
+
         mFrameCounter += numFrames;
-        mLogTool.setVar1(mFrameCounter);
+        mBurstCounter++;
 
         return IAudioSinkCallback::Result::Continue;
     }
@@ -160,7 +162,8 @@ public:
         int32_t result; // Used to store the results of various operations during the test
         mFramesNeeded = (int)(mSampleRate * seconds);
         mFrameCounter = 0;
-        mLogTool.setVar1(mFrameCounter);
+        mBurstCounter = 0;
+        mLogTool.setVar1(mBurstCounter);
 
         // Variables for turning notes on and off.
         mAreNotesOn = false;
@@ -280,6 +283,7 @@ protected:
     int32_t          mFramesNeeded = 0;
     int32_t          mDelayNotesOnUntilFrame = 0;
     int32_t          mNoteCounter = 0;
+    int32_t          mBurstCounter = 0;
     int32_t          mNanosPerBin = 1;
 
     // Variables for turning notes on and off.
