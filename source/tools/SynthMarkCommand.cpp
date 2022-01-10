@@ -60,6 +60,7 @@ static void usage(const char *name) {
     printf("    -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED\n");
     printf("    -d{noteOnDelay} seconds to delay the first NoteOn, default = %d\n",
            kDefaultNoteOnDelay);
+    printf("    -f{enable} use SCHED_FIFO for normal thread, 0 = off, 1 = on (default)\n");
     printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
     printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
     printf("    -m{voicesMode} algorithm to choose the number of voices in the range\n"
@@ -105,6 +106,7 @@ int synthmark_command_main(int argc, char **argv)
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
     bool    useAudioThread = true;
+    bool    useSchedFifo = true;
     int32_t utilClampLevel = AudioSinkBase::UTIL_CLAMP_OFF;
     int32_t workloadHintsLevel = HostCpuManager::WORKLOAD_HINTS_OFF;
     int32_t bufferSizeBursts = kDefaultBufferSizeBursts;
@@ -129,23 +131,25 @@ int synthmark_command_main(int argc, char **argv)
                     if (temp < 0) return 1;
                     useAudioThread = (temp > 0);
                     break;
+                case 'b':
+                    if ((framesPerBurst = stringToPositiveInteger(&arg[2], "-b")) < 0) return 1;
+                    break;
+                case 'B':
+                    if ((bufferSizeBursts = stringToPositiveInteger(&arg[2], "-B")) < 0) return 1;
+                    break;
                 case 'c':
                     if ((cpuAffinity = stringToPositiveInteger(&arg[2], "-c")) < 0) return 1;
-                    break;
-                case 'p':
-                    if ((percentCpu = stringToPositiveInteger(&arg[2], "-p")) < 0) return 1;
-                    break;
-                case 'n':
-                    if ((numVoices = stringToPositiveInteger(&arg[2], "-n")) < 0) return 1;
-                    break;
-                case 'N':
-                    if ((numVoicesHigh = stringToPositiveInteger(&arg[2], "-N")) < 0) return 1;
                     break;
                 case 'd':
                     if ((numSecondsDelayNoteOn = stringToPositiveInteger(&arg[2], "-d")) < 0) return 1;
                     break;
-                case 'r':
-                    if ((sampleRate = stringToPositiveInteger(&arg[2], "-r")) < 0) return 1;
+                case 'f':
+                    temp = stringToPositiveInteger(&arg[2], "-a");
+                    if (temp < 0) return 1;
+                    useSchedFifo = (temp > 0);
+                    break;
+                case 'p':
+                    if ((percentCpu = stringToPositiveInteger(&arg[2], "-p")) < 0) return 1;
                     break;
                 case 'm':
                     switch (arg[2]) {
@@ -161,14 +165,17 @@ int synthmark_command_main(int argc, char **argv)
                             break;
                     }
                     break;
+                case 'n':
+                    if ((numVoices = stringToPositiveInteger(&arg[2], "-n")) < 0) return 1;
+                    break;
+                case 'N':
+                    if ((numVoicesHigh = stringToPositiveInteger(&arg[2], "-N")) < 0) return 1;
+                    break;
+                case 'r':
+                    if ((sampleRate = stringToPositiveInteger(&arg[2], "-r")) < 0) return 1;
+                    break;
                 case 's':
                     if ((numSeconds = stringToPositiveInteger(&arg[2], "-s")) < 0) return 1;
-                    break;
-                case 'b':
-                    if ((framesPerBurst = stringToPositiveInteger(&arg[2], "-b")) < 0) return 1;
-                    break;
-                case 'B':
-                    if ((bufferSizeBursts = stringToPositiveInteger(&arg[2], "-B")) < 0) return 1;
                     break;
                 case 't':
                     testCode = arg[2];
@@ -234,8 +241,19 @@ int synthmark_command_main(int argc, char **argv)
         usage(argv[0]);
         return 1;
     }
+    if (!useSchedFifo && useAudioThread) {
+        printf(TEXT_ERROR "Audio thread will ALWAYS use SCHED_FIFO, use -f0 -a0\n");
+        usage(argv[0]);
+        return 1;
+    }
+    if (!useSchedFifo && utilClampLevel > 0) {
+        printf(TEXT_ERROR "UtilClamp requires SCHED_FIFO\n");
+        usage(argv[0]);
+        return 1;
+    }
 
     audioSink.setRequestedCpu(cpuAffinity);
+    audioSink.setSchedFifoEnabled(useSchedFifo);
     audioSink.setDefaultBufferSizeInBursts(bufferSizeBursts);
 
     // Create a test harness and set the parameters.

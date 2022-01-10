@@ -202,7 +202,6 @@ private:
         int lastCpu = -1;
         int32_t result = SYNTHMARK_RESULT_SUCCESS;
         IAudioSinkCallback *callback = getCallback();
-        setSchedFifoUsed(false);
         if (callback != NULL) {
             if (mUseRealThread) {
                 if (HostCpuManager::areWorkloadHintsEnabled()) {
@@ -225,9 +224,12 @@ private:
                         return -1;
                     }
                 } else {
-                    int err = mThread->promote(mThreadPriority);
-                    if (err == 0) {
-                        setSchedFifoUsed(true);
+                    int err;
+                    if (isSchedFifoEnabled()) {
+                        err = mThread->promote(mThreadPriority);
+                        if (err != 0) {
+                            mLogTool.log("ERROR promoting thread\n");
+                        }
                     }
                     if (getRequestedCpu() != SYNTHMARK_CPU_UNSPECIFIED) {
                         err = mThread->setCpuAffinity(getRequestedCpu());
@@ -242,6 +244,8 @@ private:
                     }
                 }
             }
+
+            mSchedulerUsed = sched_getscheduler(0);
 
             // Write in a loop until the callback says we are done.
             IAudioSinkCallback::Result callbackResult
