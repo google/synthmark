@@ -36,7 +36,8 @@
 // #define SYNTHMARK_MINOR_VERSION        19  /* Add -w1 for SCHED_DEADLINE. */
 // #define SYNTHMARK_MINOR_VERSION        20  /* Optimize search for LatencyMark. */
 // #define SYNTHMARK_MINOR_VERSION        21  /* Fix intermittent hang on STOP */
-#define SYNTHMARK_MINOR_VERSION        22  /* Add CDD Summary to Auto Test */
+// #define SYNTHMARK_MINOR_VERSION        22  /* Add CDD Summary to Auto Test */
+#define SYNTHMARK_MINOR_VERSION        23  /* Add UtilClamp, -f */
 
 
 #define SYNTHMARK_STRINGIFY(x) #x

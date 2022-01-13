@@ -185,6 +185,7 @@ public:
     }
 
     static const char *schedulerToString(int scheduler) {
+        scheduler = scheduler & 0xFFFF; // clear high flags like SCHED_RESET_ON_FORK
         switch(scheduler) {
             case SCHED_FIFO:
                 return "SCHED_FIFO";
@@ -201,10 +202,12 @@ public:
 
     std::string  dump() {
         std::stringstream resultMessage;
+        resultMessage << std::endl;
         resultMessage << "AudioSink:" << std::endl;
         resultMessage << "  frames.per.burst       = " << getFramesPerBurst() << std::endl;
         resultMessage << "  scheduler              = "
-                         << schedulerToString(mSchedulerUsed) << std::endl;
+                         << schedulerToString(mSchedulerUsed)
+                         << " # 0x" << std::hex << mSchedulerUsed << std::dec << std::endl;
         resultMessage << "  buffer.size.frames     = "  << getBufferSizeInFrames() << std::endl;
         resultMessage << "  buffer.size.bursts     = "
                          << (getBufferSizeInFrames() / getFramesPerBurst()) << std::endl;

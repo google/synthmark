@@ -61,7 +61,7 @@ public:
     int32_t runCompleteTest(int32_t sampleRate,
                             int32_t framesPerBurst,
                             int32_t numSeconds) override {
-        mResult->appendMessage(TEXT_RESULTS_BEGIN "\n");
+        mResult->appendMessage("\n" TEXT_RESULTS_BEGIN "\n");
         int32_t result = runTest(sampleRate, framesPerBurst, numSeconds);
         mResult->appendMessage(mAudioSink->dump());
         mResult->appendMessage(TEXT_RESULTS_END "\n");
