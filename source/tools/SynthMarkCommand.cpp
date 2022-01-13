@@ -62,7 +62,7 @@ static void usage(const char *name) {
            kDefaultNoteOnDelay);
     printf("    -f{enable} use SCHED_FIFO for normal thread, 0 = off, 1 = on (default)\n");
     printf("    -n{numVoices} to render, default = %d\n", kDefaultNumVoices);
-    printf("    -N{numVoices} to render for toggling high load, LatencyMark only\n");
+    printf("    -N{numVoices} to render for toggling high load, only for -t{l|j|c|s}\n");
     printf("    -m{voicesMode} algorithm to choose the number of voices in the range\n"
            "      [-n, -N]. This value can be 'l' for a linear increment, 'r' for a\n"
            "      random choice, or 's' to switch between -n and -N. default = s\n");
@@ -219,6 +219,13 @@ int synthmark_command_main(int argc, char **argv)
     }
     if (numVoicesHigh != 0 && numVoicesHigh < numVoices) {
         printf(TEXT_ERROR "Invalid num voices high = %d\n", numVoicesHigh);
+        usage(argv[0]);
+        return 1;
+    }
+    if (numVoicesHigh != 0
+            && testCode != 'l' && testCode != 'j'
+            && testCode != 's' && testCode != 'c') {
+        printf(TEXT_ERROR "Num voices high ignored for this test.\n");
         usage(argv[0]);
         return 1;
     }
