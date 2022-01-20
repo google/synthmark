@@ -267,8 +267,8 @@ private:
                     if (isUtilClampLoggingEnabled()) {
                         mLogTool.log("burst, suggestedMin, actualMin, util\%, cpu\n");
                     }
-                    behavior.setup(utilClampController.getMin(),
-                                   utilClampController.getMax(),
+                    behavior.setup(40,
+                                   300,
                                    targetDurationNanos);
                 } else {
                     mLogTool.log("WARNING utilClamp not supported\n");
