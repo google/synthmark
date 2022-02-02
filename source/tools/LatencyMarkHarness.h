@@ -149,7 +149,8 @@ public:
                 int32_t desiredSizeInFrames = bursts * getFramesPerBurst();
                 int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
                 if (actualSize < desiredSizeInFrames) {
-                    mLogTool.log("ERROR - at maximum buffer size and still glitching\n");
+                    mLogTool.log("ERROR - requested buffer size %d, got %d, still glitching\n",
+                                 desiredSizeInFrames, actualSize);
                     bursts = 0;
                 }
             }

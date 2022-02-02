@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <ctime>
+#include <memory>
 #include <unistd.h>
 
 #include "AudioSinkBase.h"
@@ -32,9 +33,6 @@
 
 constexpr int kMaxBufferCapacityInBursts = 512;
 
-// Use 2 for double buffered
-constexpr int kBufferSizeInBursts = 8;
-
 class VirtualAudioSink : public AudioSinkBase
 {
 public:
@@ -47,8 +45,7 @@ public:
     }
 
     virtual int32_t close() override {
-        delete[] mBurstBuffer;
-        mBurstBuffer = nullptr;
+        mBurstBuffer.reset();
         return 0;
     }
 
@@ -60,7 +57,7 @@ public:
         }
 
         // This must be set before setting the size.
-        mMaxBufferCapacityInFrames = kMaxBufferCapacityInBursts * framesPerBurst;
+        mBufferCapacityInFrames = kMaxBufferCapacityInBursts * framesPerBurst;
 
         // If UNSPECIFIED then set to a reasonable default.
         if (getBufferSizeInFrames() == 0) {
@@ -72,9 +69,7 @@ public:
         mNanosPerBurst = (int32_t) nanosPerBurst;
         HostCpuManager::getInstance()->setNanosPerBurst(nanosPerBurst);
 
-        delete[] mBurstBuffer;
-        mBurstBuffer = nullptr;
-        mBurstBuffer = new float[samplesPerFrame * framesPerBurst];
+        mBurstBuffer = std::make_unique<float[]>(samplesPerFrame * framesPerBurst);
 
         mNextHardwareReadTimeNanos = 0;
         mFramesConsumed = 0;
@@ -93,35 +88,6 @@ public:
 
     int32_t getFullFramesAvailable() {
         return (int32_t) (getFramesWritten() - mFramesConsumed);
-    }
-
-    int32_t getBufferSizeInFrames() override {
-        return mBufferSizeInFrames;
-    }
-
-    void setDefaultBufferSizeInBursts(int32_t numBursts) override {
-        mDefaultBufferSizeInBursts = numBursts;
-    }
-
-    /**
-     * Set the amount of the buffer that will be used. Determines latency.
-     */
-     int32_t setBufferSizeInFrames(int32_t numFrames) override {
-        // mLogTool.log("VirtualAudioSink::%s(%d) max = %d\n", __func__, numFrames, mMaxBufferCapacityInFrames);
-        if (numFrames < 1) {
-            numFrames = 1;
-        } else if (numFrames > mMaxBufferCapacityInFrames) {
-            numFrames = mMaxBufferCapacityInFrames;
-        }
-        mBufferSizeInFrames = numFrames;
-        return mBufferSizeInFrames;
-    }
-
-    /**
-     * Get the maximum size of the buffer.
-     */
-    virtual int32_t getBufferCapacityInFrames() override {
-        return mMaxBufferCapacityInFrames;
     }
 
     virtual void writeBurst(const float *buffer) {
@@ -280,7 +246,7 @@ private:
 
                 int64_t beginCallback = HostTools::getNanoTime();
                 // Call the synthesizer to render the audio data.
-                callbackResult = fireCallback(mBurstBuffer, mFramesPerBurst);
+                callbackResult = fireCallback(mBurstBuffer.get(), mFramesPerBurst);
                 int64_t endCallback = HostTools::getNanoTime();
                 int64_t actualDurationNanos = endCallback - beginCallback;
                 if (isUtilClampEnabled()) {
@@ -304,7 +270,7 @@ private:
 
                 if (callbackResult == IAudioSinkCallback::Result::Continue) {
                     // Output the audio using a blocking write.
-                    writeBurst(mBurstBuffer);
+                    writeBurst(mBurstBuffer.get());
                 } else if (callbackResult != IAudioSinkCallback::Result::Finished) {
                     result = callbackResult;
                 }
@@ -328,7 +294,7 @@ private:
     /**
      * Call the callback directly or from a thread.
      */
-    virtual int32_t runCallbackLoop() override {
+    int32_t runCallbackLoop() override {
         if (mThread != NULL) {
             int err = mThread->join();
             if (err != 0) {
@@ -347,11 +313,8 @@ private:
     int64_t mStartTimeNanos = 0;
     int32_t mNanosPerBurst = 1; // set in open
     int64_t mNextHardwareReadTimeNanos = 0;
-    int32_t mBufferSizeInFrames = 0;
-    int32_t mMaxBufferCapacityInFrames = 0;
-    int32_t mDefaultBufferSizeInBursts = kBufferSizeInBursts;
     int64_t mFramesConsumed = 0;
-    float*  mBurstBuffer = nullptr;   // contains output of the synthesizer
+    std::unique_ptr<float[]>  mBurstBuffer;   // contains output of the synthesizer
     bool    mUseRealThread = true; // TODO control using new settings object
     int     mThreadPriority = SYNTHMARK_THREAD_PRIORITY_DEFAULT;   // TODO control using new settings object
     int32_t mCallbackLoopResult = 0;

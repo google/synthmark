@@ -20,7 +20,9 @@
 #include <android/log.h>
 
 #include "synth/IncludeMeOnce.h"
+#include "synth/IncludeMeOnce.h"
 
+#include "tools/RealAudioSink.h"
 #include "tools/NativeTest.h"
 
 JNIEXPORT jlong JNICALL

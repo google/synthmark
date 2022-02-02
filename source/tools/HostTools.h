@@ -163,7 +163,7 @@ public:
      * @param cpuIndex
      * @return 0 on success or a negative errno
      */
-    virtual int setCpuAffinity(int cpuIndex) {
+    static int setCpuAffinity(int cpuIndex) {
 #if defined(__APPLE__)
         return -1;
 #else

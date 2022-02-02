@@ -81,29 +81,41 @@ public:
         return mCallback->onRenderAudio(buffer, numFrames);
     }
 
-    virtual void setDefaultBufferSizeInBursts(int32_t numBursts) = 0;
+    void setDefaultBufferSizeInBursts(int32_t numBursts) {
+        mDefaultBufferSizeInBursts = numBursts;
+    }
 
     /**
      * Set the amount of the buffer that will be used. Determines latency.
      * @return the actual size, which may not match the requested size, or a negative error
      */
-    virtual int32_t setBufferSizeInFrames(int32_t numFrames) = 0;
+    virtual int32_t setBufferSizeInFrames(int32_t numFrames) {
+        // mLogTool.log("VirtualAudioSink::%s(%d) max = %d\n", __func__, numFrames, mBufferCapacityInFrames);
+        if (numFrames < 1) {
+            numFrames = 1;
+        } else if (numFrames > mBufferCapacityInFrames) {
+            numFrames = mBufferCapacityInFrames;
+        }
+        mBufferSizeInFrames = numFrames;
+        return mBufferSizeInFrames;
+    }
+
+    int32_t getBufferSizeInFrames() {
+        return mBufferSizeInFrames;
+    }
 
     /**
-     * Get the size size of the buffer.
+     * Get the maximum allocated size of the buffer.
      */
-    virtual int32_t getBufferSizeInFrames() = 0;
+    int32_t getBufferCapacityInFrames() {
+        return mBufferCapacityInFrames;
+    }
 
-    /**
-     * Get the maximum size of the buffer.
-     */
-    virtual int32_t getBufferCapacityInFrames() = 0;
-
-    virtual int32_t getUnderrunCount() {
+    int32_t getUnderrunCount() {
         return mUnderrunCount;
     }
 
-    virtual void setUnderrunCount(int i) {
+    void setUnderrunCount(int i) {
         mUnderrunCount = i;
     }
 
@@ -229,6 +241,12 @@ protected:
     int32_t       mUnderrunCount = 0;
     // set in callback loop
     int           mSchedulerUsed = -1;
+
+    int32_t       mBufferSizeInFrames = 0;
+// Use 2 for double buffered
+    static constexpr int kBufferSizeInBursts = 8;
+    int32_t       mDefaultBufferSizeInBursts = kBufferSizeInBursts;
+    int32_t       mBufferCapacityInFrames = 0;
 
 private:
     IAudioSinkCallback *mCallback = NULL;
