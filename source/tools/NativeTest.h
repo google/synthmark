@@ -234,7 +234,6 @@ protected:
 class TestVoiceMark : public CommonNativeTestUnit {
 public:
     TestVoiceMark(LogTool &logTool) : CommonNativeTestUnit("VoiceMark", logTool) {
-
     }
 
     int init() override {

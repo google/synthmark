@@ -31,6 +31,7 @@
 #include "tools/ITestHarness.h"
 #include "tools/LatencyMarkHarness.h"
 #include "tools/TimingAnalyzer.h"
+#include "tools/RealAudioSink.h"
 #include "tools/UtilizationMarkHarness.h"
 #include "tools/UtilizationSeriesHarness.h"
 #include "tools/VirtualAudioSink.h"
@@ -44,6 +45,12 @@ constexpr int  kDefaultNumVoices        = 8;
 constexpr int  kDefaultNoteOnDelay      = 0;
 constexpr int  kDefaultPercentCpu       = 50;
 
+enum : int32_t {
+    AUDIO_LEVEL_NORMAL = 0,
+    AUDIO_LEVEL_CALLBACK = 1,
+    AUDIO_LEVEL_OUTPUT = 2
+};
+
 static void usage(const char *name) {
     printf("SynthMark version %d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
@@ -52,7 +59,7 @@ static void usage(const char *name) {
            ", s=series_util, c=clock_ramp, a=automated, default is %c\n",
            kDefaultTestCode);
 
-    printf("    -a{enable} 0 for normal thread, 1 for audio callback, default = 1\n");
+    printf("    -a{audioLevel} 0 = normal thread, 1 = audio callback (default), 2 = audio output\n");
     printf("    -b{burstSize} frames read by virtual hardware at one time, default = %d\n",
            kDefaultFramesPerBurst);
     printf("    -B{bursts} initial buffer size in bursts, default = %d\n",
@@ -105,6 +112,7 @@ int synthmark_command_main(int argc, char **argv)
     int32_t numVoicesHigh = 0;
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
+    int32_t audioLevel = AUDIO_LEVEL_CALLBACK;
     bool    useAudioThread = true;
     bool    useSchedFifo = true;
     int32_t utilClampLevel = AudioSinkBase::UTIL_CLAMP_OFF;
@@ -116,7 +124,7 @@ int synthmark_command_main(int argc, char **argv)
     ITestHarness    *harness = nullptr;
     SynthMarkResult  result;
     LogTool          logTool;
-    VirtualAudioSink audioSink(logTool);
+    std::unique_ptr<AudioSinkBase> audioSink;
 
     printf("# SynthMark V%d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
 
@@ -127,9 +135,9 @@ int synthmark_command_main(int argc, char **argv)
         if (arg[0] == '-') {
             switch(arg[1]) {
                 case 'a':
-                    temp = stringToPositiveInteger(&arg[2], "-a");
-                    if (temp < 0) return 1;
-                    useAudioThread = (temp > 0);
+                    audioLevel = stringToPositiveInteger(&arg[2], "-a");
+                    if (audioLevel < 0) return 1;
+                    useAudioThread = (audioLevel > 0);
                     break;
                 case 'b':
                     if ((framesPerBurst = stringToPositiveInteger(&arg[2], "-b")) < 0) return 1;
@@ -259,15 +267,20 @@ int synthmark_command_main(int argc, char **argv)
         return 1;
     }
 
-    audioSink.setRequestedCpu(cpuAffinity);
-    audioSink.setSchedFifoEnabled(useSchedFifo);
-    audioSink.setDefaultBufferSizeInBursts(bufferSizeBursts);
+    if (audioLevel == AUDIO_LEVEL_OUTPUT) {
+        audioSink = std::make_unique<RealAudioSink>(logTool);
+    } else {
+        audioSink = std::make_unique<VirtualAudioSink>(logTool);
+    }
+    audioSink->setRequestedCpu(cpuAffinity);
+    audioSink->setSchedFifoEnabled(useSchedFifo);
+    audioSink->setDefaultBufferSizeInBursts(bufferSizeBursts);
 
     // Create a test harness and set the parameters.
     switch(testCode) {
         case 'v':
         {
-            VoiceMarkHarness *voiceHarness = new VoiceMarkHarness(&audioSink, &result, logTool);
+            VoiceMarkHarness *voiceHarness = new VoiceMarkHarness(audioSink.get(), &result, logTool);
             voiceHarness->setTargetCpuLoad(percentCpu * 0.01);
             voiceHarness->setInitialVoiceCount(numVoices);
             harness = voiceHarness;
@@ -276,7 +289,7 @@ int synthmark_command_main(int argc, char **argv)
 
         case 'l':
         {
-            LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(&audioSink, &result, logTool);
+            LatencyMarkHarness *latencyHarness = new LatencyMarkHarness(audioSink.get(), &result, logTool);
             latencyHarness->setNumVoicesHigh(numVoicesHigh);
             latencyHarness->setVoicesMode(voicesMode);
             latencyHarness->setInitialBursts(bufferSizeBursts);
@@ -286,7 +299,7 @@ int synthmark_command_main(int argc, char **argv)
 
         case 'j':
         {
-            JitterMarkHarness *jitterHarness = new JitterMarkHarness(&audioSink, &result, logTool);
+            JitterMarkHarness *jitterHarness = new JitterMarkHarness(audioSink.get(), &result, logTool);
             jitterHarness->setNumVoicesHigh(numVoicesHigh);
             jitterHarness->setVoicesMode(voicesMode);
             harness = jitterHarness;
@@ -295,7 +308,7 @@ int synthmark_command_main(int argc, char **argv)
 
         case 'c':
         {
-            ClockRampHarness *clockHarness = new ClockRampHarness(&audioSink, &result, logTool);
+            ClockRampHarness *clockHarness = new ClockRampHarness(audioSink.get(), &result, logTool);
             clockHarness->setNumVoicesHigh(numVoicesHigh);
             clockHarness->setVoicesMode(voicesMode);
             harness = clockHarness;
@@ -305,14 +318,14 @@ int synthmark_command_main(int argc, char **argv)
         case 'u':
         {
             UtilizationMarkHarness *utilizationHarness
-                    = new UtilizationMarkHarness(&audioSink, &result, logTool);
+                    = new UtilizationMarkHarness(audioSink.get(), &result, logTool);
             harness = utilizationHarness;
         }
             break;
 
         case 'a':
         {
-            AutomatedTestSuite *testSuite = new AutomatedTestSuite(&audioSink, &result, logTool);
+            AutomatedTestSuite *testSuite = new AutomatedTestSuite(audioSink.get(), &result, logTool);
             harness = testSuite;
         }
             break;
@@ -320,7 +333,7 @@ int synthmark_command_main(int argc, char **argv)
         case 's':
         {
             UtilizationSeriesHarness *seriesHarness
-                    = new UtilizationSeriesHarness(&audioSink, &result, logTool);
+                    = new UtilizationSeriesHarness(audioSink.get(), &result, logTool);
             seriesHarness->setNumVoicesHigh(numVoicesHigh);
             harness = seriesHarness;
         }
@@ -339,7 +352,7 @@ int synthmark_command_main(int argc, char **argv)
                            : HostThreadFactory::ThreadType::Default);
     HostCpuManager::setWorkloadHintsLevel(workloadHintsLevel);
 
-    audioSink.setUtilClampLevel(utilClampLevel);
+    audioSink->setUtilClampLevel(utilClampLevel);
 
     // Print specified parameters.
     printf("  test.name            = %s\n",  harness->getName());
@@ -353,7 +366,7 @@ int synthmark_command_main(int argc, char **argv)
     printf("  msec.per.burst       = %6.2f\n", ((framesPerBurst * 1000.0) / sampleRate));
     printf("  cpu.affinity         = %6d\n", cpuAffinity);
     printf("  cpu.count            = %6d\n", HostTools::getCpuCount());
-    printf("  audio.thread         = %6d\n", (useAudioThread ? 1 : 0));
+    printf("  audio.level          = %6d\n", audioLevel);
     printf("  util.clamp           = %6d\n", utilClampLevel);
     printf("  workload.hints       = %6d\n", workloadHintsLevel);
     printf("# wait at least %d seconds for benchmark to complete\n", numSeconds);
