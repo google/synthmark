@@ -222,6 +222,9 @@ private:
             int originalUtilClamp = 0;
             int currentUtilClamp = 0;
             constexpr int32_t kUtilClampQuanta = 10;
+            // Restrict the range to save power.
+            constexpr int32_t kUtilClampLow = 40;
+            constexpr int32_t kUtilClampHigh = 300;
             int64_t targetDurationNanos = (mFramesPerBurst * 1e9) / getSampleRate();
 
             // init UtilClampBehavior
@@ -233,8 +236,8 @@ private:
                     if (isUtilClampLoggingEnabled()) {
                         mLogTool.log("burst, suggestedMin, actualMin, util\%, cpu\n");
                     }
-                    behavior.setup(40,
-                                   300,
+                    behavior.setup(kUtilClampLow,
+                                   kUtilClampHigh,
                                    targetDurationNanos);
                 } else {
                     mLogTool.log("WARNING utilClamp not supported\n");
