@@ -72,7 +72,8 @@ typedef enum {
 #define PARAMS_FRAMES_PER_BURST "frames_per_burst"
 #define PARAMS_NUM_SECONDS "num_seconds"
 #define PARAMS_NOTE_ON_DELAY "note_on_delay"
-
+#define PARAMS_TEST_START_DELAY "test_start_delay"
+#define PARAMS_AUDIO_LEVEL  "audio_level"
 #define PARAMS_TARGET_CPU_LOAD  "target_cpu_load"
 #define PARAMS_NUM_VOICES "num_voices"
 #define PARAMS_NUMB_VOICES_HIGH "num_voices_high"
@@ -134,6 +135,16 @@ public:
 
     }
 
+    void createAudioSink() {
+        int audioLevel = mParams.getValueFromInt(PARAMS_AUDIO_LEVEL);
+        if (audioLevel == AudioSinkBase::AUDIO_LEVEL_OUTPUT) {
+            mAudioSink = std::make_unique<RealAudioSink>(mLogTool);
+        } else {
+            mAudioSink = std::make_unique<VirtualAudioSink>(mLogTool);
+        }
+        mAudioSink->setThreadType(HostThreadFactory::ThreadType::Audio);
+    }
+
     int init() override {
         //Register parameters
 
@@ -151,7 +162,14 @@ public:
                                          &vFramesPerBurst,
                                          kParamsDefaultIndexFramesPerBurst);
 
+        ParamInteger paramAudioLevel(PARAMS_AUDIO_LEVEL, "Audio Level: 1=callback, 2=audible",
+                                     AudioSinkBase::AUDIO_LEVEL_CALLBACK,
+                                     AudioSinkBase::AUDIO_LEVEL_CALLBACK,
+                                     AudioSinkBase::AUDIO_LEVEL_OUTPUT);
+
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
+        // Touch boost usually dies down in a few seconds.
+        ParamInteger paramTestStartDelay(PARAMS_TEST_START_DELAY, "Test Start Delay Seconds", 4, 0, 20);
 
         std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
         ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS, "Number of Seconds", &vDurations, 3);
@@ -160,7 +178,9 @@ public:
         mParams.addParam(&paramSamplesPerFrame);
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
+        mParams.addParam(&paramAudioLevel);
         mParams.addParam(&paramNoteOnDelay);
+        mParams.addParam(&paramTestStartDelay);
         mParams.addParam(&paramNumSeconds);
 
 #ifndef __APPLE__
@@ -182,11 +202,15 @@ public:
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
-    int runTestHarness(ITestHarness &harness, VirtualAudioSink &audioSink) {
+    int runTestHarness(ITestHarness &harness) {
+        // Sleep to allow time for touch boost to die down.
+        int32_t testDelaySeconds = mParams.getValueFromInt(PARAMS_TEST_START_DELAY);
+        if (testDelaySeconds > 0) {
+            mLogTool.log("Wait %d seconds for the test to start...\n", testDelaySeconds);
+            sleep(testDelaySeconds);
+        }
 
         mResult.reset();
-        audioSink.setHostThread(mHostThreadFactory->createThread(
-                HostThreadFactory::ThreadType::Audio));
 
         int32_t sampleRate = mParams.getValueFromInt(PARAMS_SAMPLE_RATE);
         // int32_t samplesPerFrame = mParams.getValueFromInt(PARAMS_SAMPLES_PER_FRAME); // IGNORED!
@@ -198,7 +222,7 @@ public:
 
 #ifndef __APPLE__
         int CoreAffinity = mParams.getValueFromInt(PARAMS_CORE_AFFINITY);
-        audioSink.setRequestedCpu(CoreAffinity);
+        mAudioSink->setRequestedCpu(CoreAffinity);
 #endif
         mLogTool.log(mParams.toString(ParamBase::PRINT_COMPACT).c_str());
 
@@ -224,6 +248,7 @@ public:
 
 protected:
 
+    std::unique_ptr<AudioSinkBase> mAudioSink;
     SynthMarkResult mResult;
 };
 
@@ -250,13 +275,13 @@ public:
     }
 
     int run() override {
-        VirtualAudioSink audioSink(mLogTool);
-        VoiceMarkHarness harness(&audioSink, &mResult, mLogTool);
+        createAudioSink();
+        VoiceMarkHarness harness(mAudioSink.get(), &mResult, mLogTool);
         
         float targetCpuLoad = mParams.getValueFromFloat(PARAMS_TARGET_CPU_LOAD);
         harness.setTargetCpuLoad(targetCpuLoad);
 
-        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness);
     }
 
 protected:
@@ -284,13 +309,13 @@ public:
     }
 
     int run() override {
-        VirtualAudioSink audioSink(mLogTool);
-        UtilizationMarkHarness harness(&audioSink, &mResult, mLogTool);
+        createAudioSink();
+        UtilizationMarkHarness harness(mAudioSink.get(), &mResult, mLogTool);
 
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
         harness.setNumVoices(numVoices);
 
-        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness);
     }
 
 protected:
@@ -325,7 +350,7 @@ public:
         return err;
     }
 
-    int runTestHarness(TestHarnessBase &harness, VirtualAudioSink &audioSink) {
+    int runTestHarness(TestHarnessBase &harness) {
 
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
         harness.setNumVoices(numVoices);
@@ -333,7 +358,7 @@ public:
         int32_t numVoicesHigh = mParams.getValueFromInt(PARAMS_NUMB_VOICES_HIGH);
         harness.setNumVoicesHigh(numVoicesHigh);
 
-        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness);
     }
 
 protected:
@@ -347,10 +372,10 @@ public:
     }
 
     int run() override {
-        VirtualAudioSink audioSink(mLogTool);
-        LatencyMarkHarness harness(&audioSink, &mResult, mLogTool);
+        createAudioSink();
+        LatencyMarkHarness harness(mAudioSink.get(), &mResult, mLogTool);
 
-        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness, audioSink);
+        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness);
     }
 protected:
 };
@@ -363,10 +388,10 @@ public:
     }
 
     int run() override {
-        VirtualAudioSink audioSink(mLogTool);
-        JitterMarkHarness harness(&audioSink, &mResult, mLogTool);
+        createAudioSink();
+        JitterMarkHarness harness(mAudioSink.get(), &mResult, mLogTool);
 
-        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness, audioSink);
+        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness);
     }
 protected:
 };
@@ -379,10 +404,10 @@ public:
     }
 
     int run() override {
-        VirtualAudioSink audioSink(mLogTool);
-        ClockRampHarness harness(&audioSink, &mResult, mLogTool);
+        createAudioSink();
+        ClockRampHarness harness(mAudioSink.get(), &mResult, mLogTool);
 
-        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness, audioSink);
+        return ChangingVoiceTestUnit::runTestHarness((TestHarnessBase &) harness);
     }
 protected:
 };
@@ -402,10 +427,10 @@ public:
     }
 
     int run() override {
-        VirtualAudioSink audioSink(mLogTool);
-        AutomatedTestSuite harness(&audioSink, &mResult, mLogTool);
+        createAudioSink();
+        AutomatedTestSuite harness(mAudioSink.get(), &mResult, mLogTool);
 
-        return CommonNativeTestUnit::runTestHarness(harness, audioSink);
+        return CommonNativeTestUnit::runTestHarness(harness);
     }
 
 protected:

@@ -45,12 +45,6 @@ constexpr int  kDefaultNumVoices        = 8;
 constexpr int  kDefaultNoteOnDelay      = 0;
 constexpr int  kDefaultPercentCpu       = 50;
 
-enum : int32_t {
-    AUDIO_LEVEL_NORMAL = 0,
-    AUDIO_LEVEL_CALLBACK = 1,
-    AUDIO_LEVEL_OUTPUT = 2
-};
-
 static void usage(const char *name) {
     printf("SynthMark version %d.%d\n", SYNTHMARK_MAJOR_VERSION, SYNTHMARK_MINOR_VERSION);
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
@@ -112,7 +106,7 @@ int synthmark_command_main(int argc, char **argv)
     int32_t numVoicesHigh = 0;
     int32_t numSecondsDelayNoteOn = kDefaultNoteOnDelay;
     int32_t cpuAffinity = SYNTHMARK_CPU_UNSPECIFIED;
-    int32_t audioLevel = AUDIO_LEVEL_CALLBACK;
+    int32_t audioLevel = AudioSinkBase::AUDIO_LEVEL_CALLBACK;
     bool    useAudioThread = true;
     bool    useSchedFifo = true;
     int32_t utilClampLevel = AudioSinkBase::UTIL_CLAMP_OFF;
@@ -267,7 +261,7 @@ int synthmark_command_main(int argc, char **argv)
         return 1;
     }
 
-    if (audioLevel == AUDIO_LEVEL_OUTPUT) {
+    if (audioLevel == AudioSinkBase::AUDIO_LEVEL_OUTPUT) {
         audioSink = std::make_unique<RealAudioSink>(logTool);
     } else {
         audioSink = std::make_unique<VirtualAudioSink>(logTool);

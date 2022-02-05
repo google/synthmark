@@ -45,6 +45,12 @@ public:
         UTIL_CLAMP_ON_LOGGED = 2
     };
 
+    enum : int32_t {
+        AUDIO_LEVEL_NORMAL = 0,
+        AUDIO_LEVEL_CALLBACK = 1,
+        AUDIO_LEVEL_OUTPUT = 2,
+    };
+
     virtual int32_t initialize() {
         return 0;
     }
