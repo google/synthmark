@@ -76,7 +76,7 @@ typedef enum {
 #define PARAMS_AUDIO_LEVEL  "audio_level"
 #define PARAMS_TARGET_CPU_LOAD  "target_cpu_load"
 #define PARAMS_NUM_VOICES "num_voices"
-#define PARAMS_NUMB_VOICES_HIGH "num_voices_high"
+#define PARAMS_NUM_VOICES_HIGH "num_voices_high"
 #define PARAMS_CORE_AFFINITY "core_affinity"
 
 static constexpr int kParamsDefaultIndexFramesPerBurst = 5; // 4->64, 5->96
@@ -340,9 +340,9 @@ public:
                                     300);
         mParams.addParam(&paramNumVoices);
 
-        ParamInteger paramNumVoicesHigh(PARAMS_NUMB_VOICES_HIGH,
+        ParamInteger paramNumVoicesHigh(PARAMS_NUM_VOICES_HIGH,
                                         "Number of Voices High",
-                                        0,
+                                        0, // 0 means just use LOW
                                         0,
                                         300);
         mParams.addParam(&paramNumVoicesHigh);
@@ -355,7 +355,7 @@ public:
         int32_t numVoices = mParams.getValueFromInt(PARAMS_NUM_VOICES);
         harness.setNumVoices(numVoices);
 
-        int32_t numVoicesHigh = mParams.getValueFromInt(PARAMS_NUMB_VOICES_HIGH);
+        int32_t numVoicesHigh = mParams.getValueFromInt(PARAMS_NUM_VOICES_HIGH);
         harness.setNumVoicesHigh(numVoicesHigh);
 
         return CommonNativeTestUnit::runTestHarness(harness);
