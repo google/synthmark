@@ -129,12 +129,19 @@ public:
         int32_t testCount = 1;
         resetBinarySearch();
         int32_t bursts = getNextBurstsToTry(true); // assume glitches at zero latency
-
         while (bursts > 0) {
             int32_t numSeconds = (mState == STATE_VERIFY) ? maxSeconds : std::min(maxSeconds, 10);
             mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d ----\n",
                           testCount++, numSeconds, bursts);
+            int32_t desiredSizeInFrames = bursts * framesPerBurst;
+            int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
+            if (actualSize < desiredSizeInFrames) {
+                mLogTool.log("ERROR - requested buffer size %d, got %d, still glitching\n",
+                             desiredSizeInFrames, actualSize);
+                break;
+            }
             fflush(stdout);
+
             int32_t err = measureOnce(sampleRate, framesPerBurst, numSeconds);
             if (err < 0) {
                 mLogTool.log("LatencyMark: %s returning err = %d ----\n",  __func__, err);
@@ -145,15 +152,6 @@ public:
                 mLogTool.log("LatencyMark: no glitches\n");
             }
             bursts = getNextBurstsToTry(glitched);
-            if (bursts != 0) {
-                int32_t desiredSizeInFrames = bursts * getFramesPerBurst();
-                int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
-                if (actualSize < desiredSizeInFrames) {
-                    mLogTool.log("ERROR - requested buffer size %d, got %d, still glitching\n",
-                                 desiredSizeInFrames, actualSize);
-                    bursts = 0;
-                }
-            }
         }
 
         return mLowestGoodBursts;

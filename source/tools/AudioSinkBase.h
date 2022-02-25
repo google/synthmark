@@ -252,7 +252,7 @@ protected:
 // Use 2 for double buffered
     static constexpr int kBufferSizeInBursts = 8;
     int32_t       mDefaultBufferSizeInBursts = kBufferSizeInBursts;
-    int32_t       mBufferCapacityInFrames = 0;
+    int32_t       mBufferCapacityInFrames = 4 * 1024;
 
 private:
     IAudioSinkCallback *mCallback = NULL;

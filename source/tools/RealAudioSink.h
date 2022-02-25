@@ -112,10 +112,10 @@ public:
         // If UNSPECIFIED then set to a reasonable default.
         if (getBufferSizeInFrames() == 0) {
             int32_t bufferSize = mDefaultBufferSizeInBursts * framesPerBurst;
-            setBufferSizeInFrames(bufferSize);
+            setRealBufferSizeInFrames(bufferSize);
         } else {
             // Set based on previous setting.
-            setBufferSizeInFrames(getBufferSizeInFrames());
+            setRealBufferSizeInFrames(getBufferSizeInFrames());
         }
 
         return result;
@@ -194,12 +194,12 @@ public:
      * Set the amount of the buffer that will be used. Determines latency.
      * @return the actual size, which may not match the requested size, or a negative error
      */
-    int32_t setBufferSizeInFrames(int32_t numFrames) override {
-        numFrames = AudioSinkBase::setBufferSizeInFrames(numFrames);
+    int32_t setRealBufferSizeInFrames(int32_t numFrames)  {
+        int32_t numFrames2 = AudioSinkBase::setBufferSizeInFrames(numFrames);
         if (mStream) {
-            int32_t actualSize = AAudioStream_setBufferSizeInFrames(mStream, numFrames);
-            mLogTool.log("AAudioStream_setBufferSizeInFrames(%d) = %d\n",
-                     numFrames, actualSize);
+            int32_t actualSize = AAudioStream_setBufferSizeInFrames(mStream, numFrames2);
+//            mLogTool.log("AAudioStream_setBufferSizeInFrames(%d) => %d\n",
+//                         numFrames2, actualSize);
             if (actualSize < 0) return actualSize;
             AudioSinkBase::setBufferSizeInFrames(actualSize);
         }
