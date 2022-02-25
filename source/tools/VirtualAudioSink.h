@@ -234,11 +234,18 @@ private:
                     currentUtilClamp = originalUtilClamp;
                     mLogTool.log("utilClamp active\n");
                     if (isUtilClampLoggingEnabled()) {
-                        mLogTool.log("burst, suggestedMin, actualMin, util\%, cpu\n");
+                        mLogTool.log("burst, uclamp_min, load, cpu#\n");
                     }
-                    behavior.setup(kUtilClampLow,
-                                   kUtilClampHigh,
-                                   targetDurationNanos);
+                    if (isUtilClampDynamic()) {
+                        behavior.setup(kUtilClampLow,
+                                       kUtilClampHigh,
+                                       targetDurationNanos);
+                    } else {
+                        // Set to fixed level for entire time.
+                        utilClampController.setMin(getUtilClampLevel());
+                        currentUtilClamp = utilClampController.getMin();
+                        mLogTool.log("sched_util_min fixed at %d\n", currentUtilClamp);
+                    }
                 } else {
                     mLogTool.log("WARNING utilClamp not supported\n");
                     setUtilClampLevel(UTIL_CLAMP_OFF);
@@ -252,7 +259,7 @@ private:
                 callbackResult = fireCallback(mBurstBuffer.get(), mFramesPerBurst);
                 int64_t endCallback = HostTools::getNanoTime();
                 int64_t actualDurationNanos = endCallback - beginCallback;
-                if (isUtilClampEnabled()) {
+                if (isUtilClampDynamic()) {
                     bool utilClampChanged = false;
                     int cpu = HostThread::getCpu(); // query before changing util_clamp
                     int suggestedUtilClamp = behavior.processTiming(actualDurationNanos);
@@ -279,7 +286,7 @@ private:
                 }
             }
             // Restore original value.
-            if (isUtilClampEnabled() && utilClampController.isSupported()) {
+            if (isUtilClampEnabled()) {
                 utilClampController.setMin(originalUtilClamp);
             }
         }

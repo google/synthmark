@@ -179,6 +179,10 @@ public:
     }
 
     bool isUtilClampEnabled() {
+        return mUtilClampLevel > 0;
+    }
+
+    bool isUtilClampDynamic() {
         return mUtilClampLevel == UTIL_CLAMP_ON
                || mUtilClampLevel == UTIL_CLAMP_ON_LOGGED;
     }
