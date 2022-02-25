@@ -72,7 +72,7 @@ static void usage(const char *name) {
            kSynthmarkSampleRate);
     printf("    -s{seconds} to run the test, latencyMark may take longer, default is %d\n",
            kDefaultSeconds);
-    printf("    -u{utilClampLevel} 0 = off (default), 1 = on, 2 = on verbose\n");
+    printf("    -u{utilClampLevel} 0 = off (default), 1 = on, 2 = on verbose, >2 = fixed\n");
     printf("           Using utilClamp helps the scheduler adapt to dynamic workloads.\n");
     printf("    -w{workloadHintsEnabled} 0 = no (default), 1 = give workload hints to scheduler\n");
 }
