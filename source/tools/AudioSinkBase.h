@@ -206,6 +206,14 @@ public:
         mSchedFifoEnabled = enabled;
     }
 
+    bool isAdpfEnabled() const {
+        return mAdpfEnabled;
+    }
+
+    void setAdpfEnabled(bool enabled) {
+        mAdpfEnabled = enabled;
+    }
+
     static const char *schedulerToString(int scheduler) {
         scheduler = scheduler & 0xFFFF; // clear high flags like SCHED_RESET_ON_FORK
         switch(scheduler) {
@@ -264,6 +272,7 @@ private:
     int            mRequestedCpu = SYNTHMARK_CPU_UNSPECIFIED;
     int            mActualCpu = SYNTHMARK_CPU_UNSPECIFIED;
     bool           mSchedFifoEnabled = true;
+    bool           mAdpfEnabled = false;
     int32_t        mUtilClampLevel = UTIL_CLAMP_OFF;
 };
 

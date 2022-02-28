@@ -38,7 +38,8 @@
 // #define SYNTHMARK_MINOR_VERSION        21  /* Fix intermittent hang on STOP */
 // #define SYNTHMARK_MINOR_VERSION        22  /* Add CDD Summary to Auto Test */
 // #define SYNTHMARK_MINOR_VERSION        23  /* Add UtilClamp -u, and SCHED_FIFO option -f */
-#define SYNTHMARK_MINOR_VERSION        24  /* Add real-time audio output using AAudio, -a2 */
+// #define SYNTHMARK_MINOR_VERSION        24  /* Add real-time audio output using AAudio, -a2 */
+#define SYNTHMARK_MINOR_VERSION        25  /* Add ADPF support, -z1 */
 
 #define SYNTHMARK_STRINGIFY(x) #x
 #define SYNTHMARK_TOSTRING(x) SYNTHMARK_STRINGIFY(x)

@@ -6,6 +6,7 @@ LOCAL_C_INCLUDES := \
     ../source/
 LOCAL_SRC_FILES:= \
     ../../apps/synthmark.cpp \
+    ../../source/tools/AdpfWrapper.cpp \
     ../../source/tools/HostTools.cpp \
     ../../source/tools/SynthMarkCommand.cpp \
     ../../source/aaudio/AAudioHostThread.cpp

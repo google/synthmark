@@ -78,6 +78,7 @@ typedef enum {
 #define PARAMS_NUM_VOICES "num_voices"
 #define PARAMS_NUM_VOICES_HIGH "num_voices_high"
 #define PARAMS_CORE_AFFINITY "core_affinity"
+#define PARAMS_ADPF_ENABLED  "adpf_enabled"
 
 static constexpr int kParamsDefaultIndexFramesPerBurst = 5; // 4->64, 5->96
 
@@ -143,6 +144,9 @@ public:
             mAudioSink = std::make_unique<VirtualAudioSink>(mLogTool);
         }
         mAudioSink->setThreadType(HostThreadFactory::ThreadType::Audio);
+
+        int adpfLevel = mParams.getValueFromInt(PARAMS_ADPF_ENABLED);
+        mAudioSink->setAdpfEnabled(adpfLevel > 0);
     }
 
     int init() override {
@@ -167,6 +171,9 @@ public:
                                      AudioSinkBase::AUDIO_LEVEL_CALLBACK,
                                      AudioSinkBase::AUDIO_LEVEL_OUTPUT);
 
+        ParamInteger paramAdpfEnabled(PARAMS_ADPF_ENABLED, "ADPF: 0=off, 1=on",
+                                     0, 0, 1);
+
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
         // Touch boost usually dies down in a few seconds.
         ParamInteger paramTestStartDelay(PARAMS_TEST_START_DELAY, "Test Start Delay Seconds", 4, 0, 20);
@@ -179,6 +186,7 @@ public:
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
         mParams.addParam(&paramAudioLevel);
+        mParams.addParam(&paramAdpfEnabled);
         mParams.addParam(&paramNoteOnDelay);
         mParams.addParam(&paramTestStartDelay);
         mParams.addParam(&paramNumSeconds);
