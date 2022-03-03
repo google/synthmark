@@ -153,7 +153,7 @@ public:
             // This has to be called from the callback thread so we get the right TID.
             int adpfResult = mAdpfWrapper.open(gettid(), targetDurationNanos);
             if (adpfResult < 0) {
-                mLogTool.log("WARNING ADPF not supported\n");
+                mLogTool.log("WARNING ADPF not supported, %d\n", adpfResult);
                 mUseADPF = false;
             } else {
                 mLogTool.log("ADPF is active\n");
@@ -180,7 +180,9 @@ public:
             mSchedulerUsed = sched_getscheduler(0);
 
             // Call the synthesizer to render the audio data.
-            IAudioSinkCallback::Result callbackResult = fireCallback((float *)audioData, mFramesPerBurst);
+            IAudioSinkCallback::Result callbackResult = fireCallback(
+                    (float *)audioData,
+                    mFramesPerBurst);
             if (callbackResult != IAudioSinkCallback::Result::Continue) {
                 aaudioCallbackResult = AAUDIO_CALLBACK_RESULT_STOP;
                 mThreadDone = true;

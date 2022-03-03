@@ -171,8 +171,7 @@ public:
                                      AudioSinkBase::AUDIO_LEVEL_CALLBACK,
                                      AudioSinkBase::AUDIO_LEVEL_OUTPUT);
 
-        ParamInteger paramAdpfEnabled(PARAMS_ADPF_ENABLED, "ADPF: 0=off, 1=on",
-                                     0, 0, 1);
+        ParamInteger paramAdpfEnabled(PARAMS_ADPF_ENABLED, "ADPF: 0=off, 1=on",0, 0, 1);
 
         ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
         // Touch boost usually dies down in a few seconds.

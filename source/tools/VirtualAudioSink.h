@@ -255,7 +255,7 @@ private:
             } else if (isAdpfEnabled()) {
                 int adpfResult = adpfWrapper.open(gettid(), targetDurationNanos);
                 if (adpfResult < 0) {
-                    mLogTool.log("WARNING ADPF not supported\n");
+                    mLogTool.log("WARNING ADPF not supported, %d\n", adpfResult);
                     setAdpfEnabled(false);
                 } else {
                     mLogTool.log("ADPF is active\n");

@@ -14,20 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "AdpfWrapper"
-//#define LOG_NDEBUG 0
-//#include <utils/Log.h>
-
-//#include <cutils/properties.h>
 #include <dlfcn.h>
 #include <stdint.h>
 #include <sys/types.h>
-//#include <utils/Errors.h>
 
 #include "AdpfWrapper.h"
-//#include "LogTool.h"
-
-// using namespace android;
 
 typedef APerformanceHintManager* (*APH_getManager)();
 typedef APerformanceHintSession* (*APH_createSession)(APerformanceHintManager*, const int32_t*,
@@ -39,77 +30,71 @@ typedef void (*APH_closeSession)(APerformanceHintSession* session);
 static bool gAPerformanceHintBindingInitialized = false;
 static APH_getManager gAPH_getManagerFn = nullptr;
 static APH_createSession gAPH_createSessionFn = nullptr;
-static APH_updateTargetWorkDuration gAPH_updateTargetWorkDurationFn = nullptr;
 static APH_reportActualWorkDuration gAPH_reportActualWorkDurationFn = nullptr;
 static APH_closeSession gAPH_closeSessionFn = nullptr;
 
-static bool loadAphFunctions() {
+static int loadAphFunctions() {
     if (gAPerformanceHintBindingInitialized) return true;
 
     void* handle_ = dlopen("libandroid.so", RTLD_NOW | RTLD_NODELETE);
     if (handle_ == nullptr) {
-        printf("%s() - Failed to dlopen libandroid.so!\n", __func__);
-        return false;
+        return -1000;
     }
 
     gAPH_getManagerFn = (APH_getManager)dlsym(handle_, "APerformanceHint_getManager");
     if (gAPH_getManagerFn == nullptr) {
-        printf("%s() - Failed to find required symbol APerformanceHint_getManager!\n", __func__);
-        return false;
+        return -1001;
     }
 
     gAPH_createSessionFn = (APH_createSession)dlsym(handle_, "APerformanceHint_createSession");
     if (gAPH_getManagerFn == nullptr) {
-        printf("%s() - Failed to find required symbol APerformanceHint_createSession!\n", __func__);
-        return false;
-    }
-    gAPH_updateTargetWorkDurationFn = (APH_updateTargetWorkDuration)dlsym(
-            handle_, "APerformanceHint_updateTargetWorkDuration");
-    if (gAPH_getManagerFn == nullptr) {
-        printf("%s() - Failed to find required symbol APerformanceHint_updateTargetWorkDuration!\n", __func__);
-        return false;
+        return -1002;
     }
 
     gAPH_reportActualWorkDurationFn = (APH_reportActualWorkDuration)dlsym(
             handle_, "APerformanceHint_reportActualWorkDuration");
     if (gAPH_getManagerFn == nullptr) {
-        printf("%s() - Failed to find required symbol APerformanceHint_reportActualWorkDuration!\n", __func__);
-        return false;
+        return -1003;
     }
 
     gAPH_closeSessionFn = (APH_closeSession)dlsym(handle_, "APerformanceHint_closeSession");
     if (gAPH_getManagerFn == nullptr) {
-        printf("%s() - Failed to find required symbol APerformanceHint_closeSession!\n", __func__);
-        return false;
+        return -1004;
     }
 
     gAPerformanceHintBindingInitialized = true;
-    return true;
+    return 0;
 }
 
 int AdpfWrapper::open(pid_t threadId, int64_t targetDurationNanos) {
-    if (!loadAphFunctions()) return -1;
+    std::lock_guard<std::mutex> lock(mLock);
 
+    int result = loadAphFunctions();
+    if (result < 0) return result;
+
+    // This is a singleton.
     APerformanceHintManager* manager = gAPH_getManagerFn();
 
     int32_t thread32 = threadId;
     mHintSession = gAPH_createSessionFn(manager, &thread32, 1 /* size */, targetDurationNanos);
     if (mHintSession == nullptr) {
-        printf("%s() - Failed to create session.\n", __func__);
         return -1;
     }
     return 0;
 }
 
+void AdpfWrapper::reportActualDuration(int64_t actualDurationNanos) {
+    std::lock_guard<std::mutex> lock(mLock);
+    if (mHintSession != nullptr) {
+        gAPH_reportActualWorkDurationFn(mHintSession, actualDurationNanos);
+    }
+}
+
 void AdpfWrapper::close() {
+    std::lock_guard<std::mutex> lock(mLock);
     if (mHintSession != nullptr) {
         gAPH_closeSessionFn(mHintSession);
         mHintSession = nullptr;
     }
 }
 
-void AdpfWrapper::reportActualDuration(int64_t actualDurationNanos) {
-    if (mHintSession != nullptr) {
-        gAPH_reportActualWorkDurationFn(mHintSession, actualDurationNanos);
-    }
-}

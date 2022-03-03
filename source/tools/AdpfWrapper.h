@@ -22,8 +22,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-//#include <utils/Errors.h>
+#include <mutex>
 
 struct APerformanceHintManager;
 struct APerformanceHintSession;
@@ -33,14 +32,24 @@ typedef struct APerformanceHintSession APerformanceHintSession;
 
 class AdpfWrapper {
 public:
-    // @return zero or negative error
+     /**
+      * Create an ADPF session that can be used to boost performance.
+      * @param threadId
+      * @param targetDurationNanos - period of isochronous task
+      * @return zero or negative error
+      */
     int open(pid_t threadId, int64_t targetDurationNanos);
 
+    /**
+     * Report the measured duration of a callback.
+     * @param actualDurationNanos
+     */
     void reportActualDuration(int64_t actualDurationNanos);
 
     void close();
 
 private:
+    std::mutex mLock;
     APerformanceHintSession* mHintSession = nullptr;
 };
 
