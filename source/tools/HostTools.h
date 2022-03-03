@@ -130,6 +130,10 @@ public:
         return err;
     }
 
+    static void yield() {
+        sched_yield();
+    }
+
     virtual int join() {
         int err = 0;
         if (mRunning && !mDead) {

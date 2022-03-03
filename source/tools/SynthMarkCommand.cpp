@@ -75,6 +75,7 @@ static void usage(const char *name) {
     printf("    -u{utilClampLevel} 0 = off (default), 1 = on, 2 = on verbose, >2 = fixed\n");
     printf("           Using utilClamp helps the scheduler adapt to dynamic workloads.\n");
     printf("    -w{workloadHintsEnabled} 0 = no (default), 1 = give workload hints to scheduler\n");
+    printf("    -z{enable} use ADPF for performance hints, 0 = off (default), 1 = on\n");
 }
 
 #define TEXT_ERROR "ERROR: "
@@ -109,6 +110,7 @@ int synthmark_command_main(int argc, char **argv)
     int32_t audioLevel = AudioSinkBase::AUDIO_LEVEL_CALLBACK;
     bool    useAudioThread = true;
     bool    useSchedFifo = true;
+    bool    useADPF = false;
     int32_t utilClampLevel = AudioSinkBase::UTIL_CLAMP_OFF;
     int32_t workloadHintsLevel = HostCpuManager::WORKLOAD_HINTS_OFF;
     int32_t bufferSizeBursts = kDefaultBufferSizeBursts;
@@ -190,6 +192,11 @@ int synthmark_command_main(int argc, char **argv)
                     workloadHintsLevel = stringToPositiveInteger(&arg[2], "-w");
                     if (workloadHintsLevel < 0) return 1;
                     break;
+                case 'z':
+                    temp = stringToPositiveInteger(&arg[2], "-z");
+                    if (temp < 0) return 1;
+                    useADPF = (temp > 0);
+                    break;
 
                 case 'h': // help
                 case '?': // help
@@ -268,7 +275,10 @@ int synthmark_command_main(int argc, char **argv)
     }
     audioSink->setRequestedCpu(cpuAffinity);
     audioSink->setSchedFifoEnabled(useSchedFifo);
+    audioSink->setAdpfEnabled(useADPF);
+    audioSink->setUtilClampLevel(utilClampLevel);
     audioSink->setDefaultBufferSizeInBursts(bufferSizeBursts);
+    HostCpuManager::setWorkloadHintsLevel(workloadHintsLevel);
 
     // Create a test harness and set the parameters.
     switch(testCode) {
@@ -344,9 +354,6 @@ int synthmark_command_main(int argc, char **argv)
     harness->setThreadType(useAudioThread
                            ? HostThreadFactory::ThreadType::Audio
                            : HostThreadFactory::ThreadType::Default);
-    HostCpuManager::setWorkloadHintsLevel(workloadHintsLevel);
-
-    audioSink->setUtilClampLevel(utilClampLevel);
 
     // Print specified parameters.
     printf("  test.name            = %s\n",  harness->getName());

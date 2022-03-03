@@ -25,6 +25,7 @@
 #include <aaudio/AAudio.h>
 
 #include "AudioSinkBase.h"
+#include "AdpfWrapper.h"
 #include "HostTools.h"
 #include "HostThreadFactory.h"
 #include "LogTool.h"
@@ -123,11 +124,17 @@ public:
 
     virtual int32_t start() override {
         mThreadDone = false;
+        mCallbackCount = 0;
         return AAudioStream_requestStart(mStream);
     }
 
     virtual int32_t stop() override {
-        return AAudioStream_requestStop(mStream);
+        int32_t result =  AAudioStream_requestStop(mStream);
+        // Close after the stream is stopped so we do not collide with the callback thread.
+        if (mUseADPF) {
+            mAdpfWrapper.close();
+        }
+        return result;
     }
 
     HostThreadFactory::ThreadType getThreadType() const override {
@@ -140,6 +147,21 @@ public:
     aaudio_data_callback_result_t onCallback(
             void *audioData,
             int32_t numFrames) {
+
+        if (mCallbackCount == 0 && isAdpfEnabled()) {
+            int64_t targetDurationNanos = (mFramesPerBurst * 1e9) / getSampleRate();
+            // This has to be called from the callback thread so we get the right TID.
+            int adpfResult = mAdpfWrapper.open(gettid(), targetDurationNanos);
+            if (adpfResult < 0) {
+                mLogTool.log("WARNING ADPF not supported, %d\n", adpfResult);
+                mUseADPF = false;
+            } else {
+                mLogTool.log("ADPF is active\n");
+                mUseADPF = true;
+            }
+        }
+        int64_t beginCallback = HostTools::getNanoTime();
+
         aaudio_data_callback_result_t aaudioCallbackResult = AAUDIO_CALLBACK_RESULT_CONTINUE;
         IAudioSinkCallback *callback = getCallback();
         if (callback != NULL) {
@@ -157,12 +179,10 @@ public:
 
             mSchedulerUsed = sched_getscheduler(0);
 
-            // Write in a loop until the callback says we are done.
-            IAudioSinkCallback::Result callbackResult
-                    = IAudioSinkCallback::Result::Continue;
-
             // Call the synthesizer to render the audio data.
-            callbackResult = fireCallback((float *)audioData, mFramesPerBurst);
+            IAudioSinkCallback::Result callbackResult = fireCallback(
+                    (float *)audioData,
+                    mFramesPerBurst);
             if (callbackResult != IAudioSinkCallback::Result::Continue) {
                 aaudioCallbackResult = AAUDIO_CALLBACK_RESULT_STOP;
                 mThreadDone = true;
@@ -173,6 +193,12 @@ public:
         } else {
             aaudioCallbackResult = AAUDIO_CALLBACK_RESULT_STOP;
         }
+        if (mUseADPF) {
+            int64_t endCallback = HostTools::getNanoTime();
+            int64_t actualDurationNanos = endCallback - beginCallback;
+            mAdpfWrapper.reportActualDuration(actualDurationNanos);
+        }
+        mCallbackCount++;
         return aaudioCallbackResult;
     }
 
@@ -210,6 +236,9 @@ private:
     LogTool           &mLogTool;
     AAudioStream      *mStream = nullptr;
     std::atomic<bool>  mThreadDone{false};
+    bool               mUseADPF = false;
+    int32_t            mCallbackCount = 0;
+    AdpfWrapper        mAdpfWrapper;
 };
 
 #endif // SYNTHMARK_REAL_AUDIO_SINK_H

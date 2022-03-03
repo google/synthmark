@@ -30,6 +30,7 @@
 #include "SynthMarkResult.h"
 #include "UtilClampAudioBehavior.h"
 #include "UtilClampController.h"
+#include "AdpfWrapper.h"
 
 constexpr int kMaxBufferCapacityInBursts = 512;
 
@@ -219,6 +220,7 @@ private:
 
             UtilClampController utilClampController;
             UtilClampAudioBehavior behavior;
+            AdpfWrapper adpfWrapper;
             int originalUtilClamp = 0;
             int currentUtilClamp = 0;
             constexpr int32_t kUtilClampQuanta = 10;
@@ -250,7 +252,16 @@ private:
                     mLogTool.log("WARNING utilClamp not supported\n");
                     setUtilClampLevel(UTIL_CLAMP_OFF);
                 }
+            } else if (isAdpfEnabled()) {
+                int adpfResult = adpfWrapper.open(gettid(), targetDurationNanos);
+                if (adpfResult < 0) {
+                    mLogTool.log("WARNING ADPF not supported, %d\n", adpfResult);
+                    setAdpfEnabled(false);
+                } else {
+                    mLogTool.log("ADPF is active\n");
+                }
             }
+
             while (callbackResult == IAudioSinkCallback::Result::Continue
                    && result == SYNTHMARK_RESULT_SUCCESS) {
 
@@ -276,6 +287,8 @@ private:
                                      cpu);
                     }
                     lastCpu = cpu;
+                } else if (isAdpfEnabled()) {
+                    adpfWrapper.reportActualDuration(actualDurationNanos);
                 }
 
                 if (callbackResult == IAudioSinkCallback::Result::Continue) {
@@ -288,6 +301,9 @@ private:
             // Restore original value.
             if (isUtilClampEnabled()) {
                 utilClampController.setMin(originalUtilClamp);
+            }
+            if (isAdpfEnabled()) {
+                adpfWrapper.close();
             }
         }
 
