@@ -6,8 +6,8 @@ android {
         applicationId "com.sonodroid.synthmark"
         minSdkVersion 26
         targetSdkVersion 29
-        versionCode 10
-        versionName "1.10"
+        versionCode 11
+        versionName "1.11"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {

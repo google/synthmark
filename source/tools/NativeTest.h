@@ -52,6 +52,9 @@
     600, 1200, 1800, 2400, 3600}
 #define DEFAULT_TEST_TARGET_CPU_LOADS {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, \
     0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}
+#define DEFAULT_TEST_NUM_VOICES  1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, \
+    80, 90, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500
+#define DEFAULT_TEST_NUM_VOICES_HIGH  0, DEFAULT_TEST_NUM_VOICES
 
 typedef enum {
     NATIVETEST_ID_AUTOMATED       = 0,
@@ -305,11 +308,11 @@ public:
             return err;
         }
 
+        std::vector<int> vNumVoices = { DEFAULT_TEST_NUM_VOICES };
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,
                                     "Number of Voices",
-                                    kSynthmarkNumVoicesLatency,
-                                    1,
-                                    300);
+                                    &vNumVoices,
+                                    2);
         mParams.addParam(&paramNumVoices);
 
         return err;
@@ -340,18 +343,18 @@ public:
             return err;
         }
 
+        std::vector<int> vNumVoices = { DEFAULT_TEST_NUM_VOICES };
         ParamInteger paramNumVoices(PARAMS_NUM_VOICES,
                                     "Number of Voices",
-                                    kSynthmarkNumVoicesLatency,
-                                    1,
-                                    300);
+                                    &vNumVoices,
+                                    2);
         mParams.addParam(&paramNumVoices);
 
+        std::vector<int> vNumVoicesHigh = { DEFAULT_TEST_NUM_VOICES_HIGH };
         ParamInteger paramNumVoicesHigh(PARAMS_NUM_VOICES_HIGH,
-                                        "Number of Voices High",
-                                        0, // 0 means just use LOW
-                                        0,
-                                        300);
+                                    "Number of Voices High",
+                                    &vNumVoicesHigh,
+                                    0);
         mParams.addParam(&paramNumVoicesHigh);
 
         return err;
