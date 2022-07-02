@@ -406,7 +406,8 @@ public class MainActivity extends BaseActivity {
         String subjectText = "SynthMark result " + getTimestampString();
         sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subjectText);
 
-        String shareBody = mTextViewOutput.getText().toString();
+        String shareBody = AppObject.getDeviceInfo();
+        shareBody += "\n" + mTextViewOutput.getText().toString();
         sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
 
         startActivity(Intent.createChooser(sharingIntent, "Share using:"));

@@ -36,7 +36,10 @@ public:
     virtual ~LogTool() {}
 
     virtual int32_t log(const char* format, ...) {
-        int numWritten = snprintf(mBuffer, LOGTOOL_BUFFER_SIZE, "%8d, ", mVar1);
+        int numWritten = 0;
+        if (mVar1Valid) {
+            numWritten = snprintf(mBuffer, LOGTOOL_BUFFER_SIZE, "%4d, ", mVar1);
+        }
         va_list args;
         va_start(args, format);
         numWritten += vsnprintf(&mBuffer[numWritten],
@@ -54,6 +57,11 @@ public:
 
     void setVar1(int value) {
         mVar1 = value;
+        mVar1Valid = true;
+    }
+    void clearVar1() {
+        mVar1 = 0;
+        mVar1Valid = false;
     }
 
     int getVar1() {
@@ -72,6 +80,7 @@ private:
     ByteFIFO      mFIFO;
     char          mBuffer[LOGTOOL_BUFFER_SIZE + 1]; // for writing
     int           mVar1;    //user assigned variable.
+    bool          mVar1Valid = false;
 };
 
 #endif //SYNTHMARK_LOGTOOL_H

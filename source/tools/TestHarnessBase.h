@@ -117,7 +117,7 @@ public:
                                                                       kSynthmarkMaxVoices);
                     result = mSynth.notesOn(currentNumVoices);
                     if (result < 0) {
-                        mLogTool.log("%s() allNotesOn() returned %d\n", __func__, result);
+                        mLogTool.log("%s() notesOn() returned %d\n", __func__, result);
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
                     }
@@ -191,7 +191,7 @@ public:
 
         mAudioSink->stop();
         onEndMeasurement();
-
+        mLogTool.clearVar1();
         mResult->setResultCode(result);
         return result;
     }

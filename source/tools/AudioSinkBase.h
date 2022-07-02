@@ -59,6 +59,11 @@ public:
         mSampleRate = sampleRate;
         mSamplesPerFrame = samplesPerFrame;
         mFramesPerBurst = framesPerBurst;
+        mMaxEmptyFrames = 0;
+        mUnderrunCount = 0;
+        mUnderrunSkipCount = 0;
+        mContiguousGoodRunCount = 0;
+        mValidRun = false;
         return 0;
     }
 
@@ -117,12 +122,24 @@ public:
         return mBufferCapacityInFrames;
     }
 
+    int32_t getUnderrunSkipCount() {
+        return mUnderrunSkipCount;
+    }
+
     int32_t getUnderrunCount() {
         return mUnderrunCount;
     }
 
-    void setUnderrunCount(int i) {
-        mUnderrunCount = i;
+    void setUnderrunCount(int count) {
+        mUnderrunCount = count;
+    }
+
+    int32_t getMaxEmptyFrames() const {
+        return mMaxEmptyFrames;
+    }
+
+    void setMaxEmptyFrames(int32_t maxEmptyFrames) {
+        mMaxEmptyFrames = maxEmptyFrames;
     }
 
     int32_t getSampleRate() {
@@ -257,6 +274,10 @@ protected:
     int32_t       mSamplesPerFrame = 1;
     int32_t       mFramesPerBurst = 0;
     int32_t       mUnderrunCount = 0;
+    int32_t       mUnderrunSkipCount = 0; // Underruns not counted at beginning.
+    int32_t       mContiguousGoodRunCount = 0; // Number of bursts in a row without an underrun.
+    bool          mValidRun = false;
+
     // set in callback loop
     int           mSchedulerUsed = -1;
 
@@ -274,6 +295,8 @@ private:
     bool           mSchedFifoEnabled = true;
     bool           mAdpfEnabled = false;
     int32_t        mUtilClampLevel = UTIL_CLAMP_OFF;
+
+    int32_t        mMaxEmptyFrames = 0;
 };
 
 #endif // SYNTHMARK_AUDIO_SINK_BASE_H

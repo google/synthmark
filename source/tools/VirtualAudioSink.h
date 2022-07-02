@@ -91,22 +91,37 @@ public:
         return (int32_t) (getFramesWritten() - mFramesConsumed);
     }
 
-    virtual void writeBurst(const float *buffer) {
-        (void) buffer; // discard the audio data
-
+    virtual void writeBurst(const float * /* buffer */) {
         if (mStartTimeNanos == 0) {
             mStartTimeNanos = HostTools::getNanoTime();
             mNextHardwareReadTimeNanos = mStartTimeNanos;
         }
 
+        // Update the model so the statistics are more accurate.
+        updateHardwareSimulator();
+
         int32_t availableData = getFullFramesAvailable();
+        int32_t availableRoom = getEmptyFramesAvailable();
         if (availableData < 0) {
-            // Not enough data! Hardware underflowed while we were gone.
-            mUnderrunCount++;
+            if (mValidRun) {
+                // Not enough data! Hardware underflowed while we were gone.
+                mUnderrunCount++;
+            } else {
+                mUnderrunSkipCount++;
+            }
+            mContiguousGoodRunCount = 0;
+        } else {
+            mContiguousGoodRunCount++;
+            if (!mValidRun && mContiguousGoodRunCount > 4) {
+                mValidRun = true;
+            }
         }
 
-        updateHardwareSimulator();
-        int32_t availableRoom = getEmptyFramesAvailable();
+        // Use the depth of the underrun as a measure of the maximum latency required to
+        // avoid underruns.
+        if (mValidRun) {
+            setMaxEmptyFrames(std::max(getMaxEmptyFrames(), availableRoom));
+        }
 
         // If there is not enough room then sleep until the hardware reads another burst.
         if (availableRoom < mFramesPerBurst) {
@@ -352,7 +367,7 @@ private:
     // Advance mFramesConsumed and mNextHardwareReadTimeNanos based on real-time clock.
     void updateHardwareSimulator() {
         int64_t currentTime = HostTools::getNanoTime();
-        int countdown = 32; // Avoid spinning like crazy.
+        int countdown = 512; // Avoid spinning forever.
         // Is it time to consume a block?
         while ((currentTime >= mNextHardwareReadTimeNanos) && (countdown-- > 0)) {
             mFramesConsumed += mFramesPerBurst; // fake read
