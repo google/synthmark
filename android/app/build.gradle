@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.sonodroid.synthmark"
-        minSdkVersion 26
-        targetSdkVersion 29
-        versionCode 11
-        versionName "1.11"
+        minSdkVersion 28
+        targetSdkVersion 33
+        versionCode 12
+        versionName "1.12.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -40,6 +40,7 @@ android {
             path "CMakeLists.txt"
         }
     }
+    ndkVersion '21.4.7075529'
 }
 
 dependencies {
