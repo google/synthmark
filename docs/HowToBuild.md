@@ -1,6 +1,7 @@
 # How to Build SynthMark
 
-Instructions for building the app or the command line executable.
+Instructions for building the app for Android
+or the command line executable for Android or Linux.
 
 ## How to Build the Android GUI App
 
@@ -10,24 +11,37 @@ Instructions for building the app or the command line executable.
 * Click OK button
 * Then build and run as usual
 
-## Command Line Interface
-
-### Building the Command for Running on Android
+## Building the Command Line Executable for Android
 
 If you have not already, then install the NDK support for Android Studio.
-
-#### Build using the NDK.
+Then enter:
 
     cd synthmark/android_mk
-	  ndk-build
+    ndk-build
 
-If ndk-build cannot be found then add the NDK tools to your PATH then try again. On Linux, this might work:
+If ndk-build cannot be found then add the NDK tools to your PATH then try again. 
+
+### Linux
+
+On Linux, this might work:
 
     export PATH=$PATH:$HOME/Android/Sdk/ndk-bundle
 
-On Mac OSX, this might work:
+### Mac OS
+
+On Mac OSX, this used to work:
 
     export PATH=$PATH:$HOME/Library/Android/sdk/ndk-bundle
+
+But recently I had to use 'ls' to find a recent version of the NDK.
+
+    ls $HOME/Android/Sdk/ndk
+
+Look for the most recent version and then set the PATH to use that version.
+
+    export PATH=$PATH:/Users/philburk/Library/Android/sdk/ndk/25.1.8937393/
+
+### Installing SynthMark
 
 Push the executable program to your Android device. 
 The “jni/Application.mk” file determines the target architecture, eg. “arm64-v8a”.
@@ -36,7 +50,7 @@ The “jni/Application.mk” file determines the target architecture, eg. “arm
     adb remount
     adb push libs/arm64-v8a/synthmark   /system/bin/.
 
-### Building the Command for Running on Linux
+## Building the Command Line Executable for Linux
 
     cd synthmark
     make -f linux/Makefile
