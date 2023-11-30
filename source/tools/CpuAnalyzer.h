@@ -28,8 +28,6 @@
 #include "HostTools.h"
 #include "SynthMark.h"
 
-constexpr int MAX_CPUS  = 32;
-
 /**
  * Measure CPU migration.
  */
@@ -40,7 +38,7 @@ public:
     void recordCpu() {
         int cpuIndex = HostThread::getCpu();
         // Bump histogram for the current CPU.
-        if (cpuIndex >= 0 && cpuIndex < MAX_CPUS) {
+        if (cpuIndex >= 0 && cpuIndex < kMaxCpuCount) {
             mCpuBins.increment(cpuIndex);
         }
         // Did we change CPUs?
@@ -81,7 +79,7 @@ private:
     int         mPreviousCpu = kCpuIndexInvalid;
     int32_t     mMigrationCount = 0;
     int32_t     mTotalCount = 0;
-    BinCounter  mCpuBins{MAX_CPUS};
+    BinCounter  mCpuBins{kMaxCpuCount};
 };
 
 #endif // SYNTHMARK_CPU_ANALYZER_H
