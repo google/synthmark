@@ -4,7 +4,7 @@ TARGET = synthmark.app
 SOURCEDIR = source
 LIBS = -lm -lpthread
 CC = g++
-CFLAGS = -g -Wall -Werror -Isource -std=c++11 -Ofast
+CFLAGS = -g -Wall -Werror -Isource -std=c++14 -Ofast
 
 VPATH = apps:source:source/tools
 

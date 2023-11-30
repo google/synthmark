@@ -36,7 +36,7 @@
 constexpr int64_t kNanosPerMicrosecond  = 1000;
 constexpr int64_t kNanosPerSecond       = 1000000 * kNanosPerMicrosecond;
 
-constexpr int kMaxCpuCount = 64;
+constexpr int kMaxCpuCount = 128;
 
 /**
  * Put all low level host platform dependencies in this file.
