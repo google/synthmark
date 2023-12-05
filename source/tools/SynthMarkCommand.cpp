@@ -31,7 +31,9 @@
 #include "tools/ITestHarness.h"
 #include "tools/LatencyMarkHarness.h"
 #include "tools/TimingAnalyzer.h"
+#if defined(__ANDROID__)
 #include "tools/RealAudioSink.h"
+#endif
 #include "tools/UtilizationMarkHarness.h"
 #include "tools/UtilizationSeriesHarness.h"
 #include "tools/VirtualAudioSink.h"
@@ -269,8 +271,15 @@ int synthmark_command_main(int argc, char **argv)
     }
 
     if (audioLevel == AudioSinkBase::AUDIO_LEVEL_OUTPUT) {
+#if defined(__ANDROID__)
         audioSink = std::make_unique<RealAudioSink>(logTool);
-    } else {
+#else
+        printf(TEXT_ERROR "-a2 only supported on Android\n");
+        usage(argv[0]);
+        return 1;
+#endif
+    } else
+    {
         audioSink = std::make_unique<VirtualAudioSink>(logTool);
     }
     audioSink->setRequestedCpu(cpuAffinity);
