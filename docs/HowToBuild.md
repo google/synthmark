@@ -35,7 +35,7 @@ On Mac OSX, this used to work:
 
 But recently I had to use 'ls' to find a recent version of the NDK.
 
-    ls $HOME/Android/Sdk/ndk
+    ls $HOME/Library/Android/Sdk/ndk
 
 Look for the most recent version and then set the PATH to use that version.
 
