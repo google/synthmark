@@ -47,7 +47,7 @@ Push the executable program to your Android device.
 The “jni/Application.mk” file determines the target architecture, eg. “arm64-v8a”.
 
     adb root
-    adb remount
+    adb remount -R
     adb push libs/arm64-v8a/synthmark   /system/bin/.
 
 ## Building the Command Line Executable for Linux
