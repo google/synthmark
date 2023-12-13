@@ -74,23 +74,6 @@ public:
         if (err) return err;
 
         mLogTool.log("\n-------- LATENCY ------------\n");
-#if 0
-        (void) measureLatencySeries(sampleRate, framesPerBurst, numSeconds);
-
-        // Print latency series
-        std::stringstream resultMessage;
-        resultMessage << std::endl;
-        resultMessage << "-------- Latency Series -------" << std::endl;
-        resultMessage << "| numVoices | fixed | dynamic |" << std::endl;
-        resultMessage << "| ----- | ----- | ----- |" << std::endl;
-        for (auto newLatencyResult : mNewLatencyResults) {
-            resultMessage << "| " << newLatencyResult.numVoices
-                          << " | " << newLatencyResult.latencyFixedMillis
-                          << " | " << newLatencyResult.latencyDynamicMillis
-                          << " |" << std::endl;
-        }
-        mResult->appendMessage(resultMessage.str());
-#else
         // Test both sizes of CPU if needed. BIG or little
         LatencyResult result;
 
@@ -115,7 +98,6 @@ public:
         }
 
         printSummaryCDD(latencyMarkFixedLittleFrames, latencyMarkDynamicLittleFrames);
-#endif
 
         return err;
     }
@@ -128,17 +110,6 @@ struct LatencyResult {
     double heavyLatencyFrames = 999999;
     double mixedLatencyFrames = 999999;
 };
-
-    struct NewLatencyResult {
-        // Inputs
-        int32_t numVoices = 1;
-        // Outputs
-        int err = 0;
-        double latencyFixedMillis = 999999.0;
-        double latencyDynamicMillis = 999999.0;
-    };
-
-    std::vector<NewLatencyResult> mNewLatencyResults;
 
 // Key text for CDD report.
 #define kKeyVoiceMark90          "voicemark.90"
@@ -255,38 +226,6 @@ struct LatencyResult {
         delete harness;
         return SYNTHMARK_RESULT_SUCCESS;
     }
-
-#if 0
-    void measureLatencySeries(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) {
-        const int kNumDuplicates = 2;
-        std::vector<int32_t> voiceLoads{1, 25, 50, 75, 100, 125, 150};
-        for (auto voiceLoad : voiceLoads) {
-            for (int count = 0; count < kNumDuplicates; count++) {
-                NewLatencyResult latencyResult;
-                latencyResult.numVoices = voiceLoad;
-                double latencyFrames = 0;
-
-                // Measure fixed load.
-                latencyResult.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                                       -1,
-                                                       voiceLoad,
-                                                       0,
-                                                       &latencyFrames);
-                latencyResult.latencyFixedMillis = framesToMillis(latencyFrames);
-
-                // Measure dynamic load.
-                latencyResult.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                                       -1,
-                                                       1,
-                                                       voiceLoad,
-                                                       &latencyFrames);
-                latencyResult.latencyDynamicMillis = framesToMillis(latencyFrames);
-
-                mNewLatencyResults.push_back(latencyResult);
-            }
-        }
-    }
-#endif
 
     int32_t measureLatencyOnce(int32_t sampleRate,
                                int32_t framesPerBurst,

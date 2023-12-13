@@ -242,7 +242,7 @@ public:
             return -1;
         }
         if (framesPerBurst < 8) {
-            mLogTool.log("ERROR in open, framesPerBurst = %d < 8\n", framesPerRender);
+            mLogTool.log("ERROR in open, framesPerBurst = %d < 8\n", framesPerBurst);
             return -1;
         }
         mSampleRate = sampleRate;
@@ -273,8 +273,13 @@ public:
         return mFrameCounter;
     }
 
-    double calculateRequiredLatency() {
+    double calculateRequiredLatencyMillis() {
         return 1000.0 * mAudioSink->getMaxEmptyFrames() / getSampleRate();
+    }
+
+    int32_t calculateRequiredLatencyBursts(int32_t framesPerBurst) {
+        int32_t maxEmptyFrames = std::max(1, mAudioSink->getMaxEmptyFrames());
+        return (maxEmptyFrames + framesPerBurst - 1) / framesPerBurst;
     }
 
 protected:

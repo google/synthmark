@@ -100,7 +100,7 @@ private:
         int32_t numSeconds = std::min(maxSeconds, 10);
         mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d ----\n",
                       testCount++, numSeconds, bursts);
-        int32_t desiredSizeInFrames = bursts * framesPerBurst;
+        int32_t desiredSizeInFrames = bursts * getFramesPerBurst();
         int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
         if (actualSize < desiredSizeInFrames) {
             mLogTool.log("WARNING - requested buffer size %d, got %d\n",
@@ -120,8 +120,7 @@ private:
         }
 
         // Determine number of bursts needed to prevent the biggest under-run.
-        int32_t maxEmptyFrames = std::max(1, mAudioSink->getMaxEmptyFrames());
-        int32_t measuredBursts = ((maxEmptyFrames + framesPerBurst - 1) / framesPerBurst);
+        int32_t measuredBursts = calculateRequiredLatencyBursts(framesPerBurst);
 
         return measuredBursts;
     }
