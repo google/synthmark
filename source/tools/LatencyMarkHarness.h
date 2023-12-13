@@ -38,10 +38,10 @@
  * The "LatencyMark" is the minimum buffer size that is a multiple
  * of a burst size that can be used for N minutes without glitching.
  */
-class LatencyMarkHarness : public TestHarnessParameters {
+class LatencyMarkHarness : public ChangingVoiceHarness {
 public:
     LatencyMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
-    : TestHarnessParameters(audioSink, result, logTool) {
+    : ChangingVoiceHarness(audioSink, result, logTool) {
     }
 
     const char *getName() const override {
@@ -108,7 +108,8 @@ private:
         }
         fflush(stdout);
 
-        int32_t err = measureOnce(sampleRate, framesPerBurst, numSeconds);
+        mAudioSink->setUnderrunCount(0);
+        int32_t err = ChangingVoiceHarness::runTest(sampleRate, framesPerBurst, numSeconds);
         if (err < 0) {
             mLogTool.log("LatencyMark: %s returning err = %d ----\n",  __func__, err);
             return err;
@@ -119,31 +120,19 @@ private:
         }
 
         // Determine number of bursts needed to prevent the biggest under-run.
-        int32_t maxEmptyFrames = mAudioSink->getMaxEmptyFrames();
+        int32_t maxEmptyFrames = std::max(1, mAudioSink->getMaxEmptyFrames());
         int32_t measuredBursts = ((maxEmptyFrames + framesPerBurst - 1) / framesPerBurst);
 
         return measuredBursts;
     }
-
+/*
     int32_t measureOnce(int32_t sampleRate,
                         int32_t framesPerBurst,
                         int32_t numSeconds) {
-        std::stringstream resultMessage;
-        SynthMarkResult result1;
-        mAudioSink->setUnderrunCount(0);
-        ChangingVoiceHarness harness(mAudioSink, &result1, mLogTool);
-        harness.setNumVoices(getNumVoices());
-        harness.setNumVoicesHigh(getNumVoicesHigh());
-        harness.setVoicesMode(getVoicesMode());
-        harness.setDelayNoteOnSeconds(mDelayNotesOn);
-        harness.setThreadType(mThreadType);
-
-        int32_t err = harness.runTest(sampleRate, framesPerBurst, numSeconds);
-        return err;
     }
-
+*/
 private:
-    int32_t           mInitialBursts = 0;
+    int32_t           mInitialBursts = kDefaultBufferSizeBursts;
 };
 
 #endif // SYNTHMARK_LATENCYMARK_HARNESS_H

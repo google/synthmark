@@ -26,9 +26,7 @@
 #include "tools/UtilizationMarkHarness.h"
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
-#include "TestHarnessParameters.h"
-#include "JitterMarkHarness.h"
-
+#include "tools/TestHarnessParameters.h"
 
 /**
  * Run an automated test, analyze the results and print a report.
@@ -42,7 +40,6 @@
  *     assumes that both lowCpu and highCpu are online,
  *     assume the existence of only two architectures, homogeneous or BIG.little.
  * TODO handle more architectures
- * TODO Use new JitterMark latency measurement
  * TODO Measure latency without CPU affinity
  */
 class AutomatedTestSuite : public TestHarnessParameters {
@@ -77,9 +74,23 @@ public:
         if (err) return err;
 
         mLogTool.log("\n-------- LATENCY ------------\n");
+#if 0
         (void) measureLatencySeries(sampleRate, framesPerBurst, numSeconds);
 
-#if 0
+        // Print latency series
+        std::stringstream resultMessage;
+        resultMessage << std::endl;
+        resultMessage << "-------- Latency Series -------" << std::endl;
+        resultMessage << "| numVoices | fixed | dynamic |" << std::endl;
+        resultMessage << "| ----- | ----- | ----- |" << std::endl;
+        for (auto newLatencyResult : mNewLatencyResults) {
+            resultMessage << "| " << newLatencyResult.numVoices
+                          << " | " << newLatencyResult.latencyFixedMillis
+                          << " | " << newLatencyResult.latencyDynamicMillis
+                          << " |" << std::endl;
+        }
+        mResult->appendMessage(resultMessage.str());
+#else
         // Test both sizes of CPU if needed. BIG or little
         LatencyResult result;
 
@@ -106,23 +117,8 @@ public:
         printSummaryCDD(latencyMarkFixedLittleFrames, latencyMarkDynamicLittleFrames);
 #endif
 
-        // Print latency series
-        std::stringstream resultMessage;
-        resultMessage << std::endl;
-        resultMessage << "-------- Latency Series -------" << std::endl;
-        resultMessage << "| numVoices | fixed | dynamic |" << std::endl;
-        resultMessage << "| ----- | ----- | ----- |" << std::endl;
-        for (auto newLatencyResult : mNewLatencyResults) {
-            resultMessage << "| " << newLatencyResult.numVoices
-                          << " | " << newLatencyResult.latencyFixedMillis
-                          << " | " << newLatencyResult.latencyDynamicMillis
-                          << " |" << std::endl;
-        }
-        mResult->appendMessage(resultMessage.str());
-
         return err;
     }
-
 
 private:
 
@@ -260,6 +256,7 @@ struct LatencyResult {
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
+#if 0
     void measureLatencySeries(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) {
         const int kNumDuplicates = 2;
         std::vector<int32_t> voiceLoads{1, 25, 50, 75, 100, 125, 150};
@@ -289,6 +286,7 @@ struct LatencyResult {
             }
         }
     }
+#endif
 
     int32_t measureLatencyOnce(int32_t sampleRate,
                                int32_t framesPerBurst,
@@ -299,14 +297,14 @@ struct LatencyResult {
                                double *latencyPtr) {
         std::stringstream resultMessage;
         SynthMarkResult result1;
-        JitterMarkHarness *harness = new JitterMarkHarness(mAudioSink, &result1, mLogTool);
+        LatencyMarkHarness *harness = new LatencyMarkHarness(mAudioSink, &result1, mLogTool);
         harness->setDelayNoteOnSeconds(mDelayNotesOn);
         harness->setNumVoices(numVoices);
         harness->setNumVoicesHigh(numVoicesHigh);
         harness->setThreadType(mThreadType);
 
         mAudioSink->setRequestedCpu(cpu);
-        mLogTool.log("Run JitterMark with CPU #%d, voices = %d / %d\n",
+        mLogTool.log("Run LatencyMark with CPU #%d, voices = %d / %d\n",
                      cpu, numVoices, numVoicesHigh);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
         if (err) {

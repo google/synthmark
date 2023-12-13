@@ -39,6 +39,8 @@
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
 
+constexpr int  kDefaultBufferSizeBursts = 1;
+
 /**
  * Base class for running a test.
  */

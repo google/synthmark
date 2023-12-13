@@ -42,7 +42,6 @@
 constexpr char kDefaultTestCode         = 'v';
 constexpr int  kDefaultSeconds          = 10;
 constexpr int  kDefaultFramesPerBurst   = 96; // 2 msec at 48000 Hz
-constexpr int  kDefaultBufferSizeBursts = 1;
 constexpr int  kDefaultNumVoices        = 8;
 constexpr int  kDefaultNoteOnDelay      = 0;
 constexpr int  kDefaultPercentCpu       = 50;
