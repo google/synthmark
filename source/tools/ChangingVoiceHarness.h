@@ -17,6 +17,15 @@
 #ifndef ANDROID_CHANGING_VOICE_HARNESS_H
 #define ANDROID_CHANGING_VOICE_HARNESS_H
 
+#include "tools/TimingAnalyzer.h"
+#include "tools/LogTool.h"
+#include "tools/CpuAnalyzer.h"
+#include "synth/Synthesizer.h"
+#include "SynthMark.h"
+#include "AudioSinkBase.h"
+#include <iomanip>
+#include <cstdint>
+#include <cmath>
 #include "tools/TestHarnessBase.h"
 #include "TestHarnessParameters.h"
 
@@ -79,8 +88,6 @@ public:
             return getNumVoices();
         }
     }
-
-private:
 
 };
 

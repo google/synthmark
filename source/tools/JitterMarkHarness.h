@@ -30,6 +30,7 @@
 #include "tools/LogTool.h"
 #include "tools/TestHarnessBase.h"
 #include "tools/TimingAnalyzer.h"
+#include "TestHarnessBase.h"
 
 /**
  * Measure the wakeup time and render time for each wakeup period.
@@ -64,8 +65,7 @@ public:
         resultMessage << "underrun.count = " << mAudioSink->getUnderrunCount() << "\n";
         resultMessage << "underrun.skip.count = " << mAudioSink->getUnderrunSkipCount() << "\n";
         resultMessage << "max.empty.frames = " << mAudioSink->getMaxEmptyFrames() << "\n";
-        double requiredLatencyMillis = 1000.0 * mAudioSink->getMaxEmptyFrames() / getSampleRate();
-        resultMessage << "latency.required.msec = " << requiredLatencyMillis << "\n";
+        resultMessage << "latency.required.msec = " << calculateRequiredLatency() << "\n";
         resultMessage << mCpuAnalyzer.dump();
 
         mResult->setMeasurement(measurement);

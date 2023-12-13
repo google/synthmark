@@ -17,6 +17,7 @@
 #ifndef SYNTHMARK_SYNTHMARK_HARNESS_H
 #define SYNTHMARK_SYNTHMARK_HARNESS_H
 
+#include <iomanip>
 #include <cmath>
 #include <cstdint>
 
@@ -268,6 +269,10 @@ public:
 
     int32_t getFrameCount() {
         return mFrameCounter;
+    }
+
+    double calculateRequiredLatency() {
+        return 1000.0 * mAudioSink->getMaxEmptyFrames() / getSampleRate();
     }
 
 protected:

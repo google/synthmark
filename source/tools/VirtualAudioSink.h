@@ -117,8 +117,9 @@ public:
             }
         }
 
+        // Find maximum underrun level.
         // Use the depth of the underrun as a measure of the maximum latency required to
-        // avoid underruns.
+        // avoid underruns. Wait until we have had some valid calls without an underflow.
         if (mValidRun) {
             setMaxEmptyFrames(std::max(getMaxEmptyFrames(), availableRoom));
         }
@@ -366,12 +367,11 @@ private:
 
     // Advance mFramesConsumed and mNextHardwareReadTimeNanos based on real-time clock.
     void updateHardwareSimulator() {
-        int64_t currentTime = HostTools::getNanoTime();
-        int countdown = 512; // Avoid spinning forever.
-        // Is it time to consume a block?
-        while ((currentTime >= mNextHardwareReadTimeNanos) && (countdown-- > 0)) {
-            mFramesConsumed += mFramesPerBurst; // fake read
-            mNextHardwareReadTimeNanos += mNanosPerBurst; // avoid drift
+        int64_t lateness = HostTools::getNanoTime() - mNextHardwareReadTimeNanos;
+        if (lateness > 0) {
+            int64_t numBurstsToAdvance = (lateness + mNanosPerBurst - 1) / mNanosPerBurst;
+            mFramesConsumed += mFramesPerBurst * numBurstsToAdvance;
+            mNextHardwareReadTimeNanos += mNanosPerBurst * numBurstsToAdvance;
         }
     }
 
