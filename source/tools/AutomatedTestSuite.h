@@ -19,14 +19,14 @@
 
 #include <cmath>
 #include <cstdint>
+#include <vector>
 
 #include "tools/LatencyMarkHarness.h"
 #include "tools/TimingAnalyzer.h"
 #include "tools/UtilizationMarkHarness.h"
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
-#include "TestHarnessParameters.h"
-
+#include "tools/TestHarnessParameters.h"
 
 /**
  * Run an automated test, analyze the results and print a report.
@@ -39,7 +39,8 @@
  *     assumes that the CPU numbering depends on their capacity,
  *     assumes that both lowCpu and highCpu are online,
  *     assume the existence of only two architectures, homogeneous or BIG.little.
- * TODO handle more architectures.
+ * TODO handle more architectures
+ * TODO Measure latency without CPU affinity
  */
 class AutomatedTestSuite : public TestHarnessParameters {
 
@@ -101,15 +102,14 @@ public:
         return err;
     }
 
-
 private:
 
-    struct LatencyResult {
-        int err = 0;
-        double lightLatencyFrames = 999999;
-        double heavyLatencyFrames = 999999;
-        double mixedLatencyFrames = 999999;
-    };
+struct LatencyResult {
+    int err = 0;
+    double lightLatencyFrames = 999999;
+    double heavyLatencyFrames = 999999;
+    double mixedLatencyFrames = 999999;
+};
 
 // Key text for CDD report.
 #define kKeyVoiceMark90          "voicemark.90"
@@ -256,13 +256,13 @@ private:
 
         double latencyFrames = result1.getMeasurement();
         std::stringstream suffix;
-        suffix << "." << cpu << "." << numVoices << "." << numVoicesHigh;
+        suffix << "." << ((cpu < 0) ? "N" : std::to_string(cpu)) << "." << numVoices << "." << numVoicesHigh;
         resultMessage << "audio.latency.frames" << suffix.str() << " = " << latencyFrames << std::endl;
         double latencyMillis = framesToMillis(latencyFrames);
         resultMessage << "audio.latency.msec" << suffix.str() << " = " << latencyMillis << std::endl;
         mResult->appendMessage(resultMessage.str());
         *latencyPtr = latencyFrames;
-        mLogTool.log("Got LatencyMark = %5.1f msec\n", latencyMillis);
+        mLogTool.log("Got latencyMillis = %5.1f msec\n", latencyMillis);
         delete harness;
         return SYNTHMARK_RESULT_SUCCESS;
     }
@@ -282,26 +282,26 @@ private:
         LatencyResult result;
 
         mLogTool.log("\n---- Measure latency for CPU #%d ----\n", cpu);
-        int32_t voiceMarkLow = 1 * numVoicesMax / 4;
-        int32_t voiceMarkHigh = 3 * numVoicesMax / 4;
+        int32_t numVoicesLow = 1 * numVoicesMax / 4;
+        int32_t numVoicesHigh = 3 * numVoicesMax / 4;
 
         // Test latency with a low number of voices.
         result.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                         cpu, voiceMarkLow, voiceMarkLow, &result.lightLatencyFrames);
+                                        cpu, numVoicesLow, numVoicesLow, &result.lightLatencyFrames);
         if (result.err) return result;
         message << "# Latency in frames with a steady light CPU load.\n";
         message << "latency.light." << cpuToBigLittle(cpu) << " = " << result.lightLatencyFrames << std::endl;
 
         // Test latency with a high number of voices.
         result.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                 cpu, voiceMarkHigh, voiceMarkHigh, &result.heavyLatencyFrames);
+                                        cpu, numVoicesHigh, numVoicesHigh, &result.heavyLatencyFrames);
         if (result.err) return result;
         message << "# Latency in frames with a steady heavy CPU load.\n";
         message << "latency.heavy." << cpuToBigLittle(cpu) << " = " << result.heavyLatencyFrames << std::endl;
 
         // Alternate low to high to stress the CPU governor.
         result.err = measureLatencyOnce(sampleRate, framesPerBurst, numSeconds,
-                                 cpu, voiceMarkLow, voiceMarkHigh, &result.mixedLatencyFrames);
+                                        cpu, numVoicesLow, numVoicesHigh, &result.mixedLatencyFrames);
         if (result.err) return result;
         message << "# Latency in frames when alternating between light and heavy CPU load.\n";
         message << "latency.mixed." << cpuToBigLittle(cpu) << " = " << result.mixedLatencyFrames << std::endl;

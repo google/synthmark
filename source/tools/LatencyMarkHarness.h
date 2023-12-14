@@ -34,50 +34,28 @@
 #define BURSTS_OVER_RANGE 99999
 
 /**
- * Measure the wakeup time and render time for each wakeup period.
- */
-class StopOnGlitchHarness : public ChangingVoiceHarness {
-public:
-    StopOnGlitchHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
-            : ChangingVoiceHarness(audioSink, result, logTool) {
-        mTestName = "StopOnGlitch";
-    }
-
-    IAudioSinkCallback::Result onRenderAudio(float *buffer,
-                                             int32_t numFrames) override {
-        IAudioSinkCallback::Result result = ChangingVoiceHarness::onRenderAudio(buffer, numFrames);
-        if (mAudioSink->getUnderrunCount() > 0) {
-             result = IAudioSinkCallback::Finished;
-        }
-        return result;
-    }
-};
-
-/**
  * Determine buffer latency required to avoid glitches.
  * The "LatencyMark" is the minimum buffer size that is a multiple
  * of a burst size that can be used for N minutes without glitching.
  */
-class LatencyMarkHarness : public TestHarnessParameters {
+class LatencyMarkHarness : public ChangingVoiceHarness {
 public:
     LatencyMarkHarness(AudioSinkBase *audioSink, SynthMarkResult *result, LogTool &logTool)
-    : TestHarnessParameters(audioSink, result, logTool) {
-        resetBinarySearch();
+    : ChangingVoiceHarness(audioSink, result, logTool) {
     }
 
     const char *getName() const override {
         return "LatencyMark";
     }
 
+    void setInitialBursts(int32_t bursts) {
+        mInitialBursts = bursts;
+    }
+
     // Run the benchmark.
     int32_t runTest(int32_t sampleRate, int32_t framesPerBurst, int32_t numSeconds) override {
         std::stringstream resultMessage;
-        if (mInitialBursts > 0) {
-            resetLinearSearch();
-        } else {
-            resetBinarySearch();
-        }
-        int32_t result = searchForLowestLatencyInBursts(sampleRate, framesPerBurst, numSeconds);
+        int32_t result = measureLatencyInBursts(sampleRate, framesPerBurst, numSeconds);
         if (result < 0) {
             resultMessage << "ERROR in latency search = " << result << std::endl;
             mResult->appendMessage(resultMessage.str());
@@ -107,17 +85,7 @@ public:
         return 0;
     }
 
-    int32_t testSearchSeries() {
-        for (int i=1; i<200; i++) {
-            int latency = testSearch(i);
-            if (latency != i) {
-                mLogTool.log("ERROR expected %d, got %d\n", i, latency);
-                return 1;
-            }
-        }
-        return 0;
-    }
-
+private:
     /**
      *
      * @param sampleRate
@@ -125,164 +93,45 @@ public:
      * @param maxSeconds
      * @return latency in bursts or a negative error code or BURSTS_OVER_RANGE
      */
-    int32_t searchForLowestLatencyInBursts(int32_t sampleRate, int32_t framesPerBurst, int32_t maxSeconds) {
+    int32_t measureLatencyInBursts(int32_t sampleRate, int32_t framesPerBurst, int32_t maxSeconds) {
         int32_t testCount = 1;
-        resetBinarySearch();
-        int32_t bursts = getNextBurstsToTry(true); // assume glitches at zero latency
-        while (bursts > 0) {
-            int32_t numSeconds = (mState == STATE_VERIFY) ? maxSeconds : std::min(maxSeconds, 10);
-            mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d ----\n",
-                          testCount++, numSeconds, bursts);
-            int32_t desiredSizeInFrames = bursts * framesPerBurst;
-            int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
-            if (actualSize < desiredSizeInFrames) {
-                mLogTool.log("ERROR - requested buffer size %d, got %d, still glitching\n",
-                             desiredSizeInFrames, actualSize);
-                break;
-            }
-            fflush(stdout);
+        bool glitched = true;
+        int32_t bursts = mInitialBursts;
+        int32_t numSeconds = std::min(maxSeconds, 10);
+        mLogTool.log("LatencyMark: #%d, %d seconds with bursts = %d ----\n",
+                      testCount++, numSeconds, bursts);
+        int32_t desiredSizeInFrames = bursts * getFramesPerBurst();
+        int32_t actualSize = mAudioSink->setBufferSizeInFrames(desiredSizeInFrames);
+        if (actualSize < desiredSizeInFrames) {
+            mLogTool.log("WARNING - requested buffer size %d, got %d\n",
+                         desiredSizeInFrames, actualSize);
+        }
+        fflush(stdout);
 
-            int32_t err = measureOnce(sampleRate, framesPerBurst, numSeconds);
-            if (err < 0) {
-                mLogTool.log("LatencyMark: %s returning err = %d ----\n",  __func__, err);
-                return err;
-            }
-            bool glitched = (mAudioSink->getUnderrunCount() > 0);
-            if (!glitched) {
-                mLogTool.log("LatencyMark: no glitches\n");
-            }
-            bursts = getNextBurstsToTry(glitched);
+        mAudioSink->setUnderrunCount(0);
+        int32_t err = ChangingVoiceHarness::runTest(sampleRate, framesPerBurst, numSeconds);
+        if (err < 0) {
+            mLogTool.log("LatencyMark: %s returning err = %d ----\n",  __func__, err);
+            return err;
+        }
+        glitched = (mAudioSink->getUnderrunCount() > 0);
+        if (!glitched) {
+            mLogTool.log("LatencyMark: no glitches\n");
         }
 
-        return mLowestGoodBursts;
-    }
+        // Determine number of bursts needed to prevent the biggest under-run.
+        int32_t measuredBursts = calculateRequiredLatencyBursts(framesPerBurst);
 
+        return measuredBursts;
+    }
+/*
     int32_t measureOnce(int32_t sampleRate,
                         int32_t framesPerBurst,
                         int32_t numSeconds) {
-        std::stringstream resultMessage;
-        SynthMarkResult result1;
-        mAudioSink->setUnderrunCount(0);
-        StopOnGlitchHarness harness(mAudioSink, &result1, mLogTool);
-        harness.setNumVoices(getNumVoices());
-        harness.setNumVoicesHigh(getNumVoicesHigh());
-        harness.setVoicesMode(getVoicesMode());
-        harness.setDelayNoteOnSeconds(mDelayNotesOn);
-        harness.setThreadType(mThreadType);
-
-        int32_t err = harness.runTest(sampleRate, framesPerBurst, numSeconds);
-
-        if (mAudioSink->getUnderrunCount() > 0) {
-            // Record when the glitch occurred.
-            float glitchTime = ((float) harness.getFrameCount() / mAudioSink->getSampleRate());
-            mLogTool.log("LatencyMark: detected glitch at %5.2f seconds\n", glitchTime);
-            fflush(stdout);
-        }
-
-        return err;
     }
-
-    void setInitialBursts(int32_t bursts) {
-        mInitialBursts = bursts;
-    }
-
-    void resetLinearSearch() {
-        mCurrentBursts = mInitialBursts;
-        mState = STATE_VERIFY;
-    }
-
-    void resetBinarySearch() {
-        mCurrentBursts = 0;
-        mHighestBadBursts = 0;
-        mLowestGoodBursts = BURSTS_OVER_RANGE;
-        mPowerOf2 = 1;
-        mState = STATE_RAMP_UP;
-    }
-
-    int32_t testSearch(int32_t target) {
-        resetBinarySearch();
-        int32_t bursts = getNextBurstsToTry(true); // assume zero latency glitches
-        while (bursts > 0) {
-            mLogTool.log("%2d, ", bursts);
-            bool glitched = (bursts < target);
-            bursts = getNextBurstsToTry(glitched);
-        }
-        mLogTool.log("\n");
-        fflush(stdout);
-        return mLowestGoodBursts;
-    }
-
-    // Determine number of bursts for next test.
-    // It is faster to glitch and then try again then to not glitch and run the whole test.
-    // So prefer burst sizes that will glitch.
-    int32_t getNextBurstsToTry(bool glitched) {
-        // Determine next state.
-        switch(mState) {
-            case STATE_RAMP_UP:
-            case STATE_BOUNDED:
-                if (glitched) {
-                    mHighestBadBursts = mCurrentBursts;
-                } else {
-                    mLowestGoodBursts = mCurrentBursts;
-                    if (mLowestGoodBursts == mHighestBadBursts + 1) {
-                        mState = STATE_VERIFY;
-                    } else {
-                        mDelta = std::max(1, (mLowestGoodBursts - mHighestBadBursts) / 8);
-                        mState = STATE_BOUNDED;
-                    }
-                }
-                break;
-
-            case STATE_VERIFY:
-                if (glitched) {
-                    mHighestBadBursts = mCurrentBursts;
-                    mLowestGoodBursts = mHighestBadBursts + 1;
-                } else {
-                    mState = STATE_DONE;
-                }
-
-            case STATE_DONE:
-                break;
-        }
-
-        // Determine number of bursts for next test.
-        int32_t candidate = 0;
-        switch(mState) {
-            case STATE_RAMP_UP:
-                candidate = mPowerOf2;
-                mPowerOf2 *= 2;
-                break;
-
-            case STATE_BOUNDED:
-                candidate = mHighestBadBursts + mDelta;
-                break;
-
-            case STATE_VERIFY:
-                candidate = mLowestGoodBursts;
-                break;
-
-            case STATE_DONE:
-                candidate = 0;
-                break;
-        }
-        mCurrentBursts = candidate;
-        return mCurrentBursts;
-    }
-
-    enum state_search_t {
-        STATE_RAMP_UP,
-        STATE_BOUNDED,
-        STATE_VERIFY,
-        STATE_DONE,
-    };
-
-    int32_t           mCurrentBursts;
-    int32_t           mInitialBursts = 0;
-    int32_t           mHighestBadBursts;
-    int32_t           mLowestGoodBursts;
-    int32_t           mDelta;
-    int32_t           mPowerOf2;
-    state_search_t    mState = STATE_RAMP_UP;
+*/
+private:
+    int32_t           mInitialBursts = kDefaultBufferSizeBursts;
 };
 
 #endif // SYNTHMARK_LATENCYMARK_HARNESS_H

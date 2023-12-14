@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <cstring>
 #include <ctime>
+#include <iomanip>
 
 #include "BinCounter.h"
 #include "HostTools.h"

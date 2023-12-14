@@ -17,6 +17,7 @@
 #ifndef SYNTHMARK_SYNTHMARK_HARNESS_H
 #define SYNTHMARK_SYNTHMARK_HARNESS_H
 
+#include <iomanip>
 #include <cmath>
 #include <cstdint>
 
@@ -37,6 +38,8 @@
 
 constexpr int JITTER_BINS_PER_MSEC  = 10;
 constexpr int JITTER_MAX_MSEC       = 100;
+
+constexpr int  kDefaultBufferSizeBursts = 1;
 
 /**
  * Base class for running a test.
@@ -117,7 +120,7 @@ public:
                                                                       kSynthmarkMaxVoices);
                     result = mSynth.notesOn(currentNumVoices);
                     if (result < 0) {
-                        mLogTool.log("%s() allNotesOn() returned %d\n", __func__, result);
+                        mLogTool.log("%s() notesOn() returned %d\n", __func__, result);
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
                     }
@@ -191,7 +194,7 @@ public:
 
         mAudioSink->stop();
         onEndMeasurement();
-
+        mLogTool.clearVar1();
         mResult->setResultCode(result);
         return result;
     }
@@ -239,7 +242,7 @@ public:
             return -1;
         }
         if (framesPerBurst < 8) {
-            mLogTool.log("ERROR in open, framesPerBurst = %d < 8\n", framesPerRender);
+            mLogTool.log("ERROR in open, framesPerBurst = %d < 8\n", framesPerBurst);
             return -1;
         }
         mSampleRate = sampleRate;
@@ -268,6 +271,15 @@ public:
 
     int32_t getFrameCount() {
         return mFrameCounter;
+    }
+
+    double calculateRequiredLatencyMillis() {
+        return 1000.0 * mAudioSink->getMaxEmptyFrames() / getSampleRate();
+    }
+
+    int32_t calculateRequiredLatencyBursts(int32_t framesPerBurst) {
+        int32_t maxEmptyFrames = std::max(1, mAudioSink->getMaxEmptyFrames());
+        return (maxEmptyFrames + framesPerBurst - 1) / framesPerBurst;
     }
 
 protected:

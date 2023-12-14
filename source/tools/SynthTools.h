@@ -20,7 +20,6 @@
 #include <cmath>
 #include <cstdint>
 
-
 /**
  * A fractional amplitude corresponding to exactly -96 dB.
  * amplitude = pow(10.0, db/20.0)

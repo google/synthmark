@@ -56,12 +56,15 @@ public:
 
     virtual void onEndMeasurement() override {
 
-        double measurement = 0.0;
+        double measurement = mAudioSink->getMaxEmptyFrames();
         std::stringstream resultMessage;
         resultMessage << mTestName << " = " << measurement << std::endl;
 
         resultMessage << dumpJitter();
         resultMessage << "underrun.count = " << mAudioSink->getUnderrunCount() << "\n";
+        resultMessage << "underrun.skip.count = " << mAudioSink->getUnderrunSkipCount() << "\n";
+        resultMessage << "max.empty.frames = " << mAudioSink->getMaxEmptyFrames() << "\n";
+        resultMessage << "latency.required.msec = " << calculateRequiredLatencyMillis() << "\n";
         resultMessage << mCpuAnalyzer.dump();
 
         mResult->setMeasurement(measurement);
