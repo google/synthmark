@@ -45,9 +45,18 @@ This measures the % CPU load for a fixed number of voices.
 Benchmarks do not monitor or control for radios, temperature, other apps, etc.
 Such monitoring or controlling is expected to be provided as part of the test conditions, not the tool.
 
-## AutomatedTest
+## Clock Ramp
 
-This test combines several benchmarks and then provides a summary the the system performance.
+In this test, the worload is suddenly increase, which can the CPU to saturate and miss its real-time deadlines.
+This measure how long it takes for the CPU scheduler to raise the frequency enough to meat its deadlines again.
+
+You will need to specify both a Low and High number of voices.
+If the CPU does not become saturated then the test is invalid.
+In that case, you may need to raise the High number of voices.
+
+## Automated Test
+
+This test combines several benchmarks and then provides a summary of the system performance.
 
 It measures the performance of a BIG and little CPU. It then runs latency analysis for a changing workload.
 This measures the ability of the CPU scheduler to run real-time audio workloads
