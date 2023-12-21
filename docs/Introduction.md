@@ -6,7 +6,12 @@ SynthMark currently includes several benchmarks.
 
 ## VoiceMark
 
-This measures the number of voices that will use X% of a single CPU.
+This measures the number of [voices](Synthesizer.md) that will use X% of a single CPU.
+
+A “voice” is a unit of computation based on a two oscillator
+subtractive synthesizer that is common in plugins and sound formats
+such as Downloadable Sounds (DLS) and Sound Font (SF2). It is roughly
+equivalent to a “Mini Moog” synthesizer.
 
 ## LatencyMark
 
@@ -39,3 +44,30 @@ This measures the % CPU load for a fixed number of voices.
 
 Benchmarks do not monitor or control for radios, temperature, other apps, etc.
 Such monitoring or controlling is expected to be provided as part of the test conditions, not the tool.
+
+## AutomatedTest
+
+This test combines several benchmarks and then provides a summary the the system performance.
+
+It measures the performance of a BIG and little CPU. It then runs latency analysis for a changing workload.
+This measures the ability of the CPU scheduler to run real-time audio workloads
+with low latency and without glitching.
+
+It produces three metrics in a section labelled "CDD_SUMMARY".
+
+* **voicemark.90** is the number of voices that can be rendered when running at 90% of its maximum CPU load.
+* **latencymark.fixed.little** is the minimum latency of the
+top level buffer closest to the app for a constant workload. The DSP
+and other lower level components might add 4-6 msec of latency when
+using EXCLUSIVE MMAP mode in AAudio. This would give us a total output
+latency of around 20 msec.
+* **latencymark.dynamic.little** measures latency for a changing workload,
+which is common in interactive applications. Higher latency is required
+because the scheduler may not increase the clock rate rapidly enough to
+meet the changing demand.
+
+(Note that the latency values are for the top level of a virtual audio
+device with 2 msec buffers. So SynthMark can achieve lower latency values
+than the actual audio framework with multiple levels and a DSP.)
+
+
