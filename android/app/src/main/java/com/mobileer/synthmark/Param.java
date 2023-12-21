@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.sonodroid.synthmark;
+package com.mobileer.synthmark;
 
 import android.content.Context;
 
