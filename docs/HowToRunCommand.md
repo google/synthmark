@@ -12,24 +12,28 @@ On Android, run as root so that SynthMark can request SCHED_FIFO:
 
 If you run with the -h option you will get some “help” information:
 
-    SynthMark V1.16
-    SynthMark version 1.16
+
+    SynthMark version 1.26
     synthmark -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate} -s{seconds} -b{burstSize} -c{cpuAffinity}
-        -t{test}, v=voice, l=latency, j=jitter, u=utilization, s=series, 
-                  s=series_util, c=clock_ramp, a=automated, default is v
+        -t{test}, v=voice, l=latency, j=jitter, u=utilization, s=series_util, c=clock_ramp, a=automated, default is v
+        -a{audioLevel} 0 = normal thread, 1 = audio callback (default), 2 = audio output
+        -b{burstSize} frames read by virtual hardware at one time, default = 96
+        -B{bursts} initial buffer size in bursts, default = 1
+        -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED
+        -d{noteOnDelay} seconds to delay the first NoteOn, default = 0
+        -f{enable} use SCHED_FIFO for normal thread, 0 = off, 1 = on (default)
         -n{numVoices} to render, default = 8
-        -N{numVoices} to render for toggling high load, LatencyMark only
+        -N{numVoices} to render for toggling high load, only for -t{l|j|c|s}
         -m{voicesMode} algorithm to choose the number of voices in the range
           [-n, -N]. This value can be 'l' for a linear increment, 'r' for a
           random choice, or 's' to switch between -n and -N. default = s
-        -d{noteOnDelay} seconds to delay the first NoteOn, default = 0
         -p{percentCPU} target load, default = 50
         -r{sampleRate} should be typical, 44100, 48000, etc. default is 48000
         -s{seconds} to run the test, latencyMark may take longer, default is 10
-        -b{burstSize} frames read by virtual hardware at one time, default = 96
-        -c{cpuAffinity} index of CPU to run on, default = UNSPECIFIED
-        -a{enable} 0 for normal thread, 1 for audio callback, default = 1
-
+        -u{utilClampLevel} 0 = off (default), 1 = on, 2 = on verbose, >2 = fixed
+               Using utilClamp helps the scheduler adapt to dynamic workloads.
+        -w{workloadHintsEnabled} 0 = no (default), 1 = give workload hints to scheduler
+        -z{enable} use ADPF for performance hints, 0 = off (default), 1 = on
 
 ## Running and Interpreting each Test
 
@@ -37,7 +41,8 @@ If you run with the -h option you will get some “help” information:
 
 VoiceMark measures CPU performance and the behavior of the CPU governor.
 
-Run VoiceMark with the percent CPU set to 50% for 20 seconds. Then run it again at 80%. Note that the number of voices may not be linear because of the CPU governor.
+Run VoiceMark with the percent CPU set to 50% for 20 seconds. Then run it again at 80%. Note that the number of voices
+may not be linear because of the CPU frequency governor.
 
     synthmark -tv -s20 -p50
     synthmark -tv -s20 -p80
@@ -46,14 +51,14 @@ Run VoiceMark with the percent CPU set to 50% for 20 seconds. Then run it again 
 
 JitterMark measures thread scheduling, preemption and the behavior of the CPU governor.
 
-Run the JitterMark with 4 voices, a 48 frame burst size.
+Run the JitterMark with 20 voices, and 96 frame burst size.
 
-    adb shell synthmark -tj -n4 -b48
+    adb shell synthmark -tj -n20 -b96
 
-You can copy and paste the CSV output into a spreadsheet and plot a histogram. In the chart below, for example, we added a column that contained the LOG base 2 of the count and plotted that against milliseconds.
-Jitter Histogram for SCHED_FIFO Thread on Pixel XL running Nougat
+You can copy and paste the CSV output into a spreadsheet and plot a histogram. In the chart below, for example, we plotted the LOG base 2 of the counts against milliseconds.
+Jitter Histogram for SCHED_FIFO Thread on Pixel 7 Pro.
 
-TODO add chart
+<img width="724" alt="jittermark_histogram" src="https://github.com/google/synthmark/assets/5175913/8e55b31b-7e7e-44db-9aa0-4b80d0cde9e7">
 
 ### LatencyMark
 
