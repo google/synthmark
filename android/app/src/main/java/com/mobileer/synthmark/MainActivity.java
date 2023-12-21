@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.sonodroid.synthmark;
+package com.mobileer.synthmark;
 
 import android.Manifest;
 import android.annotation.TargetApi;
@@ -31,7 +31,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -49,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
 
 public class MainActivity extends BaseActivity {
     private static final String KEY_TEST_NAME = "test";
@@ -161,7 +159,7 @@ public class MainActivity extends BaseActivity {
     }
 
     // Sample command
-    // adb shell am start -n com.sonodroid.synthmark/.MainActivity --es test jitter \
+    // adb shell am start -n com.mobileer.synthmark/.MainActivity --es test jitter \
     //       --ei core_affinity 1  --es file /sdcard/test20190611.txt
     //
     // Required parameters:

@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 33
     defaultConfig {
-        applicationId "com.sonodroid.synthmark"
+        applicationId "com.mobileer.synthmark"
         minSdkVersion 28
         targetSdkVersion 33
         versionCode 26

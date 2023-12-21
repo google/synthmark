@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.sonodroid.synthmark;
+package com.mobileer.synthmark;
 
 import android.app.Application;
 import android.content.Intent;
@@ -23,7 +23,6 @@ import android.os.Build;
 import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
