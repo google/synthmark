@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 Copyright 2016 Google Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,193 +13,189 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="com.mobileer.synthmark.MainActivity"
     android:orientation="vertical"
-    >
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.mobileer.synthmark.MainActivity">
 
     <ScrollView
         android:id="@+id/scrollview_main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:layout_above="@+id/button_cancel"
-        android:layout_weight="1"
-        >
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        >
-
-        <!-- Device information -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/device_information_title"
-            android:textAppearance="@android:style/TextAppearance.Material.Subhead"
-            />
+        android:layout_alignParentTop="true"
+        android:layout_weight="1">
 
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
+            <!-- Device information -->
             <TextView
-                android:id="@+id/textViewDeviceInfo"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="4" />
+                android:text="@string/device_information_title"
+                android:textAppearance="@android:style/TextAppearance.Material.Subhead" />
 
             <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#ffc0d0e0">
+                android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/textViewDeviceInfo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/status_label" />
+                    android:layout_weight="4" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="#ffc0d0e0"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/status_label" />
+
+                    <TextView
+                        android:id="@+id/textViewShortUpdate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/short_update" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/activity_vertical_margin" />
+
+            <!-- Test configuration (parameters which can be changed at runtime) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/test_configuration_title"
+                android:textAppearance="@android:style/TextAppearance.Material.Subhead" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <Switch
+                    android:id="@+id/switchFakeTouches"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:checked="false"
+                    android:switchPadding="@dimen/activity_horizontal_margin"
+                    android:text="@string/fake_touches" />
+
+                <Switch
+                    android:id="@+id/switchSustainedPerformance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:enabled="false"
+                    android:switchPadding="@dimen/activity_horizontal_margin"
+                    android:text="@string/sustained_performance" />
+
+            </LinearLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/activity_vertical_margin" />
+
+            <!-- Run test buttons -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/run_tests_title"
+                android:textAppearance="@android:style/TextAppearance.Material.Subhead" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/spinnerTest"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/buttonSettings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="onSettingsClicked"
+                    android:text="Settings" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonTest"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onRunTest"
+                    android:text="Run Test" />
+
+                <Button
+                    android:id="@+id/buttonShare"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onShareResult"
+                    android:text="Share Result" />
+            </LinearLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/activity_vertical_margin" />
+
+            <!-- Test output -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textViewShortUpdate"
-                    android:text="@string/short_update" />
+                    android:text="@string/test_results_title"
+                    android:textAppearance="@android:style/TextAppearance.Material.Subhead" />
+
+                <TextView
+                    android:id="@+id/textViewOutput"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
             </LinearLayout>
 
         </LinearLayout>
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/activity_vertical_margin"
-            />
-
-        <!-- Test configuration (parameters which can be changed at runtime) -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/test_configuration_title"
-            android:textAppearance="@android:style/TextAppearance.Material.Subhead"
-            />
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:baselineAligned="false">
-            <Switch
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:switchPadding="@dimen/activity_horizontal_margin"
-                android:text="@string/fake_touches"
-                android:checked="false"
-                android:id="@+id/switchFakeTouches" />
-            <Switch
-                android:id="@+id/switchSustainedPerformance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:switchPadding="@dimen/activity_horizontal_margin"
-                android:text="@string/sustained_performance"
-                android:enabled="false"
-                android:checked="false"
-                />
-
-        </LinearLayout>
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/activity_vertical_margin"
-            />
-
-        <!-- Run test buttons -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/run_tests_title"
-            android:textAppearance="@android:style/TextAppearance.Material.Subhead"
-            />
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <Spinner
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/spinnerTest"
-                android:layout_weight="1" />
-
-            <Button
-                android:text="Settings"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="onSettingsClicked"
-                android:id="@+id/buttonSettings" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <Button
-                android:text="Run Test"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/buttonTest"
-                android:onClick="onRunTest"
-                android:layout_weight="1" />
-            <Button
-                android:text="Share Result"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/buttonShare"
-                android:onClick="onShareResult"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/activity_vertical_margin"
-            />
-
-        <!-- Test output -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/test_results_title"
-                android:textAppearance="@android:style/TextAppearance.Material.Subhead"
-                />
-
-            <TextView
-                android:id="@+id/textViewOutput"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                />
-        </LinearLayout>
-
-    </LinearLayout>
     </ScrollView>
+
     <Button
-        android:text="Cancel"
+        android:id="@+id/button_cancel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_weight="1"
         android:onClick="onCancelClicked"
-        android:id="@+id/button_cancel" />
+        android:text="Cancel" />
 </RelativeLayout>
