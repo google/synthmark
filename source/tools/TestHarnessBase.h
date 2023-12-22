@@ -25,7 +25,6 @@
 #include "BinCounter.h"
 #include "HostTools.h"
 #include "IAudioSinkCallback.h"
-#include "NativeTest.h"
 #include "SynthMark.h"
 #include "SynthMarkResult.h"
 #include "synth/Synthesizer.h"
