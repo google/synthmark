@@ -66,6 +66,8 @@ public class AppObject extends Application {
     private native int native_getTestCount(long nativeTest);
     private native String native_getTestName(long nativeTest, int testId);
 
+    public static native void setCancelled(boolean cancelled);
+
     //params
     private native int native_getParamCount(long nativeTest, int testId);
     private native int native_getParamType(long nativeTest, int testId, int paramIndex);

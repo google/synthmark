@@ -71,6 +71,13 @@ Java_com_mobileer_synthmark_AppObject_testRun(
     }
     return NATIVETEST_ERROR;
 }
+JNIEXPORT void JNICALL
+Java_com_mobileer_synthmark_AppObject_setCancelled(
+        JNIEnv* env __unused,
+        jclass clazz __unused,
+        jboolean cancelled) {
+    TestHarnessBase::setCancelled(cancelled);
+}
 
 JNIEXPORT jint JNICALL
 Java_com_mobileer_synthmark_AppObject_testProgress(

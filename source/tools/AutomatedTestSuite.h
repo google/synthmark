@@ -181,7 +181,11 @@ struct LatencyResult {
         if (lowCpu != highCpu) {
             mAudioSink->setRequestedCpu(highCpu);
             mLogTool.log("Run high VoiceMark with CPU #%d\n", highCpu);
-            harness->runTest(sampleRate, framesPerBurst, numSeconds);
+            err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
+            if (err) {
+                delete harness;
+                return err;
+            }
             voiceMarkHighIndex = result1.getMeasurement();
             mLogTool.log("high VoiceMark_%d = %5.1f\n", kMaxUtilizationPercent, voiceMarkHighIndex);
 

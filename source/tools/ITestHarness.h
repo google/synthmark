@@ -41,6 +41,16 @@ public:
 
     virtual bool isRunning() = 0;
 
+    void setCancelled(bool cancelled) {
+        mCancelled = cancelled;
+    }
+
+    bool isCancelled() {
+        return mCancelled;
+    }
+
+private:
+    bool mCancelled = false;
 };
 
 #endif //SYNTHMARK_ITEST_HARNESS_H

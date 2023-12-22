@@ -64,6 +64,7 @@ public class MainActivity extends BaseActivity {
     private Button mButtonTest;
     private Button mButtonShare;
     private Button mButtonSettings;
+    private Button mButtonCancel;
     private ScrollView mScrollView;
 
     private boolean mTestRunningByIntent;
@@ -82,8 +83,11 @@ public class MainActivity extends BaseActivity {
         // Lock to portrait to avoid onCreate being called more than once
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        mScrollView = (ScrollView) findViewById(R.id.activity_main);
+        mScrollView = (ScrollView) findViewById(R.id.scrollview_main);
         mTextViewDeviceInfo = (TextView) findViewById(R.id.textViewDeviceInfo);
+
+        mButtonCancel = (Button) findViewById(R.id.button_cancel);
+        mButtonCancel.setVisibility(View.GONE);
 
         mTextViewOutput = (TextView) findViewById(R.id.textViewOutput);
         mTextViewShortUpdate = (TextView) findViewById(R.id.textViewShortUpdate);
@@ -279,6 +283,7 @@ public class MainActivity extends BaseActivity {
         mSpinnerTest.setEnabled(false);
         mButtonTest.setEnabled(false);
         mButtonShare.setEnabled(false);
+        mButtonCancel.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -309,6 +314,7 @@ public class MainActivity extends BaseActivity {
         mSpinnerTest.setEnabled(true);
         mButtonTest.setEnabled(true);
         mButtonShare.setEnabled(true);
+        mButtonCancel.setVisibility(View.GONE);
 
         maybeWriteTestResult();
     }
@@ -389,10 +395,14 @@ public class MainActivity extends BaseActivity {
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
     }
+    public void onCancelClicked(View view) {
+        AppObject.setCancelled(true);
+    }
 
     public void onRunTest(View view) {
         int currentTestId = getApp().getCurrentTestId();
         if (currentTestId > -1) {
+            AppObject.setCancelled(false);
             getApp().startTest(currentTestId);
         }
     }
@@ -456,4 +466,5 @@ public class MainActivity extends BaseActivity {
             }
         });
     }
+
 }
