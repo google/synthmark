@@ -52,6 +52,12 @@ Java_com_mobileer_synthmark_AppObject_testRun(
     jobject obj,
     jlong nativeTest);
 
+JNIEXPORT void JNICALL
+Java_com_mobileer_synthmark_AppObject_setCancelled(
+        JNIEnv* env,
+        jclass clazz,
+        jboolean cancelled);
+
 JNIEXPORT jint JNICALL
 Java_com_mobileer_synthmark_AppObject_testProgress(
     JNIEnv* env,

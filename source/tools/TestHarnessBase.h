@@ -25,6 +25,7 @@
 #include "BinCounter.h"
 #include "HostTools.h"
 #include "IAudioSinkCallback.h"
+#include "NativeTest.h"
 #include "SynthMark.h"
 #include "SynthMarkResult.h"
 #include "synth/Synthesizer.h"
@@ -95,7 +96,7 @@ public:
                                                      int32_t numFrames) override {
         // mLogTool.log("onRenderAudio() callback called\n");
         int32_t result;
-        if (mFrameCounter >= mFramesNeeded) {
+        if (mFrameCounter >= mFramesNeeded || isCancelled()) {
             return IAudioSinkCallback::Result::Finished;
         }
 
@@ -186,13 +187,16 @@ public:
 
         // Run the test or wait for it to finish.
         result = mAudioSink->runCallbackLoop();
+        mAudioSink->stop();
         if (result < 0) {
             mLogTool.log("ERROR runCallbackLoop() failed, returned %d\n", result);
             mResult->setResultCode(result);
             return result;
+        } else if (isCancelled()) {
+            mLogTool.log("Test CANCELLED by user!\n");
+            return SYNTHMARK_RESULT_CANCELLED;
         }
 
-        mAudioSink->stop();
         onEndMeasurement();
         mLogTool.clearVar1();
         mResult->setResultCode(result);
@@ -282,6 +286,14 @@ public:
         return (maxEmptyFrames + framesPerBurst - 1) / framesPerBurst;
     }
 
+    static void setCancelled(bool cancelled) {
+        mCancelled = cancelled;
+    }
+
+    static bool isCancelled() {
+        return mCancelled;
+    }
+
 protected:
     Synthesizer      mSynth;
     TimingAnalyzer   mTimer;
@@ -306,6 +318,9 @@ protected:
 
 private:
     bool             mVerbose = false;
+
+    static bool      mCancelled;
 };
 
+bool TestHarnessBase::mCancelled = false;
 #endif // SYNTHMARK_SYNTHMARK_HARNESS_H

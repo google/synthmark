@@ -58,6 +58,7 @@ public class AppObject extends Application {
     public native int testInit(long nativeTest, int testId);
     public native int testClose(long nativeTest);
     public native int testRun(long nativeTest);
+    public static native void setCancelled(boolean cancelled);
     public native int testProgress(long nativeTest);
     public native int testStatus(long nativeTest);
     public native boolean testHasLogs(long nativeTest);

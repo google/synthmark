@@ -37,8 +37,9 @@
 #include "UtilizationMarkHarness.h"
 #include "ClockRampHarness.h"
 
-#define NATIVETEST_SUCCESS 0
 #define NATIVETEST_ERROR -1
+#define NATIVETEST_SUCCESS 0
+#define NATIVETEST_CANCELED 1
 
 #define NATIVETEST_STATUS_ERROR -1
 #define NATIVETEST_STATUS_UNDEFINED 0
@@ -108,6 +109,7 @@ public:
     ParamGroup * getParamGroup() {
         return &mParams;
     }
+
 
     HostThreadFactory *getHostThreadFactory() {
         return mHostThreadFactory;
@@ -213,11 +215,20 @@ public:
     }
 
     int runTestHarness(ITestHarness &harness) {
+        if (TestHarnessBase::isCancelled()) {
+            return SYNTHMARK_RESULT_CANCELLED;
+        }
+
         // Sleep to allow time for touch boost to die down.
         int32_t testDelaySeconds = mParams.getValueFromInt(PARAMS_TEST_START_DELAY);
         if (testDelaySeconds > 0) {
             mLogTool.log("Wait %d seconds for the test to start...\n", testDelaySeconds);
-            sleep(testDelaySeconds);
+            for (int i = 0; i < testDelaySeconds; i++) {
+                sleep(1);
+                if (TestHarnessBase::isCancelled()) {
+                    return SYNTHMARK_RESULT_CANCELLED;
+                }
+            }
         }
 
         mResult.reset();
@@ -239,7 +250,15 @@ public:
         harness.setDelayNoteOnSeconds(noteOnDelay);
         harness.setThreadType(HostThreadFactory::ThreadType::Audio);
 
+        if (TestHarnessBase::isCancelled()) {
+            return SYNTHMARK_RESULT_CANCELLED;
+        }
+
         harness.runCompleteTest(sampleRate, framesPerBurst, numSeconds);
+
+        if (TestHarnessBase::isCancelled()) {
+            return SYNTHMARK_RESULT_CANCELLED;
+        }
 
         // Send one line at a time so we do not overflow the LOG buffer.
         std::istringstream f(mResult.getResultMessage());
@@ -490,8 +509,9 @@ public:
         if (pTestUnit != NULL) {
             pTestUnit->run();
         }
-        mCurrentStatus = NATIVETEST_STATUS_COMPLETED;
-        return NATIVETEST_SUCCESS;
+        mCurrentStatus =  NATIVETEST_STATUS_COMPLETED;
+        return TestHarnessBase::isCancelled()
+               ? NATIVETEST_CANCELED : NATIVETEST_SUCCESS;
     }
 
     int finish() {
