@@ -166,7 +166,7 @@ struct LatencyResult {
         mAudioSink->setRequestedCpu(lowCpu);
         mLogTool.log("Run low VoiceMark with CPU #%d\n", lowCpu);
         int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
-        if (err || isCancelled()) {
+        if (err) {
             delete harness;
             return err;
         }
@@ -182,7 +182,7 @@ struct LatencyResult {
             mAudioSink->setRequestedCpu(highCpu);
             mLogTool.log("Run high VoiceMark with CPU #%d\n", highCpu);
             err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
-            if (err || isCancelled()) {
+            if (err) {
                 delete harness;
                 return err;
             }

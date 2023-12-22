@@ -58,7 +58,6 @@ public class AppObject extends Application {
     public native int testInit(long nativeTest, int testId);
     public native int testClose(long nativeTest);
     public native int testRun(long nativeTest);
-    public static native void setCancelled(boolean cancelled);
     public native int testProgress(long nativeTest);
     public native int testStatus(long nativeTest);
     public native boolean testHasLogs(long nativeTest);
@@ -66,6 +65,8 @@ public class AppObject extends Application {
 
     private native int native_getTestCount(long nativeTest);
     private native String native_getTestName(long nativeTest, int testId);
+
+    public static native void setCancelled(boolean cancelled);
 
     //params
     private native int native_getParamCount(long nativeTest, int testId);
