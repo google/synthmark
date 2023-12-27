@@ -19,7 +19,7 @@ These generate reports that contain the results of the test plus information abo
 
 SynthMark will not transmit any of those reports by itself.
 
-But you, the user, can can email them to someone, or upload them to Google Drive, or send them to other Sharing destinations.
+But you, the user, can email them to someone, or upload them to Google Drive, or send them to other Sharing destinations.
 This is optional. No reports are uploaded or saved by the program unless the user requests it.
 
 The source code for SynthMark is available [here](https://github.com/google/synthmark) on GitHub.
