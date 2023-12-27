@@ -40,7 +40,8 @@
 // #define SYNTHMARK_MINOR_VERSION        23  /* Add UtilClamp -u, and SCHED_FIFO option -f */
 // #define SYNTHMARK_MINOR_VERSION        24  /* Add real-time audio output using AAudio, -a2 */
 // #define SYNTHMARK_MINOR_VERSION        25  /* Add ADPF support, -z1 */
-#define SYNTHMARK_MINOR_VERSION        26  /* Optimize LatencyMark, one pass, use depth of underflow */
+// #define SYNTHMARK_MINOR_VERSION        26  /* Optimize LatencyMark, one pass, use depth of underflow */
+#define SYNTHMARK_MINOR_VERSION        27  /* Move from sonodroid to mobileer. Add CANCEL button. */
 
 #define SYNTHMARK_STRINGIFY(x) #x
 #define SYNTHMARK_TOSTRING(x) SYNTHMARK_STRINGIFY(x)
