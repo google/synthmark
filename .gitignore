@@ -6,5 +6,6 @@ synthmark.app
 .externalNativeBuild/
 .idea
 build
+android/app/release/
 .cxx/
 
