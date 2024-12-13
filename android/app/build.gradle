@@ -15,22 +15,15 @@ android {
             }
         }
     }
-    signingConfigs {
-        release {
-            storeFile new File("${System.properties['user.home']}/.android/debug.keystore")
-            storePassword 'android'
-            storeType "jks"
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-    }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable true
+        }
+        debug {
+            jniDebuggable true
         }
     }
     externalNativeBuild {
@@ -39,7 +32,6 @@ android {
             path "CMakeLists.txt"
         }
     }
-    ndkVersion '21.4.7075529'
     namespace 'com.mobileer.synthmark'
 }
 
