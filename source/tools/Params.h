@@ -573,12 +573,12 @@ public:
 
     ParamBase * getParamByName(std::string name) {
         ParamBase *pBase = NULL;
-
         const char * str1 = name.c_str();
         for (int i = 0; i < mParams.size(); i++) {
             ParamBase *pBaseTemp = mParams[i];
             if (pBaseTemp != NULL) {
-                const char * str2 = pBaseTemp->getName().c_str();
+                auto tempName = pBaseTemp->getName();
+                const char * str2 = tempName.c_str();
                 if (strcmp(str1, str2) == 0) {
                     pBase = pBaseTemp;
                     break; //done
