@@ -1,5 +1,8 @@
 # How to Build SynthMark
 
+The SynthMark app is [available on the Play Store](https://play.google.com/store/apps/details?id=com.mobileer.synthmark).
+But if you want the latest version or the command line executable then continue.
+
 Instructions for building the app for Android
 or the command line executable for Android or Linux.
 
