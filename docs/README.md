@@ -3,6 +3,8 @@ SynthMark
 
 SynthMark is a cross platform tool for benchmarking CPU performance under a variety of real-time audio workloads. It uses a polyphonic synthesizer model to provide standardized tests for latency, jitter and computational throughput.
 
+The SynthMark app is [available on the Play Store](https://play.google.com/store/apps/details?id=com.mobileer.synthmark).
+
 * [Introduction](Introduction.md)
 * [Synthesizer Architecture](Synthesizer.md)
 
