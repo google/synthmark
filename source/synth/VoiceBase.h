@@ -40,8 +40,8 @@ public:
     }
 
     void noteOn(synth_float_t pitch, synth_float_t velocity) {
-        mVelocity = velocity;
         mPitch = pitch;
+        mVelocity = velocity;
     }
 
     void noteOff() {

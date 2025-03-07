@@ -67,8 +67,7 @@ public:
     }
 
     void noteOn(synth_float_t pitch, synth_float_t velocity) {
-        (void) velocity; // TODO use velocity?
-        mPitch = pitch;
+        VoiceBase::noteOn(pitch, velocity);
         mFilterEnvelope.setGate(true);
         mAmplitudeEnvelope.setGate(true);
     }
