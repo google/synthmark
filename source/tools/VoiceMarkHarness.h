@@ -29,7 +29,6 @@
 #include "tools/TimingAnalyzer.h"
 #include "TestHarnessParameters.h"
 
-
 constexpr int kMinimumVoiceCount  = 4;
 constexpr int kMinimumNoteOnCount = 1;
 

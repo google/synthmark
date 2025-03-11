@@ -67,6 +67,7 @@ constexpr int64_t SYNTHMARK_MICROS_PER_SECOND      = 1000 * 1000;
 constexpr int64_t SYNTHMARK_NANOS_PER_MICROSECOND  = 1000;
 constexpr int64_t SYNTHMARK_NANOS_PER_MILLISECOND  = 1000 * 1000;
 constexpr int64_t SYNTHMARK_NANOS_PER_SECOND       = 1000 * 1000 * 1000;
+constexpr double  SYNTHMARK_SECONDS_PER_NANO       = 1.0e-9;
 
 typedef float synth_float_t;
 

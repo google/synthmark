@@ -125,7 +125,7 @@ public:
         }
 
         // If there is not enough room then sleep until the hardware reads another burst.
-        if (availableRoom < mFramesPerBurst) {
+        if (availableRoom < mFramesPerBurst && mRealTime) {
             HostCpuManager::getInstance()->sleepAndTuneCPU(mNextHardwareReadTimeNanos);
             updateHardwareSimulator();
         } else {
