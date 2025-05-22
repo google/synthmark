@@ -30,6 +30,7 @@
 #include "tools/JitterMarkHarness.h"
 #include "tools/ITestHarness.h"
 #include "tools/LatencyMarkHarness.h"
+#include "tools/BenchMarkHarness.h"
 #include "tools/TimingAnalyzer.h"
 #if defined(__ANDROID__)
 #include "tools/RealAudioSink.h"
@@ -51,7 +52,7 @@ static void usage(const char *name) {
     printf("%s -t{test} -n{numVoices} -d{noteOnDelay} -p{percentCPU} -r{sampleRate}"
            " -s{seconds} -b{burstSize} -c{cpuAffinity}\n", name);
     printf("    -t{test}, v=voice, l=latency, j=jitter, u=utilization"
-           ", s=series_util, c=clock_ramp, a=automated, default is %c\n",
+           ", s=series_util, c=clock_ramp, a=automated, b=benchmark, default is %c\n",
            kDefaultTestCode);
 
     printf("    -a{audioLevel} 0 = normal thread, 1 = audio callback (default), 2 = audio output\n");
@@ -348,6 +349,14 @@ int synthmark_command_main(int argc, char **argv)
                     = new UtilizationSeriesHarness(audioSink.get(), &result, logTool);
             seriesHarness->setNumVoicesHigh(numVoicesHigh);
             harness = seriesHarness;
+        }
+            break;
+
+        case 'b':
+        {
+            BenchMarkHarness *speedHarness = new BenchMarkHarness(audioSink.get(), &result, logTool);
+            speedHarness->setNumVoicesHigh(numVoicesHigh);
+            harness = speedHarness;
         }
             break;
 

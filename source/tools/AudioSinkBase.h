@@ -231,6 +231,19 @@ public:
         mAdpfEnabled = enabled;
     }
 
+    bool isRealTime() const {
+        return mRealTime;
+    }
+
+    /**
+     * If true then the audio sink will run at the specified audio rate.
+     * If false then the audio sink will run as fast as possible.
+     * @param realTime
+     */
+    void setRealTime(bool realTime) {
+        mRealTime = realTime;
+    }
+
     static const char *schedulerToString(int scheduler) {
         scheduler = scheduler & 0xFFFF; // clear high flags like SCHED_RESET_ON_FORK
         switch(scheduler) {
@@ -286,6 +299,8 @@ protected:
     static constexpr int kBufferSizeInBursts = 8;
     int32_t       mDefaultBufferSizeInBursts = kBufferSizeInBursts;
     int32_t       mBufferCapacityInFrames = 4 * 1024;
+
+    bool          mRealTime = false;
 
 private:
     IAudioSinkCallback *mCallback = NULL;

@@ -130,6 +130,10 @@ public:
         return mAudioSink->getSampleRate();
     }
 
+    int32_t getFramesWritten() {
+        return mAudioSink->getFramesWritten();
+    }
+
 protected:
     int32_t          mNumVoices = 8;
     int32_t          mDelayNotesOn = 0;

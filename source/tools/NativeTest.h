@@ -26,16 +26,17 @@
 #include "../SynthMark.h"
 #include "../synth/Synthesizer.h"
 #include "AutomatedTestSuite.h"
+#include "ClockRampHarness.h"
 #include "JitterMarkHarness.h"
 #include "LatencyMarkHarness.h"
 #include "LogTool.h"
 #include "Params.h"
+#include "BenchMarkHarness.h"
 #include "TimingAnalyzer.h"
-#include "VirtualAudioSink.h"
-#include "VoiceMarkHarness.h"
 #include "TestHarnessParameters.h"
 #include "UtilizationMarkHarness.h"
-#include "ClockRampHarness.h"
+#include "VirtualAudioSink.h"
+#include "VoiceMarkHarness.h"
 
 #define NATIVETEST_ERROR -1
 #define NATIVETEST_SUCCESS 0
@@ -64,8 +65,9 @@ typedef enum {
     NATIVETEST_ID_LATENCYMARK     = 3,
     NATIVETEST_ID_UTILIZATIONMARK = 4,
     NATIVETEST_ID_VOICEMARK       = 5,
+    NATIVETEST_ID_BENCHMARK       = 6,
 
-    NATIVETEST_ID_COUNT           = 6,
+    NATIVETEST_ID_COUNT           = 7,
 } native_test_t;
 
 
@@ -134,13 +136,11 @@ protected:
     HostThreadFactory *mHostThreadFactory = NULL;
 };
 
-class CommonNativeTestUnit : public NativeTestUnit {
+class BaseNativeTestUnit : public NativeTestUnit {
 public:
-    CommonNativeTestUnit(std::string title, LogTool &logTool)
+    BaseNativeTestUnit(std::string title, LogTool &logTool)
             : NativeTestUnit(title, logTool) {
-
     }
-
     void createAudioSink() {
         int audioLevel = mParams.getValueFromInt(PARAMS_AUDIO_LEVEL);
         if (audioLevel == AudioSinkBase::AUDIO_LEVEL_OUTPUT) {
@@ -171,17 +171,6 @@ public:
                                          &vFramesPerBurst,
                                          kParamsDefaultIndexFramesPerBurst);
 
-        ParamInteger paramAudioLevel(PARAMS_AUDIO_LEVEL, "Audio Level: 1=callback, 2=audible",
-                                     AudioSinkBase::AUDIO_LEVEL_CALLBACK,
-                                     AudioSinkBase::AUDIO_LEVEL_CALLBACK,
-                                     AudioSinkBase::AUDIO_LEVEL_OUTPUT);
-
-        ParamInteger paramAdpfEnabled(PARAMS_ADPF_ENABLED, "ADPF: 0=off, 1=on",0, 0, 1);
-
-        ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
-        // Touch boost usually dies down in a few seconds.
-        ParamInteger paramTestStartDelay(PARAMS_TEST_START_DELAY, "Test Start Delay Seconds", 4, 0, 20);
-
         std::vector<float> vDurations = DEFAULT_TEST_DURATIONS;
         ParamFloat paramNumSeconds(PARAMS_NUM_SECONDS, "Number of Seconds", &vDurations, 3);
 
@@ -189,10 +178,6 @@ public:
         mParams.addParam(&paramSamplesPerFrame);
         mParams.addParam(&paramFramesPerRender);
         mParams.addParam(&paramFramesPerBurst);
-        mParams.addParam(&paramAudioLevel);
-        mParams.addParam(&paramAdpfEnabled);
-        mParams.addParam(&paramNoteOnDelay);
-        mParams.addParam(&paramTestStartDelay);
         mParams.addParam(&paramNumSeconds);
 
 #ifndef __APPLE__
@@ -281,6 +266,33 @@ protected:
     SynthMarkResult mResult;
 };
 
+class CommonNativeTestUnit : public BaseNativeTestUnit {
+public:
+    CommonNativeTestUnit(std::string title, LogTool &logTool)
+            : BaseNativeTestUnit(title, logTool) {
+    }
+
+    int init() override {
+        int result = BaseNativeTestUnit::init();
+        //Register more parameters
+        ParamInteger paramAudioLevel(PARAMS_AUDIO_LEVEL, "Audio Level: 1=callback, 2=audible",
+                                     AudioSinkBase::AUDIO_LEVEL_CALLBACK,
+                                     AudioSinkBase::AUDIO_LEVEL_CALLBACK,
+                                     AudioSinkBase::AUDIO_LEVEL_OUTPUT);
+
+        ParamInteger paramAdpfEnabled(PARAMS_ADPF_ENABLED, "ADPF: 0=off, 1=on",0, 0, 1);
+
+        ParamInteger paramNoteOnDelay(PARAMS_NOTE_ON_DELAY, "Note On Delay Seconds", 0, 0, 300);
+        // Touch boost usually dies down in a few seconds.
+        ParamInteger paramTestStartDelay(PARAMS_TEST_START_DELAY, "Test Start Delay Seconds", 4, 0, 20);
+
+        mParams.addParam(&paramAudioLevel);
+        mParams.addParam(&paramAdpfEnabled);
+        mParams.addParam(&paramNoteOnDelay);
+        mParams.addParam(&paramTestStartDelay);
+        return result;
+    }
+};
 //============================
 // Custom Tests
 //============================
@@ -425,6 +437,38 @@ public:
 protected:
 };
 
+class TestBenchMark : public BaseNativeTestUnit {
+public:
+    TestBenchMark(LogTool &logTool)
+            : BaseNativeTestUnit("BenchMark", logTool) {
+
+    }
+
+    int init() override {
+        int err = BaseNativeTestUnit::init();
+        if (err != SYNTHMARK_RESULT_SUCCESS) {
+            return err;
+        }
+
+        std::vector<int> vNumVoices = { 64 };
+        ParamInteger paramNumVoices(PARAMS_NUM_VOICES,
+                                    "Number of Voices",
+                                    &vNumVoices,
+                                    0);
+        mParams.addParam(&paramNumVoices);
+
+        return err;
+    }
+
+    int run() override {
+        createAudioSink();
+        BenchMarkHarness harness(mAudioSink.get(), &mResult, mLogTool);
+
+        return BaseNativeTestUnit::runTestHarness((TestHarnessBase &) harness);
+    }
+protected:
+};
+
 class TestClockRamp : public ChangingVoiceTestUnit {
 public:
     TestClockRamp(LogTool &logTool)
@@ -476,6 +520,7 @@ public:
             , mTestUtilizationMark(mLog)
             , mTestClockRamp(mLog)
             , mTestAutomatedSuite(mLog)
+            , mTestBenchMark(mLog)
     {
         initTests();
         setHostThreadFactory(&mHostThreadFactoryOwned);
@@ -611,6 +656,7 @@ private:
             case NATIVETEST_ID_UTILIZATIONMARK: pTestUnit = &mTestUtilizationMark; break;
             case NATIVETEST_ID_CLOCKRAMP: pTestUnit = &mTestClockRamp; break;
             case NATIVETEST_ID_AUTOMATED: pTestUnit = &mTestAutomatedSuite; break;
+            case NATIVETEST_ID_BENCHMARK: pTestUnit = &mTestBenchMark; break;
         }
         return pTestUnit;
     }
@@ -624,6 +670,7 @@ private:
     TestUtilizationMark  mTestUtilizationMark;
     TestClockRamp        mTestClockRamp;
     TestAutomatedSuite   mTestAutomatedSuite;
+    TestBenchMark        mTestBenchMark;
 
     LogTool              mLog;
     HostThreadFactory    mHostThreadFactoryOwned;

@@ -73,7 +73,10 @@ public:
     // Customize the test by defining these virtual methods.
     virtual void onBeginMeasurement() {}
 
-    // TODO Use Result type return value.
+    /**
+     *
+     * @return negative error code or zero to continue or 1 to stop
+     */
     virtual int32_t onBeforeNoteOn() { return 0; }
 
     virtual void onEndMeasurement() {}
@@ -110,7 +113,10 @@ public:
                     mNoteCounter++;
                 } else {
                     result = onBeforeNoteOn();
-                    if (result < 0) {
+                    if (result == 1) {
+                        mLogTool.log("%s() test is finished\n", __func__);
+                        return IAudioSinkCallback::Result::Finished;
+                    } else  if (result < 0) {
                         mLogTool.log("%s() onBeforeNoteOn() returned %d\n", __func__, result);
                         mResult->setResultCode(result);
                         return IAudioSinkCallback::Result::Finished;
