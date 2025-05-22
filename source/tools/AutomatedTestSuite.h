@@ -27,18 +27,18 @@
 #include "tools/VirtualAudioSink.h"
 #include "tools/VoiceMarkHarness.h"
 #include "tools/TestHarnessParameters.h"
+#include "BenchMarkHarness.h"
 
 /**
  * Run an automated test, analyze the results and print a report.
- * 1) Determine what CPUs are available
- * 2) Run VoiceMark on each CPU to determine big vs little CPUs
- * 3) Run LatencyMark with a light load, a heavy load, then an alternating load.
- * 4) Print report with analysis.
+ * 1) Determine what CPUs are available.
+ * 2) Run a quick BenchMark on each CPU to identify, little, medium, big and huge CPUs.
+ * 3) Use LatencyMark to detect various problems.
+ * 4) With a light load on a small core to detect preemption from bad drivers.
+ * 6) With a dynamic load on a small core to detect slow response frequency scaling CPU governor.
+ * 5) With moderate loads with no CPU affinity to detect problems with CPU migration.
+ * 6) With a dynamic load to detect slow response from CPU governor.
  *
- * The current code:
- *     assumes that the CPU numbering depends on their capacity,
- *     assumes that both lowCpu and highCpu are online,
- *     assume the existence of only two architectures, homogeneous or BIG.little.
  * TODO handle more architectures
  * TODO Measure latency without CPU affinity
  */
@@ -70,7 +70,7 @@ public:
         mLogTool.log("\nSynthMark Version " SYNTHMARK_VERSION_TEXT "\n");
 
         mLogTool.log("\n-------- CPU Performance ------------\n");
-        int32_t err = measureLowHighCpuPerformance(sampleRate, framesPerBurst, 10);
+        int32_t err = measureCpuSpeeds(sampleRate, framesPerBurst, 10);
         if (err) return err;
 
         mLogTool.log("\n-------- LATENCY ------------\n");
@@ -147,87 +147,107 @@ struct LatencyResult {
         mResult->appendMessage(resultMessage.str());
     }
 
-    virtual int32_t measureLowHighCpuPerformance(int32_t sampleRate,
-                                                 int32_t framesPerBurst,
-                                                 int32_t numSeconds) {
+    std::vector<std::vector<std::pair<int, int>>> findClustersWithIndices(const std::vector<int>& data, int threshold) {
+        std::vector<std::pair<int, int>> indexedData;
+        for (size_t i = 0; i < data.size(); ++i) {
+            indexedData.emplace_back(data[i], static_cast<int>(i)); // Store value and index
+        }
+
+        std::sort(indexedData.begin(), indexedData.end()); // Sort based on values
+
+        std::vector<std::vector<std::pair<int, int>>> clusters;
+        std::vector<std::pair<int, int>> currentCluster;
+
+        if (!indexedData.empty()) {
+            currentCluster.push_back(indexedData[0]);
+            clusters.push_back(currentCluster);
+            currentCluster.clear();
+        }
+
+        for (size_t i = 1; i < indexedData.size(); ++i) {
+            if (std::abs(indexedData[i].first - indexedData[i - 1].first) > threshold) {
+                clusters.push_back(currentCluster);
+                currentCluster.clear();
+            }
+            if(currentCluster.empty()){
+                clusters.back().push_back(indexedData[i]);
+            }
+            else{
+                currentCluster.push_back(indexedData[i]);
+            }
+        }
+        if(!currentCluster.empty()){
+            clusters.push_back(currentCluster);
+        }
+        if(clusters[0].empty()){
+            clusters.erase(clusters.begin());
+        }
+
+        return clusters;
+    }
+
+    // Measure all of the CPU speeds.
+    virtual int32_t measureCpuSpeeds(int32_t sampleRate,
+                                     int32_t framesPerBurst,
+                                     int32_t numSeconds) {
         std::stringstream resultMessage;
         int numCPUs = HostTools::getCpuCount();
+        std::vector<int32_t> cpuMaxVoices;
+        int32_t maxVoicesPossible = 0;
         SynthMarkResult result1;
-        VoiceMarkHarness *harness = new VoiceMarkHarness(mAudioSink, &result1, mLogTool);
-        harness->setTargetCpuLoad(kMaxUtilization);
-        harness->setInitialVoiceCount(mNumVoices);
-        harness->setDelayNoteOnSeconds(mDelayNotesOn);
-        harness->setThreadType(mThreadType);
+        for (int cpuIndex = 0; cpuIndex < numCPUs; cpuIndex++) {
+            BenchMarkHarness harness(mAudioSink, &result1, mLogTool);
+            harness.setNumVoices(getNumVoices());
+            harness.setDelayNoteOnSeconds(mDelayNotesOn);
+            harness.setThreadType(mThreadType);
 
-        // TODO This is hack way to choose CPUs for BIG.little architectures.
-        // TODO Test each CPU or come up with something better.
-        mLogTool.log("Try to find BIG/LITTLE CPUs\n");
-        int lowCpu = (1 * numCPUs) / 4;
-        mAudioSink->setRequestedCpu(lowCpu);
-        mLogTool.log("Run low VoiceMark with CPU #%d\n", lowCpu);
-        int32_t err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
-        if (err) {
-            delete harness;
-            return err;
-        }
-
-        double voiceMarkLowIndex = result1.getMeasurement();
-        mLogTool.log("low VoiceMark_%d = %5.1f\n", kMaxUtilizationPercent, voiceMarkLowIndex);
-        double voiceMarkHighIndex = voiceMarkLowIndex;
-
-        int highCpu = (3 * numCPUs) / 4;
-        // If there are more than 2 CPUs than measure one each from top and bottom half in
-        // case they are heterogeneous.
-        if (lowCpu != highCpu) {
-            mAudioSink->setRequestedCpu(highCpu);
-            mLogTool.log("Run high VoiceMark with CPU #%d\n", highCpu);
-            err = harness->runTest(sampleRate, framesPerBurst, numSeconds);
+            mAudioSink->setRequestedCpu(cpuIndex);
+            mLogTool.log("Run BenchMark with CPU #%d\n", cpuIndex);
+            int32_t err = harness.runTest(sampleRate, framesPerBurst, numSeconds);
             if (err) {
-                delete harness;
                 return err;
             }
-            voiceMarkHighIndex = result1.getMeasurement();
-            mLogTool.log("high VoiceMark_%d = %5.1f\n", kMaxUtilizationPercent, voiceMarkHighIndex);
 
-            double averageVoiceMark = 0.5 * (voiceMarkHighIndex + voiceMarkLowIndex);
-            double threshold = kHighLowThreshold * averageVoiceMark;
-
-            mHaveBigLittle = (abs(voiceMarkHighIndex - voiceMarkLowIndex) > threshold);
+            int32_t maxVoicesPerCpu = harness.getMaxVoices();
+            mLogTool.log("max_voices_%d = %5.1f\n", cpuIndex, maxVoicesPerCpu);
+            cpuMaxVoices.push_back(maxVoicesPerCpu);
+            maxVoicesPossible = std::max(maxVoicesPossible, maxVoicesPerCpu);
+            // Give CPU time to settle down before the next benchmark.
+            HostTools::sleepForNanoseconds(500 * SYNTHMARK_NANOS_PER_MILLISECOND);
         }
 
-        if (mHaveBigLittle) {
-            if (voiceMarkHighIndex > voiceMarkLowIndex) {
-                mLittleCpu = lowCpu;
-                mVoiceMarkLittle = voiceMarkLowIndex;
-                mBigCpu = highCpu;
-                mVoiceMarkBig = voiceMarkHighIndex;
-            } else {
-                mLittleCpu = highCpu;
-                mVoiceMarkLittle = voiceMarkHighIndex;
-                mBigCpu = lowCpu;
-                mVoiceMarkBig = voiceMarkLowIndex;
+        // Figure out CPU clusters from the benchmarks.
+        const int threshold = 30;
+        std::vector<std::vector<std::pair<int, int>>> clusters = findClustersWithIndices(cpuMaxVoices, threshold);
+
+        for (size_t i = 0; i < clusters.size(); ++i) {
+            mLogTool.log("Cluster[#%d]: ", i);
+            for (const auto& pair : clusters[i]) {
+                mLogTool.log("( %d, %d) " ,  pair.first, pair.second);
             }
-            resultMessage << "# The CPU seems to be heterogeneous. Assume BIG-little.\n";
+            mLogTool.log("\n");
+            std::cout << std::endl;
+        }
+
+        mHaveBigLittle = clusters.size() > 1;
+
+        const auto littleCluster = clusters[0];
+        const auto& pair = littleCluster[littleCluster.size() - 1];
+        mLittleCpu = pair.second;
+        mVoiceMarkLittle = pair.first;
+        if (mHaveBigLittle) {
+            resultMessage << "# The CPU seems to be heterogeneous.\n";
             resultMessage << "cpu.little = " << mLittleCpu << std::endl;
-            resultMessage << "cpu.big = " << mBigCpu << std::endl;
         } else {
-            mLittleCpu = highCpu;
-            mVoiceMarkLittle = voiceMarkHighIndex;
-            mBigCpu = highCpu;
-            mVoiceMarkBig = voiceMarkHighIndex;
             resultMessage << "# The CPU seems to be homogeneous.\n";
             resultMessage << "cpu = " << mLittleCpu << std::endl;
         }
 
-        resultMessage << "voice.mark." << cpuToBigLittle(lowCpu) << " = " << voiceMarkLowIndex << std::endl;
-        if (lowCpu != highCpu) {
-            resultMessage << "voice.mark." << cpuToBigLittle(highCpu) << " = " << voiceMarkHighIndex << std::endl;
-        }
+        resultMessage << "max.voices.little  = " << mVoiceMarkLittle << std::endl;
 
-        // std::cout << result1.getResultMessage();
+        //std::cout << result1.getResultMessage();
 
         mResult->appendMessage(resultMessage.str());
-        delete harness;
         return SYNTHMARK_RESULT_SUCCESS;
     }
 
