@@ -1,6 +1,7 @@
 #if !defined(SYNTHMARK_SCHEDDL_H) && !defined(__APPLE__)
 #define SYNTHMARK_SCHEDDL_H
 
+#include <features.h>
 #include <linux/sched.h>
 #include <stdint.h>
 #include <sys/syscall.h>
@@ -13,6 +14,7 @@
 
 const uint64_t SCHED_GETATTR_FLAGS_DL_ABSOLUTE = 0x01;
 
+#ifndef SCHED_ATTR_SIZE_VER0 // provided by glibc >= 2.41
 struct sched_attr {
     uint32_t size;
 
@@ -36,6 +38,7 @@ struct sched_attr {
     uint32_t sched_util_min;
     uint32_t sched_util_max;
 };
+#endif
 
 inline int sched_setattr(pid_t pid,
                          const struct sched_attr *attr,

@@ -63,7 +63,7 @@ public:
 
 private:
     int32_t mNumEntries;
-    synth_float_t *mTable;
+    synth_float_t *mTable = nullptr;
 };
 
 #endif // SYNTHMARK_LOOKUP_TABLE_H
